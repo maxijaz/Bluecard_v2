@@ -1,4 +1,5 @@
 import unittest
+import json  # Import the json module
 from src.logic.parser import load_data, save_data, validate_class_format
 
 class TestParser(unittest.TestCase):
