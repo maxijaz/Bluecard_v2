@@ -8,13 +8,28 @@ BACKUP_DIR = "data/backup"
 
 def load_data(filepath=DATA_FILE):
     """Loads and returns the class and student data from a JSON file."""
-    with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        log_error(f"File not found: {filepath}")
+        return {}
+    except json.JSONDecodeError:
+        log_error(f"Invalid JSON format in file: {filepath}")
+        return {}
 
 def save_data(data, filepath=DATA_FILE):
     """Saves the provided dictionary back into the JSON file."""
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        log_error(f"Failed to save data to {filepath}: {e}")
+
+def log_error(message):
+    """Logs errors to a file."""
+    with open("data/bluecard_errors.log", "a", encoding="utf-8") as log_file:
+        log_file.write(f"{datetime.now()} - {message}\n")
 
 def validate_class_format(data):
     """Enhanced schema validation for class and student data."""
