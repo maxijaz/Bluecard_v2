@@ -60,3 +60,9 @@ class TestParser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+{
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "c:\\Temp\\Bluecard_v2"
+  }
+}
