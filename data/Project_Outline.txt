@@ -1,0 +1,442 @@
+Project Bluecard STR outline, wants and needs.
+This is an app to manage the work life of an esl Teacher (Me - Teacher Paul) and maybe a few friends.
+A local database, with everything held locally, but portable (once complete) as an .exe for friends to install and use.
+
+List of sections / forms:
+# 1. Dataset_1                       - data/001attendance_data.JSON 
+# 2. Metadata                        - list of all data fields for Project Bluecard STR
+# 3. Boilerplate                     - Project file Structure for Project Bluecard
+# 4. Launcher                        - First form runs from main.py, the entry point. Logic = (Archive = "No")
+# 5. Archive Manager                 - Simliar to Launcher but with Archived classes (Archive = "Yes") + Option to DELETE class
+# 6. Mainform                        - This form displays bluecard with Student Data PAL and Metadata with control buttons
+# 7. ADD or Edit Metadata            - Form for editing metadata
+# 8. Add or EDIT Student information - Form for adding and editing student data
+# 9. Student Active Manager - Simliar to Archive manager (active = "Yes" or "No") + Option to DELETE class
+
+----------------------------------------------------------------
+
+# 1. Dataset_1 - data/001attendance_data.JSON 
+
+{
+    "classes": {
+        "OLO123": {
+            "metadata": {
+                "Company": "ACERs",
+                "Consultant": "Fraser",
+                "Teacher": "Paul R",
+                "Room": "Floor 23",
+                "CourseBook": "IEX",
+                "MaxClasses": 10,
+                "CourseHours": 40,
+                "ClassTime": 2,
+                "StartDate": "01/05/2025",
+                "FinishDate": "15/06/2025",
+                "Days": "Tuesday, Thursday",
+                "Time": "17:00 - 19:00",
+                "Notes": "Bring Projector and screen"
+            },
+            "students": {
+                "S001": {
+                    "name": "Alice Kim",
+                    "gender": "Female",
+                    "nickname": "Ali",
+                    "score": "82% - A",
+                    "pre_test": "70%",
+                    "post_test": "90%",
+                    "active": "Yes",
+                    "note": "Very punctual and loves discussions",
+                    "attendance": {
+                        "01/05/2025": "P",
+                        "06/05/2025": "A",
+                        "08/05/2025": "P",
+                        "13/05/2025": "L",
+                        "15/05/2025": "P"
+                    }
+                },
+                "S002": {
+                    "name": "Ben Lee",
+                    "gender": "Male",
+                    "nickname": "Nok",
+                    "score": "55% - B",
+                    "pre_test": "50%",
+                    "post_test": "75%",
+                    "active": "No",
+                    "note": "Likes conversations and grammar",
+                    "attendance": {
+                        "01/05/2025": "L",
+                        "06/05/2025": "P",
+                        "08/05/2025": "P",
+                        "13/05/2025": "A",
+                        "15/05/2025": "P"
+                    }
+                }
+            },
+            "archive": "No"
+        },
+        "OLO124": {
+            "metadata": {
+                "Company": "BCErs",
+                "Consultant": "Fraser",
+                "Teacher": "Paul R",
+                "Room": "Floor 24",
+                "CourseBook": "IEX",
+                "MaxClasses": 10,
+                "CourseHours": 40,
+                "ClassTime": 2,
+                "StartDate": "02/05/2025",
+                "FinishDate": "16/06/2025",
+                "Days": "Monday, Wednesday",
+                "Time": "14:00 - 16:00",
+                "Notes": "Class prefers group activities"
+            },
+            "students": {
+                "S003": {
+                    "name": "David Tran",
+                    "gender": "Male",
+                    "nickname": "D",
+                    "score": "68% - B",
+                    "pre_test": "60%",
+                    "post_test": "75%",
+                    "active": "Yes",
+                    "note": "Asks good questions, prefers group work",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "07/05/2025": "P",
+                        "09/05/2025": "L",
+                        "14/05/2025": "A",
+                        "16/05/2025": "P"
+                    }
+                },
+                "S004": {
+                    "name": "Emma Zhou",
+                    "gender": "Female",
+                    "nickname": "Em",
+                    "score": "90% - A",
+                    "pre_test": "85%",
+                    "post_test": "95%",
+                    "active": "Yes",
+                    "note": "Highly motivated and organized",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "07/05/2025": "P",
+                        "09/05/2025": "P",
+                        "14/05/2025": "P",
+                        "16/05/2025": "P"
+                    }
+                }
+            },
+            "archive": "No"
+        }
+    }
+}
+
+----------------------------------------------------------------
+# 2. Metadata - list of all data fields for Project Bluecard STR
+
+key (Unique Number):
+classes = "OLO123"
+
+metadata:
+Company = "ACERs",
+Consultant = "Fraser",
+Teacher = "Paul R",
+Room = "Floor 23",
+CourseBook = "IEX",
+MaxClasses = "10",
+CourseHours = "40",
+ClassTime = "2",
+StartDate = "01/05/2025",
+FinishDate = "15/06/2025",
+Days = "Tuesday, Thursday",
+Time = "17:00 - 19:00",
+Notes = "Bring Projector and screen"
+
+Student data:
+students = "S001",
+name = "Alice Kim",
+gender = "Female",
+nickname = "Ali",
+score = "82% - A",
+pre_test = "70%",
+post_test = "90%",
+active = "Yes",
+note = "Very punctual and loves discussions",
+attendance = {
+"01/05/2025": "P",
+"06/05/2025": "A",
+"08/05/2025": "P",
+"13/05/2025": "L",
+"15/05/2025": "P"
+}
+
+----------------------------------------------------------------
+# 3. Boilerplate - Project file Structure for Project Bluecard
+
+bluecard/
+├── data/
+│   ├── themes.json                ← themes for application - normal, dark, large
+│   ├── Project_Outline.txt        ← requirements, outline, form layout and button logic 
+│   └── attendance_data.json       ← Your master data file (metadata)
+│
+├── src/
+│   ├── main.py                    ← Main entry point
+│   ├── logic/
+│   │   ├── parser.py              ← Handles JSON parsing
+│   │   └── attendance_utils.py    ← Business logic, scoring, etc.
+│   └── ui/
+│       └── cli.py                 ← Command-line UI or text menus
+├── tests/
+│   └── test_attendance.py        ← Unit tests for logic
+├── .gitignore
+└── README.md
+
+----------------------------------------------------------------
+
+# 4. Launcher - First form runs from main.py, the entry point. Logic = (Archive = "No")
+
++-------------------------------------------------------------------------+
+|                         **Bluecard Manager**                            |   ← Heading (bold, centered, 24pt)
++---------------------------+---------------------------------+-----------+
+|        **Class No**       |          **Company**            |**Archive**|   ← Table Headings (bold, centered, 18pt)
++---------------------------+---------------------------------+-----------+
+| OLO123                    | [            ACERs            ] |  [ No ]   |   ← Table Rows label (OLO123, regular, left, 16pt)
+| OLO124                    | [            BCERs            ] |  [ No ]   |   ← Table Rows data (ACERs,No, regular, left, 16pt)
++---------------------------+---------------------------------+-----------+   
+
+                [ Open ]   [ Edit ]   [ Add New Class ]                       ← Buttons (regular, centered, 18pt)
+          [ Archive ]  [ Archive Manager]   [TTR]  [Settings]
+
+1. Launcher Form and Button format, sequence and logic:
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. Run, -> main.py -> Launcher (Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. Launcher opens, centre of screen (hoizonal/vertical), "-topmost" = True.
+4. Set geometry ("650x500") but can Restore Window - Only window resizes, not data or table.
+5. Close X - Window closes with offer to backup 001attendance_data locally, but will move to Google drive later.
+
+1 .Launcher Button logic:
+[ Open ]            →  Must highlight row, → 6. Mainform (Maximize = yes) 
+[ Edit ]            →  Must highlight row → 7. ADD or Edit Metadata (Edit highlighted class metadata)
+[ Add New Class ]   →  7. ADD or Edit Metadata (Add a new class metadata)                 
+[ Archive ]         →  Must highlight row → Basic form with Yes, No, Cancel (Yes = "archive" = "Yes")
+[ Archive Manager]  →  5. Archive Manager → Restore ("archive" = "No"), Delete (safety Yes, No), Cancel
+[TTR]               →  Placeholder for TTR
+[Settings]          →  Basic form with dropdown to select Theme (normal, dark, large, clam) Default = normal
+
+----------------------------------------------------------------
+
+# 5. Archive Manager - Simliar to Launcher but with Archived classes (Archive = "Yes") + Option to DELETE class
+
++-------------------------------------------------------------------------+
+|                         **Archive Manager**                             |   ← Heading (bold, centered, 24pt)
++---------------------------+---------------------------------+-----------+
+|        **Class No**       |          **Company**            |**Archive**|   ← Table Headings (bold, centered, 18pt)
++---------------------------+---------------------------------+-----------+
+| OLO123                    | [            ACERs            ] |  [ Yes ]  |   ← Table Rows label (OLO123, regular, left, 16pt)
+| OLO124                    | [            BCERs            ] |  [ Yes ]  |   ← Table Rows data (ACERs,No, regular, left, 16pt)
++---------------------------+---------------------------------+-----------+   
+
+                [ Restore ]   [ Delete ]   [ Cancel ]                       ← Buttons (regular, centered, 18pt)
+
+5. Archive Manager Form and Button format, sequence and logic:
+
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. 1. Launcher -> click Archive Manager -> 5. Archive Manager form (Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. Launcher opens, centre of screen (hoizonal/vertical), "-topmost" = True.
+4. Set geometry ("650x500") but can Restore Window - Only window resizes, not data or table.
+5. Close X - Window closes with and re-opens 1. Launcher form.
+
+5. Archive Manager Button logic:
+[ Restore ]           → Must highlight row → Basic form with Yes, No, Cancel (Yes = "archive" = "No")
+[ Delete ]            → Must highlight row → Basic form with Yes, No, Cancel (Yes = Delete all metadata form class)
+[ Cancel ]            → No action, close Archive Manager, open 1. Launcher
+
+----------------------------------------------------------------
+
+# 6. Mainform - This form displays bluecard with Student Data PAL and Metadata with control buttons
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Header                                                      **Class Information - MainForm**                                                                           |    ← Heading (bold, centered, 20pt)
++----------------+------------------+---------------------+---------------------+-------+--------------------+-------------------+-------------------+-------------------+
+|**Company:**    | [    ACERs     ] |**Course Hours:**    | [      40         ] |       | [   Add Student  ] | [   Add Date    ] | [ (Unused Btn2) ] | [ (Unused Btn6) ] |
+|**Consultant:** | [    Fraser    ] |**Class Time (hrs):**| [       2         ] |       | [  Edit Student  ] | [   Edit Date   ] | [ (Unused Btn3) ] | [ (Unused Btn7) ] |    ← Buttons (regular, centered, 16pt)
+|**Teacher:**    | [    Paul R    ] |**Max Classes:**     | [      10         ] |       | [ Remove Student ] | [    Metadata   ] | [ (Unused Btn4) ] | [ (Unused Btn8) ] |
+|**Room:**       | [   Floor 23   ] |**Start Date:**      | [   01/05/2025    ] |       | [Manage Students ] | [ (Unused Btn1) ] | [ (Unused Btn5) ] | [    Settings   ] |    ← Table Rows (Labels) (bold, left, 14pt)
+|**Course Book:**| [    IEX       ] |**Finish Date:**     | [   15/06/2025    ] |       |                    |                   |                   |                   |    ← Table Rows (Data) (regular, centered, 14pt)
+|                |                  |**Days:**            | [Tuesday, Thursday] |       |                    |                   |                   |                   |
+|                |                  |**Time:**            | [  17:00 - 19:00  ] |       |                    |                   |                   |                   | 
+|                |                  |**Notes:**           | [ Bring projector ] |       |                    |                   |                   |                   |
++----------------+------------------+---------------------+---------------------+-------+--------------------+-------------------+-------------------+-------------------+
+| Attendance Table                                                                                                                                                       |    ← Heading (bold, left, 20pt)
++---+---------------+------------+----------+------------+------------+------------+------------+------------+-----+-----+-----+--------------+------------+-------------+
+| # | **Name**      |**Nickname**|**Score** |**01/05/25**|**06/05/25**|**08/05/25**|**13/05/25**|**15/05/25**|**P**|**A**|**L**|**Attendance**|**Pre-test**|**Post-test**|  ← Table Headings (bold, centered, 16pt)
++---+---------------+------------+----------+------------+------------+------------+------------+------------+-----+-----+-----+--------------+------------+-------------+
+|   |Running Total  |            |          |     2      |     4      |     6      |     8      |    10      |     |     |     |              |            |             |  ← Running Total (Data 2,4,6) (bold, centered, 14pt)
+| 1 |Alice Kim      |    Ali     |  82% - A |     P      |     A      |     P      |     L      |    P       |  3  |  1  |  1  |              |    70%     |     90%     |  ← Table Rows (Data) (regular, centered, 14pt)
+| 2 |Ben Lee        |    Nok     |  55% - B |     L      |     P      |     P      |     A      |    P       |  3  |  1  |  1  |              |    50%     |     75%     |
+| 3 | ...           |    ...     |   ...    |     -      |     -      |     -      |     -      |    -       |  -  |  -  |  -  |              |     -      |     -       |
+| 4 | ...           |    ...     |   ...    |     -      |     -      |     -      |     -      |    -       |  -  |  -  |  -  |              |     -      |     -       |
++---+---------------+------------+----------+------------+------------+------------+------------+------------+-----+-----+-----+--------------+------------+-------------+
+
+6. Mainform and Button format, sequence and logic:
+
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. 1. Launcher -> click Open (with highlighted row) -> 6. Mainform (Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. 6. Mainform opens, maximized, "-topmost" = True.
+4. Close X - Window closes with and re-opens 1. Launcher form.
+
+6. Mainform layout and button logic:
+Header -> 9 columns as shown in table above.
+Column 1 (bold, left), Column 2 (regular, centered), Column 3 (bold, left), Column 4 (regular, centered), Column 5 (blank spacer)
+Column 6 (Buttons x 4), Column 7 (Buttons x 4), Column 8 (Buttons x 4), Column 9 (Buttons x 4). 
+
+6. Attendance Table → layout as per diagram (each entry can be editted by double clicking on the table for a simple form to edit and save on exit or close form)
+6. Attendance Table → Logic filter for table, Name = order ascending, Filter "active" = "Yes".
+
+6. Button logic: (dont close mainform when any button is pressed unless stated below)
+[   Add Student  ]   → Mainform remains open and 8. Add or EDIT Student information opens to ADD NEW Student
+[  Edit Student  ]   → Mainform remains open and 8. Add or EDIT Student information opens to EDIT Student metadata
+[ Remove Student ]   → Must highlight row, basic form Remove student Yes/No. Yes = "active" = "No", refresh form
+[ Manage Students]   → opens 9. Student Active Manager → X Close back to Mainform (dont close mainform)
+[   Add Date    ]    → Add Placeholder for now
+[   Edit Date   ]    → Add Placeholder for now
+[    Metadata   ]    → Add Placeholder for now
+[ (Unused Btn1) ]    → Add Placeholder for now
+[ (Unused Btn2) ]    → Add Placeholder for now
+[ (Unused Btn2) ]    → Add Placeholder for now
+[ (Unused Btn3) ]    → Add Placeholder for now
+[ (Unused Btn4) ] 	 → Add Placeholder for now
+[ (Unused Btn5) ]    → Add Placeholder for now
+[ (Unused Btn6) ]    → Add Placeholder for now
+[ (Unused Btn7) ]    → Add Placeholder for now
+[ (Unused Btn8) ]    → Add Placeholder for now
+[    Settings   ]    → Same 1. Launcher → Basic form with dropdown to select Theme (normal, dark, large, clam) Default = normal
+
+----------------------------------------------------------------
+
+# 7. ADD or Edit Metadata - Form for editing metadata
+
++-----------------------------------------------------------+
+|           Add / Edit Class Information (metadata)         |      ← Heading (bold, centered, 24pt)
++-------------------------+---------------------------------+
+|                         |                                 |      ← Heading Blank (bold, centered, 18pt)
++-------------------------+---------------------------------+
+|**Class No:**            | [            OLO123           ] |      ← Data (labels **Days**, bold, centered, 18pt)
++-------------------------+---------------------------------+
+|**Company:**             | [             ACERs           ] |      ← Data ((ACERs), regular, centered, 18pt)
++-------------------------+---------------------------------+
+|**Consultant:**          | [            Fraser           ] | 
++-------------------------+---------------------------------+
+|**Teacher:**             | [            Paul R           ] |
++-------------------------+---------------------------------+
+|**Room:**                | [          Building 2         ] |    
++-------------------------+---------------------------------+
+|**CourseBook:**          | [             IEX             ] |
++-------------------------+---------------------------------+
+|**CourseHours:**         | [             40              ] | 
++-------------------------+---------------------------------+
+|**ClassTime:**           | [             2               ] |                  
++-------------------------+---------------------------------+
+|**MaxClasses:**          | [             10              ] |         
++-------------------------+---------------------------------+
+|**StartDate:**           | [          01/05/2025         ] | [ Pick ]  ← Button (bold, centered, 16pt)         
++-------------------------+---------------------------------+
+|**FinishDate:**          | [          01/10/2025         ] | [ Pick ]  ← Button (bold, centered, 16pt)
++-------------------------+---------------------------------+
+					            M, T, W, Th, F, Sa, Su          ← Heading (bold, centered, 24pt)
+                                O  O  O  O  O  O  O             ← Tickbox (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
++-------------------------+---------------------------------+
+|**Days:**                | [       Tuesday, Thursday     ] | [ Clear ]  ← Button (bold, centered, 16pt) ← Data ((Tuesday, Thursday), regular, centered, 18pt)
++-------------------------+---------------------------------+   
+|**Time:**                | [         17:00 - 19:00       ] |       ← Data (labels **Days**, bold, centered, 18pt)
++-------------------------+---------------------------------+  
+|**Notes:**               | [Bring Projector              ] |       ← Data ((Bring Projector), regular, left, 18pt)
++-------------------------+---------------------------------+
+
+                  [ Save ]  [ Cancel ]      ← Buttons (bold, centered, 18pt)
+
+7. 7. ADD or Edit Metadata Button format, sequence and logic:
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. 6. Mainform -> click Metaform -> 7. ADD or Edit Metadata (EDIT data and Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. Launcher opens, centre of screen (hoizonal/vertical), "-topmost" = True.
+4. Set geometry ("650x650") but can Restore Window - Only window resizes, not data or table.
+5. Close X - Window closes with and re-opens 6. Mainform.
+
+7. 7. ADD or Edit Metadata Button logic
+[ Save ]        → Saves data from from into 001attendance_data, form closes and refresh mainform
+[ Cancel ]      → No changes, close the form
+
+----------------------------------------------------------------
+
+# 8. Add or EDIT Student information - Form for adding and editing student data
+
++-----------------------------------------------------------+
+|            Add /  Edit Student Information                |      ← Heading (bold, centered, 24pt)
++-------------------------+---------------------------------+
+|                         |                                 |      ← Heading Blank (bold, centered, 18pt)
++-------------------------+---------------------------------+
+|**Students:**            | [            S001             ] |      ← Data (labels **Students**, bold, centered, 18pt)
++-------------------------+---------------------------------+
+|**Name:**                | [          Alice Kim          ] |      ← Data (S001, regular, centered, 18pt)
++-------------------------+---------------------------------+
+|**Nickname:**            | [            Ali              ] | 
++-------------------------+---------------------------------+
+|**Gender:**              | [    male    ]   [   female   ] |      ← Button (bold, centered, 16pt) 
++-------------------------+---------------------------------+
+|**Score:**               | [          82% - A            ] |    
++-------------------------+---------------------------------+
+|**PreTest:**             | [             70%             ] |
++-------------------------+---------------------------------+
+|**PostTest:**            | [             90%             ] | 
++-------------------------+---------------------------------+
+|**Note:**                | [Very punctual                ] |     ← Data ((Very punctual, regular, left, 18pt)                
++-------------------------+---------------------------------+
+|**Active**               | [     Yes    ]   [     No     ] |     ← Button (bold, centered, 16pt)   
++-------------------------+---------------------------------+
+
+                  [ Save ]  [ Cancel ]      ← Buttons (bold, centered, 18pt)
+
+8. Add or EDIT Student information and Button format, sequence and logic:
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. Launcher -> mainform -> Edit Student (Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. 8. Add or EDIT Student information, centre of screen (hoizonal/vertical), "-topmost" = True.
+4. Set geometry ("650x500") but can Restore Window - Only window resizes, not data or table.
+5. Close X - Window closes form back to mainform, refresh data.
+
+
+Gender [    male    ]   [   female   ]    →   Toggle switch between male/female - Default = "female"
+Active [     Yes    ]   [     No     ]    →   Toggle switch between male/female - Default = "Yes"
+
+----------------------------------------------------------------
+
+# 9. Student Active Manager - Simliar to Archive manager (active = "Yes" or "No") + Option to DELETE class
+
++-------------------------------------------------------------------------+
+|                       **Student Active Manager**                        |   ← Heading (bold, centered, 24pt)
++-----------------------+------------+-------------------------+----------+
+|        **Name**       |**Nickname**|        **Note**         |**Active**|   ← Table Headings (bold, centered, 18pt)
++-----------------------+------------+-------------------------+----------+
+| Alice Kim             | [   AL   ] |                         | [ Yes ]  |   ← Table Rows label (OLO123, regular, left, 16pt)
+| Ben Lee               | [  Nok   ] |                         |  [ No ]  |   ← Table Rows data (ACERs,No, regular, left, 16pt)
++-----------------------+------------+-------------------------+----------+   
+
+       [Edit]     [ Active ]  [ not Active ]   [ Delete ]   [ Cancel ]         ← Buttons (regular, centered, 18pt)
+
+
+9. Student Active Manager and Button format, sequence and logic:
+1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).
+2. Run, -> main.py -> Launcher (Apply Theme for project eg default, dark, light, clam - Default = "normal") 
+3. Launcher opens, centre of screen (hoizonal/vertical), "-topmost" = True.
+4. Set geometry ("650x500") but can Restore Window - Only window resizes, not data or table.
+5. Close X - Window closes with offer to backup 001attendance_data locally, but will move to Google drive later.
+
+9. Student Active Manager and Button logic
+[Edit]            → Open 8. Add or EDIT Student information, close back to 9. Student Active Manager
+[ Active ]        → Set "active" = "Yes"
+[ not Active ]    → Set "active" = "No"
+[ Delete ]        → Must highlight row, Delete student Yes/No (safety)
+[ Cancel ]        → No changes, close form back to mainform
+
+----------------------------------------------------------------
+
+
+

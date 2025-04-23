@@ -1,0 +1,67 @@
+{
+  "themes": [
+    {
+      "name": "default",
+      "entry": {
+        "standard_size": 15,
+        "font": "Arial 12",
+        "foreground": "black",
+        "background": "white",
+        "disabledbackground": "lightgrey"
+      },
+      "date_entry": {
+        "standard_size": 15,
+        "font": "Arial 12",
+        "foreground": "black",
+        "background": "white",
+        "calendar_button_color": "lightblue"
+      },
+      "size_modifiers": {
+        "small": 0.7,
+        "large": 1.5
+      }
+    },
+    {
+      "name": "dark",
+      "entry": {
+        "standard_size": 15,
+        "font": "Arial 12",
+        "foreground": "white",
+        "background": "#2e2e2e",
+        "disabledbackground": "#4e4e4e"
+      },
+      "date_entry": {
+        "standard_size": 15,
+        "font": "Arial 12",
+        "foreground": "white",
+        "background": "#2e2e2e",
+        "calendar_button_color": "#4e4e4e"
+      },
+      "size_modifiers": {
+        "small": 0.7,
+        "large": 1.5
+      }
+    },
+    {
+      "name": "large",
+      "entry": {
+        "standard_size": 20,
+        "font": "Arial 16",
+        "foreground": "black",
+        "background": "white",
+        "disabledbackground": "lightgrey"
+      },
+      "date_entry": {
+        "standard_size": 20,
+        "font": "Arial 16",
+        "foreground": "black",
+        "background": "white",
+        "calendar_button_color": "lightblue"
+      },
+      "size_modifiers": {
+        "small": 0.7,
+        "large": 1.5
+      }
+    }
+  ]
+}
