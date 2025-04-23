@@ -33,8 +33,8 @@ def log_error(message):
 
 def validate_class_format(data):
     """Enhanced schema validation for class and student data."""
-    if "classes" not in data or not isinstance(data["classes"], dict):
-        return False
+    if "classes" not in data or not isinstance(data["classes"], dict) or not data["classes"]:
+        return False  # Ensure "classes" exists, is a dictionary, and is not empty
 
     for class_id, class_data in data["classes"].items():
         # Validate metadata
