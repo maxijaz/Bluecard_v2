@@ -43,6 +43,7 @@ Built to be portable, offline, and eventually packaged as a standalone `.exe` fo
 ```plaintext
 Bluecard_v2/
 ├── data/
+│   ├── /backup
 │   ├── 001attendance_data.json
 │   ├── logo.png
 │   └── settings.json
