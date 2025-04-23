@@ -1,6 +1,6 @@
 import unittest
 import json  # Import the json module
-from ..src.logic.parser import load_data, save_data, validate_class_format
+from src.logic.parser import load_data, save_data, validate_class_format
 
 class TestParser(unittest.TestCase):
     def test_validate_class_format_valid(self):
