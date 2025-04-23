@@ -1,49 +1,69 @@
-# Project Bluecard STR
+
+# Project Bluecard_v2
+
 ## Overview
-A Python application for managing class data with data entry, validation, and reporting.
+Bluecard_v2 is a local-first Python application for managing ESL class data.  
+It supports editable class metadata, student attendance tracking, archive handling, and student activity control.  
+Built to be portable, offline, and eventually packaged as a standalone `.exe` for fellow teachers.
+
 ## Setup
-- Requires Python 3.13
-- Install dependencies: `pip install -r requirements.txt`
-- Run: `python main.py`
+- Requires: Python 3.13+
+- Install dependencies:
+  ```
+  pip install -r requirements.txt
+  ```
+- Run the app:
+  ```
+  python src/main.py
+  ```
+
+## Features
+- Add/edit class metadata (company, room, schedule, etc.)
+- Add/edit students with attendance and performance tracking
+- Mark students active/inactive
+- Archive and restore whole classes
+- Settings: Theme selector (normal, dark, clam, etc.)
+- Launch from a single `.exe` (via PyInstaller)
+
+## Startup Flow
+```text
+1. main.py → loads theme
+2. Launcher window opens:
+   - [ Open ] → Mainform
+   - [ Edit ] → Metadata Form
+   - [ Add New Class ] → Blank Metadata Form
+   - [ Archive ] → set archive = "Yes"
+   - [ Archive Manager ] → manage archived classes
+   - [ TTR ] → placeholder (future feature)
+   - [ Settings ] → Theme picker
+3. On Close → prompt to back up data (JSON)
+```
+
+## Project Structure
+```plaintext
+Bluecard_v2/
+├── data/
+│   ├── 001attendance_data.json
+│   ├── logo.png
+│   └── settings.json
+├── src/
+│   ├── main.py
+│   ├── logic/
+│   │   ├── parser.py
+│   │   └── attendance_utils.py
+│   └── ui/
+│       └── launcher.py (upcoming)
+├── tests/
+│   └── test_attendance.py
+├── merge_bluecard.py         # Merges project assets
+├── create_exe.bat            # Builds Windows .exe
+├── requirements.txt
+└── README.md
+```
+
 ## Notes
-- Logs errors to `data/bluecard_errors.log`.
-- Executable built with PyInstaller (see `create_exe.bat`).
-- Data files: `data/001attendance_data.json`, `data/logo.png`.
-- `merge_bluecard.py` merges project files for build purposes.
-
-Project: Bluecard STR
-Author: Teacher Paul
-Version: 1.0
-
-Overview:
-Bluecard STR is a local-first classroom manager for ESL teachers.
-It supports class metadata editing, student records, attendance tracking, archiving,
-and active/inactive student management. Data is saved locally in JSON format
-and can be exported as a standalone `.exe`.
-
-Startup Flow:
-1. Apply theme (default: "normal"). Theme options: ["normal", "dark", "light", "clam"]
-2. Open the Launcher (Form 4):
-    - If [ Open ] → open Mainform (Form 6) with selected class
-    - If [ Edit ] → open Metadata form (Form 7) for selected class
-    - If [ Add New Class ] → open blank Metadata form (Form 7)
-    - If [ Archive ] → prompt user, set archive = "Yes"
-    - If [ Archive Manager ] → open Form 5 for managing archived classes
-    - If [ TTR ] → placeholder for future feature
-    - If [ Settings ] → open theme selector popup
-3. Close button prompts user to back up JSON file (future: upload to Google Drive)
-
-Key Modules:
-- data/001attendance_data.json → all class and student info
-- logic/parser.py              → handles loading/saving JSON
-- logic/attendance_utils.py    → scoring and attendance logic
-- ui/cli.py                    → command-line or GUI logic
-- tests/test_attendance.py     → unit tests
-- create_exe.bat               → builds final Windows executable
-- merge_bluecard.py            → compiles assets for build
-
-Notes:
-- Topmost windows: all forms use `-topmost = True`
-- Data is portable and can be merged into one JSON
-- Unused buttons are placeholders for future feature expansion
-- Errors logged to: `data/bluecard_errors.log`
+- All errors are logged to: `data/bluecard_errors.log`
+- Data is stored locally for portability
+- UI will support `-topmost = True` on forms
+- Buttons marked `(Unused)` are planned for future versions
+- Built with teachers' workflows and class structures in mind
