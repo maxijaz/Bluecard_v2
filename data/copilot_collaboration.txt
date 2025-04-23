@@ -1,0 +1,84 @@
+Based on your workspace and project outline, here’s a prioritized plan to guide your development:
+
+1. Core Data Management
+Why?
+The entire application relies on accurate and reliable data handling. Ensuring the data layer is robust will prevent issues in the UI and other components.
+
+Tasks:
+Enhance Validation:
+Update parser.validate_class_format() to validate nested structures (e.g., metadata, students).
+Ensure required fields like Company, Teacher, StartDate, etc., are present and correctly formatted.
+Error Handling:
+Add error handling for file I/O operations in parser.load_data() and parser.save_data() (e.g., missing or corrupted JSON files).
+Log errors to bluecard_errors.log.
+Unit Tests:
+Write tests for parser.py to ensure data loading, saving, validation, and backup logic work as expected.
+2. Launcher Form
+Why?
+The Launcher is the entry point for the application and sets the tone for the user experience. It also connects to other forms like Mainform, Metadata Editor, and Archive Manager.
+
+Tasks:
+Implement the Launcher form with:
+A table displaying class data (Class No, Company, Archive).
+Buttons for actions like Open, Edit, Add New Class, Archive, etc.
+Connect the Launcher to the data layer (parser.load_data()).
+Add logic for button actions:
+Open → Load the selected class in Mainform.
+Edit → Open Metadata Editor for the selected class.
+Add New Class → Open Metadata Editor with a blank form.
+Archive → Mark the selected class as archived.
+3. Mainform
+Why?
+The Mainform is the core interface for managing class and student data. It provides the most functionality and will be heavily used.
+
+Tasks:
+Implement the Mainform layout as described in the outline.
+Display metadata (e.g., Company, Teacher, StartDate) and the attendance table.
+Add button logic:
+Add Student → Open the Student Editor form to add a new student.
+Edit Student → Open the Student Editor form to edit the selected student.
+Remove Student → Mark the selected student as inactive.
+Manage Students → Open the Student Active Manager.
+Connect the Mainform to the data layer for loading and saving class data.
+4. Metadata and Student Editors
+Why?
+These forms allow users to add or edit critical data. They are essential for maintaining accurate class and student records.
+
+Tasks:
+Implement the Metadata Editor:
+Allow editing of fields like Company, Teacher, StartDate, etc.
+Save changes back to the JSON file.
+Implement the Student Editor:
+Allow adding or editing student details (e.g., Name, Score, Attendance).
+Save changes back to the JSON file.
+5. Archive Manager
+Why?
+Archiving and restoring classes is a key feature for managing historical data.
+
+Tasks:
+Implement the Archive Manager form.
+Display archived classes and provide options to restore or delete them.
+Connect the Archive Manager to the data layer.
+6. Themes and Settings
+Why?
+Themes improve the user experience, and settings allow customization.
+
+Tasks:
+Implement theme switching based on themes.json.
+Create a basic settings form to select themes.
+7. Final Touches
+Why?
+Polishing the application ensures a smooth user experience.
+
+Tasks:
+Add error messages and confirmations (e.g., "Are you sure you want to delete this student?").
+Test the entire application for bugs and edge cases.
+Package the app as a .exe using PyInstaller.
+Suggested Order of Implementation
+Core Data Management (Validation, Error Handling, Unit Tests).
+Launcher Form (Entry Point).
+Mainform (Core Functionality).
+Metadata and Student Editors (Data Editing).
+Archive Manager (Historical Data Management).
+Themes and Settings (Customization).
+Final Touches (Polish and Packaging).
