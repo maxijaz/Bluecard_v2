@@ -1,4 +1,3 @@
-
 import os
 import json
 import shutil
@@ -18,8 +17,34 @@ def save_data(data, filepath=DATA_FILE):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 def validate_class_format(data):
-    """Simple schema check to ensure data has expected keys."""
-    return "classes" in data and isinstance(data["classes"], dict)
+    """Enhanced schema validation for class and student data."""
+    if "classes" not in data or not isinstance(data["classes"], dict):
+        return False
+
+    for class_id, class_data in data["classes"].items():
+        # Validate metadata
+        metadata = class_data.get("metadata", {})
+        required_metadata_fields = [
+            "Company", "Consultant", "Teacher", "Room", "CourseBook",
+            "MaxClasses", "CourseHours", "ClassTime", "StartDate", "FinishDate",
+            "Days", "Time", "Notes"
+        ]
+        if not all(field in metadata for field in required_metadata_fields):
+            return False
+
+        # Validate students
+        students = class_data.get("students", {})
+        if not isinstance(students, dict):
+            return False
+        for student_id, student_data in students.items():
+            required_student_fields = [
+                "name", "gender", "nickname", "score", "pre_test", "post_test",
+                "active", "note", "attendance"
+            ]
+            if not all(field in student_data for field in required_student_fields):
+                return False
+
+    return True
 
 def backup_data():
     """Creates a timestamped backup of the JSON data file."""
