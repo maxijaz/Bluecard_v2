@@ -39,14 +39,26 @@ Built to be portable, offline, and eventually packaged as a standalone `.exe` fo
 3. On Close → prompt to back up data (JSON)
 ```
 
-## Project Structure
+# Update the existing README.md file with a reference to parser.py and the /data/backup directory.
+
+readme_update = """
+## Data Management & Backup
+
+All class and student data is stored in `data/001attendance_data.json`. The parser module handles:
+- Loading and saving JSON (`parser.load_data()` / `parser.save_data()`)
+- Validating data format (`parser.validate_class_format()`)
+- Auto-backups to `data/backup/` with timestamped copies upon app closure
+- Automatic cleanup of backups older than 90 days
+
+## Updated Project Structure
 ```plaintext
 Bluecard_v2/
 ├── data/
-│   ├── /backup
 │   ├── 001attendance_data.json
 │   ├── logo.png
-│   └── settings.json
+│   ├── settings.json
+│   └── backup/
+│       └── (timestamped .json backups)
 ├── src/
 │   ├── main.py
 │   ├── logic/
@@ -56,11 +68,10 @@ Bluecard_v2/
 │       └── launcher.py (upcoming)
 ├── tests/
 │   └── test_attendance.py
-├── merge_bluecard.py         # Merges project assets
-├── create_exe.bat            # Builds Windows .exe
+├── merge_bluecard.py
+├── create_exe.bat
 ├── requirements.txt
 └── README.md
-```
 
 ## Notes
 - All errors are logged to: `data/bluecard_errors.log`
