@@ -1,0 +1,22 @@
+{
+    "classes": {
+        "OLO123": {
+            "metadata": {
+                "Company": "ACERs",
+                "Teacher": "Paul",
+                "Room": "Floor 23",
+                "CourseBook": "IEX",
+                "MaxClasses": 10.0,
+                "CourseHours": 20.5,
+                "ClassTime": 120.0,
+                "StartDate": "01/05/2025",
+                "FinishDate": "15/06/2025",
+                "Days": "Tuesday, Thursday",
+                "Time": "17:00 - 19:00",
+                "ClassNo": "OLO123"
+            },
+            "students": {},
+            "archive": "No"
+        }
+    }
+}
