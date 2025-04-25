@@ -71,9 +71,6 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Debugging: Print the value being inserted into the Class No field
-                print(f"Setting Class No field: {self.metadata.get(key, self.class_id)}")
-
                 # Class No field is read-only and displays the class_id
                 entry = tk.Entry(self, width=40, fg="red", bg="lightyellow")  # Set text to red and background to light yellow
                 entry.grid(row=i, column=1, padx=10, pady=5)
@@ -86,12 +83,15 @@ class MetadataForm(tk.Toplevel):
 
             self.entries[key] = entry
 
-        # Buttons
+        # Centered Buttons
         button_frame = tk.Frame(self)
         button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
 
-        tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
+        buttons = tk.Frame(button_frame)
+        buttons.pack(anchor=tk.CENTER)
+
+        tk.Button(buttons, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
+        tk.Button(buttons, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
 
     def save_metadata(self):
         """Save metadata for the class."""
