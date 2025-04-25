@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from src.logic.parser import load_data, save_data
 from src.ui.mainform import Mainform
+from src.ui.settings import SettingsForm
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -50,29 +51,12 @@ class Launcher(tk.Toplevel):
         # Populate table
         self.populate_table()
 
-        # Buttons (Two Rows, Centered)
-        button_frame_top = tk.Frame(self)
-        button_frame_top.pack(fill=tk.X, pady=5)
+        # Buttons
+        button_frame = tk.Frame(self, bg=self["bg"])
+        button_frame.pack(fill=tk.X, pady=10)
 
-        # Center the top row of buttons
-        top_buttons = tk.Frame(button_frame_top)
-        top_buttons.pack(anchor=tk.CENTER)
-
-        tk.Button(top_buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(top_buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(top_buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
-
-        button_frame_bottom = tk.Frame(self)
-        button_frame_bottom.pack(fill=tk.X, pady=5)
-
-        # Center the bottom row of buttons
-        bottom_buttons = tk.Frame(button_frame_bottom)
-        bottom_buttons.pack(anchor=tk.CENTER)
-
-        tk.Button(bottom_buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(bottom_buttons, text="Archive Manager", command=self.open_archive_manager).pack(side=tk.LEFT, padx=5)
-        tk.Button(bottom_buttons, text="TTR", command=self.open_ttr).pack(side=tk.LEFT, padx=5)
-        tk.Button(bottom_buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
@@ -131,8 +115,7 @@ class Launcher(tk.Toplevel):
 
     def open_settings(self):
         """Open the Settings form."""
-        messagebox.showinfo("Settings", "Opening Settings form.")
-        # TODO: Open Settings form
+        SettingsForm(self, self.theme).mainloop()
 
 if __name__ == "__main__":
     app = Launcher()
