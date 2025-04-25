@@ -17,7 +17,9 @@ import os
 import json
 import signal
 import sys
+import tkinter as tk
 from logic import parser
+from ui.launcher import Launcher
 
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
@@ -40,10 +42,13 @@ def on_close():
     sys.exit(0)
 
 def start_launcher():
-    """Placeholder for launching the main UI."""
-    print(f"Launching Bluecard_v2 with theme: {load_theme()}")
-    print("[Launcher form would open here]")
-    print("Press Ctrl+C to simulate app close and trigger backup.")
+    """Start the Launcher form."""
+    theme = load_theme()
+    print(f"Launching Bluecard_v2 with theme: {theme}")
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    launcher = Launcher(root, theme)
+    launcher.mainloop()
 
 if __name__ == "__main__":
     try:
@@ -52,8 +57,5 @@ if __name__ == "__main__":
         signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
-        while True:
-            pass  # Keep app running until interrupted
-
-    except KeyboardInterrupt:
+    finally:
         on_close()
