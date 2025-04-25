@@ -11,7 +11,15 @@ def load_data() -> Dict[str, Any]:
     """Load data from 001attendance_data.json."""
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+
+        # Ensure class_no is set in the metadata for each class
+        for class_id, class_data in data.get("classes", {}).items():
+            metadata = class_data.get("metadata", {})
+            if "class_no" not in metadata or not metadata["class_no"]:
+                metadata["class_no"] = class_id
+
+        return data
     except FileNotFoundError:
         print("Data file not found. Returning empty data.")
         return {"classes": {}}

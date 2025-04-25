@@ -71,16 +71,14 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
+                # Class No field is read-only and displays the class_id
                 entry = tk.Entry(self, width=40, state="readonly")
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.class_id)  # Pre-fill with class ID
+                entry.insert(0, self.metadata.get(key, self.class_id))  # Use class_id as default if class_no is missing
             else:
                 entry = tk.Entry(self, width=40)
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.metadata.get(key, ""))  # Pre-fill with existing data
-
-            if self.theme == "dark":
-                entry.configure(bg="gray", fg="white")  # Ensure text is visible
 
             self.entries[key] = entry
 
