@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from src.ui.launcher import Launcher
 from src.ui.metadata_form import MetadataForm
-from src.logic.parser import load_data
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
@@ -56,6 +54,7 @@ class Mainform(tk.Toplevel):
         self.destroy()
         root = tk.Tk()
         root.withdraw()  # Hide the root window
+        from src.ui.launcher import Launcher  # Import here to avoid circular import
         Launcher(root, self.theme).mainloop()
 
 if __name__ == "__main__":
