@@ -39,9 +39,9 @@ class Mainform(tk.Toplevel):
 
     def create_widgets(self):
         """Create the layout and fields for the Mainform."""
-        # Metadata Section
-        metadata_frame = tk.Frame(self, bg=self["bg"])
-        metadata_frame.pack(fill=tk.X, padx=20, pady=10)
+        # Header Section
+        header_frame = tk.Frame(self, bg=self["bg"])
+        header_frame.pack(fill=tk.X, padx=20, pady=10)
 
         fields = [
             ("Company:", self.metadata.get("Company", "")),
@@ -60,8 +60,8 @@ class Mainform(tk.Toplevel):
         ]
 
         for i, (label_text, value) in enumerate(fields):
-            tk.Label(metadata_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
-            tk.Label(metadata_frame, text=value, font=("Arial", 12), bg=self["bg"]).grid(row=i, column=1, sticky="w", padx=10, pady=5)
+            tk.Label(header_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            tk.Label(header_frame, text=value, font=("Arial", 12), bg=self["bg"]).grid(row=i, column=1, sticky="w", padx=10, pady=5)
 
         # Buttons Section
         button_frame = tk.Frame(self, bg=self["bg"])
@@ -87,28 +87,46 @@ class Mainform(tk.Toplevel):
 
         tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=5)
 
-        self.tree = ttk.Treeview(attendance_frame, columns=("Name", "Nickname", "Score", "Attendance", "Pre-test", "Post-test"), show="headings")
-        self.tree.heading("Name", text="Name")
-        self.tree.heading("Nickname", text="Nickname")
-        self.tree.heading("Score", text="Score")
-        self.tree.heading("Attendance", text="Attendance")
-        self.tree.heading("Pre-test", text="Pre-test")
-        self.tree.heading("Post-test", text="Post-test")
+        # Define columns for attendance table
+        columns = ["#", "Name", "Nickname", "Score"] + list(self.get_attendance_dates()) + ["P", "A", "L", "Attendance", "Pre-test", "Post-test"]
+        self.tree = ttk.Treeview(attendance_frame, columns=columns, show="headings")
+
+        # Configure column headings
+        for col in columns:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=100, anchor="center")
+
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         # Populate attendance table
         self.populate_attendance_table()
 
+    def get_attendance_dates(self):
+        """Get all unique attendance dates from student data."""
+        dates = set()
+        for student_data in self.students.values():
+            dates.update(student_data.get("attendance", {}).keys())
+        return sorted(dates)
+
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
-        for student_id, student_data in self.students.items():
+        for idx, (student_id, student_data) in enumerate(self.students.items(), start=1):
             if student_data.get("active", "Yes") == "Yes":  # Only show active students
-                attendance = sum(1 for v in student_data["attendance"].values() if v == "P")
+                attendance = student_data.get("attendance", {})
+                attendance_values = [attendance.get(date, "-") for date in self.get_attendance_dates()]
+                present_count = sum(1 for v in attendance.values() if v == "P")
+                absent_count = sum(1 for v in attendance.values() if v == "A")
+                late_count = sum(1 for v in attendance.values() if v == "L")
                 self.tree.insert("", tk.END, values=(
+                    idx,
                     student_data["name"],
                     student_data["nickname"],
                     student_data["score"],
-                    attendance,
+                    *attendance_values,
+                    present_count,
+                    absent_count,
+                    late_count,
+                    present_count,  # Total attendance
                     student_data["pre_test"],
                     student_data["post_test"],
                 ))
@@ -123,7 +141,7 @@ class Mainform(tk.Toplevel):
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a student to edit.", parent=self)
             return
-        student_name = self.tree.item(selected_item, "values")[0]
+        student_name = self.tree.item(selected_item, "values")[1]
         student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
         if student_id:
             StudentForm(self, student_id, self.students, self.refresh).mainloop()
@@ -134,7 +152,7 @@ class Mainform(tk.Toplevel):
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a student to remove.", parent=self)
             return
-        student_name = self.tree.item(selected_item, "values")[0]
+        student_name = self.tree.item(selected_item, "values")[1]
         student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
         if student_id:
             confirm = messagebox.askyesno("Remove Student", f"Are you sure you want to remove {student_name}?", parent=self)
