@@ -50,6 +50,7 @@ class Launcher(tk.Toplevel):
         self.geometry(f"{width}x{height}+{x}+{y}")
 
     def create_widgets(self):
+        """Create the table and buttons."""
         # Table for class data
         self.tree = ttk.Treeview(self, columns=("Class No", "Company", "Archived"), show="headings")
         self.tree.heading("Class No", text="Class No")
@@ -60,18 +61,11 @@ class Launcher(tk.Toplevel):
         # Populate table
         self.populate_table()
 
-        # Buttons (Centralized)
+        # Buttons
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        buttons = tk.Frame(button_frame, bg=self["bg"])
-        buttons.pack(anchor=tk.CENTER)
-
-        tk.Button(buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
@@ -88,19 +82,11 @@ class Launcher(tk.Toplevel):
             if metadata.get("archive", "No") == "No":
                 company = metadata.get("Company", "Unknown")
                 archived = metadata.get("archive", "No")
+                print(f"Inserting into tree: {class_id}, {company}, {archived}")  # Debugging
                 self.tree.insert("", tk.END, values=(class_id, company, archived))
 
-    def open_class(self):
-        """Open the selected class in the Mainform."""
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a class to open.", parent=self)
-            return
-        class_id = self.tree.item(selected_item, "values")[0]
-        self.destroy()  # Close the Launcher
-        Mainform(class_id, self.data, self.theme).mainloop()
-
     def edit_class(self):
+        """Open the Add or Edit Metadata form to edit the selected class."""
         selected_item = self.tree.selection()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a class to edit.", parent=self)
@@ -108,38 +94,14 @@ class Launcher(tk.Toplevel):
         class_id = self.tree.item(selected_item, "values")[0]
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
-    def add_new_class(self):
-        """Open the Add or Edit Metadata form to add a new class."""
-        MetadataForm(self, None, self.data, self.theme, self.refresh).mainloop()
-
-    def archive_class(self):
-        """Archive the selected class."""
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a class to archive.", parent=self)
-            return
-        class_id = self.tree.item(selected_item, "values")[0]
-        confirm = messagebox.askyesno("Archive Class", f"Are you sure you want to archive class {class_id}?", parent=self)
-        if confirm:
-            self.classes[class_id]["metadata"]["archive"] = "Yes"
-            save_data(self.data)
-            self.refresh()
-
-    def open_settings(self):
-        """Open the Settings form."""
-        SettingsForm(self, self.theme, self.refresh).mainloop()
-
-    def refresh(self, new_theme=None):
-        """Refresh the Launcher with the new theme."""
-        if new_theme:
-            self.theme = new_theme
-        self.configure_theme()
+    def refresh(self):
+        """Refresh the Launcher."""
         for widget in self.winfo_children():
             widget.destroy()  # Clear all widgets
         self.create_widgets()  # Recreate widgets
 
     def on_close(self):
-        """Handle Launcher close event and back up data."""
+        """Handle Launcher close event."""
         self.backup_data()
         self.destroy()
 
