@@ -2,13 +2,14 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
+from ui.launcher import Launcher
 
 SETTINGS_PATH = "data/settings.json"
 THEMES_PATH = "data/themes.json"
 
 class SettingsForm(tk.Toplevel):
-    def __init__(self, parent, current_theme):
-        super().__init__(parent)
+    def __init__(self, current_theme):
+        super().__init__()
         self.title("Settings")
         self.geometry("300x150")
         self.center_window(300, 150)
@@ -55,7 +56,7 @@ class SettingsForm(tk.Toplevel):
         tk.Button(self, text="Save", command=self.save_theme).pack(pady=10)
 
     def save_theme(self):
-        """Save the selected theme to settings.json."""
+        """Save the selected theme to settings.json and reopen the Launcher."""
         selected_theme = self.theme_var.get()
         if not selected_theme:
             messagebox.showwarning("Warning", "Please select a theme!")
@@ -65,5 +66,8 @@ class SettingsForm(tk.Toplevel):
                 json.dump({"theme": selected_theme}, f, indent=4)
             messagebox.showinfo("Success", "Theme saved successfully!")
             self.destroy()
+            root = tk.Tk()
+            root.withdraw()  # Hide the root window
+            Launcher(root, selected_theme).mainloop()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save theme: {e}")

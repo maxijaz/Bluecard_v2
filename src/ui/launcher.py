@@ -51,15 +51,18 @@ class Launcher(tk.Toplevel):
         # Populate table
         self.populate_table()
 
-        # Buttons
+        # Buttons (Centralized)
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        tk.Button(button_frame, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
+        buttons = tk.Frame(button_frame, bg=self["bg"])
+        buttons.pack(anchor=tk.CENTER)
+
+        tk.Button(buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
@@ -91,7 +94,8 @@ class Launcher(tk.Toplevel):
 
     def open_settings(self):
         """Open the Settings form."""
-        SettingsForm(self, self.theme).mainloop()
+        self.destroy()  # Close the current Launcher
+        SettingsForm(self.theme).mainloop()
 
 if __name__ == "__main__":
     app = Launcher()
