@@ -7,17 +7,17 @@ from typing import Any, Dict
 DATA_FILE = "data/001attendance_data.json"
 BACKUP_DIR = "data/backup"
 
-def load_data(filepath: str = DATA_FILE) -> Dict[str, Any]:
-    """Loads and returns the class and student data from a JSON file."""
+def load_data() -> Dict[str, Any]:
+    """Load data from 001attendance_data.json."""
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        log_error(f"File not found: {filepath}")
-        return {}
+        print("Data file not found. Returning empty data.")
+        return {"classes": {}}
     except json.JSONDecodeError:
-        log_error(f"Invalid JSON format in file: {filepath}")
-        return {}
+        print("Error decoding JSON. Returning empty data.")
+        return {"classes": {}}
 
 def save_data(data: dict, filepath: str = DATA_FILE) -> None:
     """Saves the provided dictionary back into the JSON file."""

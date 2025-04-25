@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from src.ui.metadata_form import MetadataForm
+from src.logic.parser import load_data
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
