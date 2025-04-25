@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from src.logic.parser import load_data, save_data
-from src.ui.mainform import Mainform
+from src.logic.parser import load_data
 from src.ui.settings import SettingsForm
 
 class Launcher(tk.Toplevel):
@@ -59,9 +58,6 @@ class Launcher(tk.Toplevel):
         buttons.pack(anchor=tk.CENTER)
 
         tk.Button(buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
@@ -81,22 +77,15 @@ class Launcher(tk.Toplevel):
             return
         class_id = self.tree.item(selected_item, "values")[0]
         self.destroy()  # Close the Launcher
-        Mainform(class_id, self.data, self.theme).mainloop()
-
-    def edit_class(self):
-        messagebox.showinfo("Edit Class", "Edit Class functionality not implemented yet.")
-
-    def add_new_class(self):
-        messagebox.showinfo("Add New Class", "Add New Class functionality not implemented yet.")
-
-    def archive_class(self):
-        messagebox.showinfo("Archive", "Archive functionality not implemented yet.")
+        # Open Mainform (not shown here)
 
     def open_settings(self):
         """Open the Settings form."""
         self.destroy()  # Close the current Launcher
-        SettingsForm(self.theme).mainloop()
+        SettingsForm(self, self.theme, self.reopen_launcher).mainloop()
 
-if __name__ == "__main__":
-    app = Launcher()
-    app.mainloop()
+    def reopen_launcher(self, new_theme):
+        """Reopen the Launcher with the new theme."""
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        Launcher(root, new_theme).mainloop()

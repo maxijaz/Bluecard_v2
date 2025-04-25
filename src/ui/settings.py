@@ -2,14 +2,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import json
 import os
-from ui.launcher import Launcher
 
 SETTINGS_PATH = "data/settings.json"
 THEMES_PATH = "data/themes.json"
 
 class SettingsForm(tk.Toplevel):
-    def __init__(self, current_theme):
-        super().__init__()
+    def __init__(self, parent, current_theme, on_theme_change):
+        super().__init__(parent)
         self.title("Settings")
         self.geometry("300x150")
         self.center_window(300, 150)
@@ -17,6 +16,7 @@ class SettingsForm(tk.Toplevel):
         self.attributes("-topmost", True)
 
         self.current_theme = current_theme
+        self.on_theme_change = on_theme_change  # Callback to reopen Launcher
         self.themes = self.load_themes()
 
         # Create UI components
@@ -66,8 +66,6 @@ class SettingsForm(tk.Toplevel):
                 json.dump({"theme": selected_theme}, f, indent=4)
             messagebox.showinfo("Success", "Theme saved successfully!")
             self.destroy()
-            root = tk.Tk()
-            root.withdraw()  # Hide the root window
-            Launcher(root, selected_theme).mainloop()
+            self.on_theme_change(selected_theme)  # Trigger callback to reopen Launcher
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save theme: {e}")
