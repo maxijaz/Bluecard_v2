@@ -14,7 +14,8 @@
                 "FinishDate": "15/06/2025",
                 "Days": "Tuesday, Thursday",
                 "Time": "17:00 - 19:00",
-                "Notes": "Bring Projector and screen"
+                "Notes": "Bring Projector and screen",
+                "archive": "Yes"
             },
             "students": {
                 "S001": {

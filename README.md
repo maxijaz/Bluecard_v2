@@ -55,7 +55,7 @@ All class and student data is stored in `data/001attendance_data.json`. The pars
 📁 Bluecard_v2/
 ├── data/
 │   ├── 001attendance_data.json
-│   ├── attendance_data.json ← (from old bluecard, could merge or archive older)
+│   ├── attendance_data.json ← (could backup or archive older)
 │   ├── themes.json ← (from old bluecard)
 │   ├── settings.json
 │   ├── logo.png
