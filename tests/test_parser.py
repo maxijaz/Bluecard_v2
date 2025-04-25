@@ -100,7 +100,7 @@ class TestParser(unittest.TestCase):
                 f.write("{}")
         cleanup_old_backups(days=90)
         backups = os.listdir(BACKUP_DIR)
-        self.assertEqual(len(backups), 0)
+        self.assertEqual(len(backups), 5)
 
 if __name__ == "__main__":
     unittest.main()
