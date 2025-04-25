@@ -57,19 +57,20 @@
         },
         "OLO124": {
             "metadata": {
-                "Company": "BCErs",
+                "Company": "BCErsss",
                 "Consultant": "Fraser",
                 "Teacher": "Paul R",
                 "Room": "Floor 24",
                 "CourseBook": "IEX",
-                "MaxClasses": 10,
-                "CourseHours": 40,
-                "ClassTime": 2,
+                "MaxClasses": "10",
+                "CourseHours": "40",
+                "ClassTime": "2",
                 "StartDate": "02/05/2025",
                 "FinishDate": "16/06/2025",
                 "Days": "Monday, Wednesday",
                 "Time": "14:00 - 16:00",
-                "Notes": "Class prefers group activities"
+                "Notes": "Class prefers group activities",
+                "class_no": ""
             },
             "students": {
                 "S003": {
