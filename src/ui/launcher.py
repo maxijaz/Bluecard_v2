@@ -5,6 +5,9 @@ from src.ui.mainform import Mainform
 from src.ui.settings import SettingsForm
 from src.ui.archive_manager import ArchiveManager
 from src.ui.metadata_form import MetadataForm
+import os
+import shutil
+from datetime import datetime
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -24,6 +27,9 @@ class Launcher(tk.Toplevel):
 
         # Create UI components
         self.create_widgets()
+
+        # Handle close event
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def configure_theme(self):
         """Apply the selected theme to the Launcher."""
@@ -133,3 +139,17 @@ class Launcher(tk.Toplevel):
         for widget in self.winfo_children():
             widget.destroy()  # Clear all widgets
         self.create_widgets()  # Recreate widgets
+
+    def on_close(self):
+        """Handle Launcher close event and back up data."""
+        self.backup_data()
+        self.destroy()
+
+    def backup_data(self):
+        """Back up 001attendance_data.json to data/backup with a timestamp."""
+        backup_dir = "data/backup"
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = os.path.join(backup_dir, f"001attendance_data_{timestamp}.json")
+        shutil.copy("data/001attendance_data.json", backup_file)
+        print(f"Backup created: {backup_file}")
