@@ -6,7 +6,8 @@ class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bluecard Launcher")
-        self.geometry("650x450")
+        self.geometry("450x450")  # Set window size
+        self.center_window(450, 450)  # Center the window on the screen
         self.resizable(False, False)
 
         # Load class data
@@ -15,6 +16,14 @@ class Launcher(tk.Tk):
 
         # Create UI components
         self.create_widgets()
+
+    def center_window(self, width, height):
+        """Center the window on the screen."""
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.geometry(f"{width}x{height}+{x}+{y}")
 
     def create_widgets(self):
         # Table for class data
@@ -27,17 +36,29 @@ class Launcher(tk.Tk):
         # Populate table
         self.populate_table()
 
-        # Buttons
-        button_frame = tk.Frame(self)
-        button_frame.pack(fill=tk.X, pady=10)
+        # Buttons (Two Rows, Centered)
+        button_frame_top = tk.Frame(self)
+        button_frame_top.pack(fill=tk.X, pady=5)
 
-        tk.Button(button_frame, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Archive Manager", command=self.open_archive_manager).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="TTR", command=self.open_ttr).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
+        # Center the top row of buttons
+        top_buttons = tk.Frame(button_frame_top)
+        top_buttons.pack(anchor=tk.CENTER)
+
+        tk.Button(top_buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(top_buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(top_buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
+
+        button_frame_bottom = tk.Frame(self)
+        button_frame_bottom.pack(fill=tk.X, pady=5)
+
+        # Center the bottom row of buttons
+        bottom_buttons = tk.Frame(button_frame_bottom)
+        bottom_buttons.pack(anchor=tk.CENTER)
+
+        tk.Button(bottom_buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(bottom_buttons, text="Archive Manager", command=self.open_archive_manager).pack(side=tk.LEFT, padx=5)
+        tk.Button(bottom_buttons, text="TTR", command=self.open_ttr).pack(side=tk.LEFT, padx=5)
+        tk.Button(bottom_buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
         """Populate the table with class data."""
