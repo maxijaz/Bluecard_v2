@@ -72,7 +72,7 @@ class MetadataForm(tk.Toplevel):
 
             if key == "class_no":
                 # Class No field is read-only and displays the class_id
-                entry = tk.Entry(self, width=40, state="readonly", fg="black")  # Set text color to black
+                entry = tk.Entry(self, width=40, state="readonly")
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.metadata.get(key, self.class_id))  # Use class_id as default if class_no is missing
             else:
