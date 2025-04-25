@@ -93,7 +93,6 @@ class Launcher(tk.Toplevel):
         Mainform(class_id, self.data, self.theme).mainloop()
 
     def edit_class(self):
-        """Open the Add or Edit Metadata form to edit the selected class."""
         selected_item = self.tree.selection()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a class to edit.", parent=self)

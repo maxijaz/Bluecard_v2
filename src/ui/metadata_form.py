@@ -15,11 +15,13 @@ class MetadataForm(tk.Toplevel):
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
+        # Debugging: Print class_id and metadata
+        print(f"Class ID: {self.class_id}")
+        self.metadata = self.data["classes"].get(self.class_id, {}).get("metadata", {})
+        print(f"Metadata: {self.metadata}")
+
         # Apply theme
         self.configure_theme()
-
-        # Load metadata for the selected class
-        self.metadata = self.data["classes"].get(self.class_id, {}).get("metadata", {})
 
         # Create UI components
         self.create_widgets()
@@ -69,7 +71,6 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Class No field is read-only and displays the class_id
                 entry = tk.Entry(self, width=40, state="readonly")
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.class_id)  # Pre-fill with class ID
@@ -77,6 +78,9 @@ class MetadataForm(tk.Toplevel):
                 entry = tk.Entry(self, width=40)
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.metadata.get(key, ""))  # Pre-fill with existing data
+
+            if self.theme == "dark":
+                entry.configure(bg="gray", fg="white")  # Ensure text is visible
 
             self.entries[key] = entry
 
