@@ -24,6 +24,9 @@ class MetadataForm(tk.Toplevel):
         # Create UI components
         self.create_widgets()
 
+        # Handle close event
+        self.protocol("WM_DELETE_WINDOW", self.close_form)
+
     def configure_theme(self):
         """Apply the selected theme to the Metadata Form."""
         if self.theme == "dark":
@@ -64,9 +67,17 @@ class MetadataForm(tk.Toplevel):
 
         for i, (label_text, key) in enumerate(fields):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
-            entry = tk.Entry(self, width=40)
-            entry.grid(row=i, column=1, padx=10, pady=5)
-            entry.insert(0, self.metadata.get(key, ""))  # Pre-fill with existing data
+
+            if key == "class_no":
+                # Class No field is read-only
+                entry = tk.Entry(self, width=40, state="readonly")
+                entry.grid(row=i, column=1, padx=10, pady=5)
+                entry.insert(0, self.class_id)  # Pre-fill with class ID
+            else:
+                entry = tk.Entry(self, width=40)
+                entry.grid(row=i, column=1, padx=10, pady=5)
+                entry.insert(0, self.metadata.get(key, ""))  # Pre-fill with existing data
+
             self.entries[key] = entry
 
         # Buttons
@@ -79,7 +90,8 @@ class MetadataForm(tk.Toplevel):
     def save_metadata(self):
         """Save metadata for the class."""
         for key, entry in self.entries.items():
-            self.metadata[key] = entry.get()
+            if key != "class_no":  # Skip saving the read-only Class No field
+                self.metadata[key] = entry.get()
 
         # Save changes to the data
         self.data["classes"][self.class_id]["metadata"] = self.metadata
