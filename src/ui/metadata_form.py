@@ -8,7 +8,7 @@ class MetadataForm(tk.Toplevel):
         self.theme = theme
         self.class_id = class_id
         self.data = data
-        self.on_metadata_save = on_metadata_save  # Callback to refresh Mainform
+        self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher or Mainform
         self.title("Metadata Form")
         self.geometry("400x300")
         self.center_window(400, 300)
@@ -39,7 +39,7 @@ class MetadataForm(tk.Toplevel):
 
     def create_widgets(self):
         # Placeholder for metadata fields
-        tk.Label(self, text=f"Editing Metadata for Class {self.class_id}", font=("Arial", 16)).pack(pady=10)
+        tk.Label(self, text=f"Editing Metadata for Class {self.class_id or 'New Class'}", font=("Arial", 16)).pack(pady=10)
         tk.Button(self, text="Save", command=self.save_metadata).pack(pady=10)
         tk.Button(self, text="Cancel", command=self.close_form).pack(pady=10)
 
@@ -51,7 +51,7 @@ class MetadataForm(tk.Toplevel):
         else:
             messagebox.showinfo("Save Metadata", "New class metadata saved.")
         save_data(self.data)
-        self.on_metadata_save()  # Trigger callback to refresh Mainform
+        self.on_metadata_save()  # Trigger callback to refresh Launcher or Mainform
         self.destroy()
 
     def close_form(self):

@@ -17,6 +17,7 @@ class Launcher(tk.Toplevel):
         self.geometry("650x500")
         self.center_window(650, 500)
         self.resizable(False, False)
+        self.attributes("-topmost", True)  # Make Launcher always on top
 
         # Apply theme
         self.configure_theme()
@@ -100,11 +101,11 @@ class Launcher(tk.Toplevel):
             messagebox.showwarning("No Selection", "Please select a class to edit.")
             return
         class_id = self.tree.item(selected_item, "values")[0]
-        MetadataForm(self, class_id, self.data, self.theme).mainloop()
+        MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
     def add_new_class(self):
         """Open the Add or Edit Metadata form to add a new class."""
-        MetadataForm(self, None, self.data, self.theme).mainloop()
+        MetadataForm(self, None, self.data, self.theme, self.refresh).mainloop()
 
     def archive_class(self):
         """Archive the selected class."""
@@ -132,9 +133,10 @@ class Launcher(tk.Toplevel):
         """Open the Settings form."""
         SettingsForm(self, self.theme, self.refresh).mainloop()
 
-    def refresh(self, new_theme):
+    def refresh(self, new_theme=None):
         """Refresh the Launcher with the new theme."""
-        self.theme = new_theme
+        if new_theme:
+            self.theme = new_theme
         self.configure_theme()
         for widget in self.winfo_children():
             widget.destroy()  # Clear all widgets
