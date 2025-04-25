@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from src.logic.parser import load_data, save_data
 from src.ui.launcher import Launcher
+from src.ui.metadata_form import MetadataForm
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
@@ -32,9 +33,23 @@ class Mainform(tk.Toplevel):
             self.configure(bg="white")
 
     def create_widgets(self):
-        # Placeholder for Mainform UI
+        # Header
         tk.Label(self, text=f"Mainform for Class {self.class_id}", font=("Arial", 16)).pack(pady=20)
+
+        # Edit Metadata Button
+        tk.Button(self, text="Edit Metadata", command=self.edit_metadata).pack(pady=10)
+
+        # Close Button
         tk.Button(self, text="Close", command=self.on_close).pack(pady=10)
+
+    def edit_metadata(self):
+        """Open the MetadataForm to edit metadata for the current class."""
+        MetadataForm(self, self.class_id, self.data, self.theme, self.refresh_mainform).mainloop()
+
+    def refresh_mainform(self):
+        """Refresh the Mainform after metadata is edited."""
+        self.title(f"Mainform - Class {self.class_id}")
+        # Add any additional refresh logic here (e.g., reload widgets)
 
     def on_close(self):
         """Handle Mainform close event and reopen Launcher."""
