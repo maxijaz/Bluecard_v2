@@ -93,9 +93,13 @@ class MetadataForm(tk.Toplevel):
             if key != "class_no":  # Skip saving the read-only Class No field
                 self.metadata[key] = entry.get()
 
-        # Save changes to the data
-        self.data["classes"][self.class_id]["metadata"] = self.metadata
-        save_data(self.data)
+        # Save changes to the data using parser.py
+        try:
+            self.data["classes"][self.class_id]["metadata"] = self.metadata
+            save_data(self.data)  # Use parser.py to save data
+            messagebox.showinfo("Success", "Metadata saved successfully!", parent=self)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save metadata: {e}", parent=self)
 
         # Notify the parent to refresh
         self.on_metadata_save()
