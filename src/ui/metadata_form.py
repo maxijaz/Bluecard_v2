@@ -6,7 +6,7 @@ class MetadataForm(tk.Toplevel):
     def __init__(self, parent, class_id, data, theme, on_metadata_save):
         super().__init__(parent)
         self.theme = theme
-        self.class_id = class_id
+        self.class_id = class_id  # Class ID (e.g., OLO123)
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
@@ -69,7 +69,7 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Class No field is read-only
+                # Class No field is read-only and displays the class_id
                 entry = tk.Entry(self, width=40, state="readonly")
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.class_id)  # Pre-fill with class ID
