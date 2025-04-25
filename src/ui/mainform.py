@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-from src.logic.parser import load_data, save_data
+from tkinter import messagebox
 from src.ui.launcher import Launcher
 from src.ui.metadata_form import MetadataForm
 
