@@ -3,10 +3,11 @@ from tkinter import ttk, messagebox
 from src.logic.parser import load_data, save_data
 
 class Mainform(tk.Toplevel):
-    def __init__(self, class_id, data):
+    def __init__(self, class_id, data, theme):
         super().__init__()
+        self.theme = theme
         self.title("Class Information - MainForm")
-        self.state("zoomed")  # Maximize the window
+        self.state("zoomed")
         self.resizable(True, True)
 
         # Store class data
@@ -16,16 +17,28 @@ class Mainform(tk.Toplevel):
         self.metadata = self.class_data.get("metadata", {})
         self.students = self.class_data.get("students", {})
 
+        # Apply theme
+        self.configure_theme()
+
         # Create UI components
         self.create_widgets()
 
+    def configure_theme(self):
+        """Apply the selected theme to the Mainform."""
+        if self.theme == "dark":
+            self.configure(bg="black")
+        elif self.theme == "clam":
+            self.configure(bg="lightblue")
+        else:  # Default theme
+            self.configure(bg="white")
+
     def create_widgets(self):
         # Header
-        header = tk.Label(self, text="Class Information - MainForm", font=("Arial", 20, "bold"))
+        header = tk.Label(self, text="Class Information - MainForm", font=("Arial", 20, "bold"), bg=self["bg"])
         header.pack(pady=10)
 
         # Metadata Section
-        metadata_frame = tk.Frame(self)
+        metadata_frame = tk.Frame(self, bg=self["bg"])
         metadata_frame.pack(fill=tk.X, padx=10, pady=5)
 
         self.add_metadata_row(metadata_frame, "Company:", self.metadata.get("Company", "N/A"), 0)
@@ -40,7 +53,7 @@ class Mainform(tk.Toplevel):
         self.add_metadata_row(metadata_frame, "Notes:", self.metadata.get("Notes", "N/A"), 9)
 
         # Attendance Table
-        table_frame = tk.Frame(self)
+        table_frame = tk.Frame(self, bg=self["bg"])
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         self.tree = ttk.Treeview(
@@ -74,8 +87,8 @@ class Mainform(tk.Toplevel):
 
     def add_metadata_row(self, frame, label, value, row):
         """Helper function to add a metadata row."""
-        tk.Label(frame, text=label, font=("Arial", 14, "bold")).grid(row=row, column=0, sticky=tk.W, padx=5)
-        tk.Label(frame, text=value, font=("Arial", 14)).grid(row=row, column=1, sticky=tk.W)
+        tk.Label(frame, text=label, font=("Arial", 14, "bold"), bg=self["bg"]).grid(row=row, column=0, sticky=tk.W, padx=5)
+        tk.Label(frame, text=value, font=("Arial", 14), bg=self["bg"]).grid(row=row, column=1, sticky=tk.W)
 
     def populate_table(self):
         """Populate the attendance table with active students."""
@@ -128,5 +141,5 @@ class Mainform(tk.Toplevel):
 if __name__ == "__main__":
     # Example usage
     data = load_data()
-    app = Mainform("OLO123", data)
+    app = Mainform("OLO123", data, "default")
     app.mainloop()

@@ -1,14 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from src.logic.parser import load_data, save_data
+from src.ui.mainform import Mainform
 
-class Launcher(tk.Tk):
-    def __init__(self):
-        super().__init__()
+class Launcher(tk.Toplevel):
+    def __init__(self, root, theme):
+        super().__init__(root)
+        self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("450x450")  # Set window size
-        self.center_window(450, 450)  # Center the window on the screen
+        self.geometry("450x450")
+        self.center_window(450, 450)
         self.resizable(False, False)
+
+        # Apply theme
+        self.configure_theme()
 
         # Load class data
         self.data = load_data()
@@ -16,6 +21,15 @@ class Launcher(tk.Tk):
 
         # Create UI components
         self.create_widgets()
+
+    def configure_theme(self):
+        """Apply the selected theme to the Launcher."""
+        if self.theme == "dark":
+            self.configure(bg="black")
+        elif self.theme == "clam":
+            self.configure(bg="lightblue")
+        else:  # Default theme
+            self.configure(bg="white")
 
     def center_window(self, width, height):
         """Center the window on the screen."""
@@ -61,12 +75,13 @@ class Launcher(tk.Tk):
         tk.Button(bottom_buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
-        """Populate the table with class data."""
+        """Populate the table with class data where archive = 'No'."""
         for class_id, class_data in self.classes.items():
             metadata = class_data.get("metadata", {})
-            company = metadata.get("Company", "Unknown")
-            archived = metadata.get("archive", "No")
-            self.tree.insert("", tk.END, values=(class_id, company, archived))
+            if metadata.get("archive", "No") == "No":
+                company = metadata.get("Company", "Unknown")
+                archived = metadata.get("archive", "No")
+                self.tree.insert("", tk.END, values=(class_id, company, archived))
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -75,8 +90,8 @@ class Launcher(tk.Tk):
             messagebox.showwarning("No Selection", "Please select a class to open.")
             return
         class_id = self.tree.item(selected_item, "values")[0]
-        messagebox.showinfo("Open Class", f"Opening class: {class_id}")
-        # TODO: Open Mainform for the selected class
+        self.destroy()  # Close the Launcher
+        Mainform(class_id, self.data, self.theme).mainloop()
 
     def edit_class(self):
         """Edit the selected class metadata."""
