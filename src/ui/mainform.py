@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
+from src.logic.parser import load_data, save_data
+from src.ui.student_form import StudentForm
 from src.ui.metadata_form import MetadataForm
-from src.logic.parser import load_data
+from src.ui.student_manager import StudentManager
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
@@ -9,9 +11,13 @@ class Mainform(tk.Toplevel):
         self.class_id = class_id
         self.data = data
         self.theme = theme
-        self.title(f"Mainform - Class {class_id}")
-        self.geometry("800x600")
-        self.resizable(True, True)
+        self.metadata = self.data["classes"][self.class_id]["metadata"]
+        self.students = self.data["classes"][self.class_id]["students"]
+
+        self.title(f"Class Information - {self.class_id}")
+        self.geometry("1200x700")
+        self.attributes("-topmost", True)  # Keep Mainform on top
+        self.state("zoomed")  # Open maximized
 
         # Apply theme
         self.configure_theme()
@@ -32,31 +38,136 @@ class Mainform(tk.Toplevel):
             self.configure(bg="white")
 
     def create_widgets(self):
-        # Header
-        tk.Label(self, text=f"Mainform for Class {self.class_id}", font=("Arial", 16)).pack(pady=20)
+        """Create the layout and fields for the Mainform."""
+        # Metadata Section
+        metadata_frame = tk.Frame(self, bg=self["bg"])
+        metadata_frame.pack(fill=tk.X, padx=20, pady=10)
 
-        # Edit Metadata Button
-        tk.Button(self, text="Edit Metadata", command=self.edit_metadata).pack(pady=10)
+        fields = [
+            ("Company:", self.metadata.get("Company", "")),
+            ("Consultant:", self.metadata.get("Consultant", "")),
+            ("Teacher:", self.metadata.get("Teacher", "")),
+            ("Room:", self.metadata.get("Room", "")),
+            ("Course Book:", self.metadata.get("CourseBook", "")),
+            ("Course Hours:", self.metadata.get("CourseHours", "")),
+            ("Class Time (hrs):", self.metadata.get("ClassTime", "")),
+            ("Max Classes:", self.metadata.get("MaxClasses", "")),
+            ("Start Date:", self.metadata.get("StartDate", "")),
+            ("Finish Date:", self.metadata.get("FinishDate", "")),
+            ("Days:", self.metadata.get("Days", "")),
+            ("Time:", self.metadata.get("Time", "")),
+            ("Notes:", self.metadata.get("Notes", "")),
+        ]
 
-        # Close Button
-        tk.Button(self, text="Close", command=self.on_close).pack(pady=10)
+        for i, (label_text, value) in enumerate(fields):
+            tk.Label(metadata_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            tk.Label(metadata_frame, text=value, font=("Arial", 12), bg=self["bg"]).grid(row=i, column=1, sticky="w", padx=10, pady=5)
+
+        # Buttons Section
+        button_frame = tk.Frame(self, bg=self["bg"])
+        button_frame.pack(fill=tk.X, pady=10)
+
+        buttons = [
+            ("Add Student", self.add_student),
+            ("Edit Student", self.edit_student),
+            ("Remove Student", self.remove_student),
+            ("Manage Students", self.manage_students),
+            ("Add Date", self.placeholder),
+            ("Edit Date", self.placeholder),
+            ("Metadata", self.edit_metadata),
+            ("Settings", self.open_settings),
+        ]
+
+        for i, (text, command) in enumerate(buttons):
+            tk.Button(button_frame, text=text, command=command, width=15).grid(row=i // 4, column=i % 4, padx=10, pady=5)
+
+        # Attendance Table
+        attendance_frame = tk.Frame(self, bg=self["bg"])
+        attendance_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=5)
+
+        self.tree = ttk.Treeview(attendance_frame, columns=("Name", "Nickname", "Score", "Attendance", "Pre-test", "Post-test"), show="headings")
+        self.tree.heading("Name", text="Name")
+        self.tree.heading("Nickname", text="Nickname")
+        self.tree.heading("Score", text="Score")
+        self.tree.heading("Attendance", text="Attendance")
+        self.tree.heading("Pre-test", text="Pre-test")
+        self.tree.heading("Post-test", text="Post-test")
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+        # Populate attendance table
+        self.populate_attendance_table()
+
+    def populate_attendance_table(self):
+        """Populate the attendance table with student data."""
+        for student_id, student_data in self.students.items():
+            if student_data.get("active", "Yes") == "Yes":  # Only show active students
+                attendance = sum(1 for v in student_data["attendance"].values() if v == "P")
+                self.tree.insert("", tk.END, values=(
+                    student_data["name"],
+                    student_data["nickname"],
+                    student_data["score"],
+                    attendance,
+                    student_data["pre_test"],
+                    student_data["post_test"],
+                ))
+
+    def add_student(self):
+        """Open the Add Student form."""
+        StudentForm(self, None, self.students, self.refresh).mainloop()
+
+    def edit_student(self):
+        """Open the Edit Student form for the selected student."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a student to edit.", parent=self)
+            return
+        student_name = self.tree.item(selected_item, "values")[0]
+        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
+        if student_id:
+            StudentForm(self, student_id, self.students, self.refresh).mainloop()
+
+    def remove_student(self):
+        """Remove the selected student."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a student to remove.", parent=self)
+            return
+        student_name = self.tree.item(selected_item, "values")[0]
+        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
+        if student_id:
+            confirm = messagebox.askyesno("Remove Student", f"Are you sure you want to remove {student_name}?", parent=self)
+            if confirm:
+                self.students[student_id]["active"] = "No"
+                save_data(self.data)
+                self.refresh()
+
+    def manage_students(self):
+        """Open the Student Active Manager."""
+        StudentManager(self, self.students, self.refresh).mainloop()
 
     def edit_metadata(self):
-        """Open the MetadataForm to edit metadata for the current class."""
-        MetadataForm(self, self.class_id, self.data, self.theme, self.refresh_mainform).mainloop()
+        """Open the Edit Metadata form."""
+        MetadataForm(self, self.class_id, self.data, self.theme, self.refresh).mainloop()
 
-    def refresh_mainform(self):
-        """Refresh the Mainform after metadata is edited."""
-        self.title(f"Mainform - Class {self.class_id}")
-        # Add any additional refresh logic here (e.g., reload widgets)
+    def open_settings(self):
+        """Open the Settings form."""
+        messagebox.showinfo("Settings", "Settings functionality is under development.", parent=self)
+
+    def placeholder(self):
+        """Placeholder for future functionality."""
+        messagebox.showinfo("Placeholder", "This feature is under development.", parent=self)
+
+    def refresh(self):
+        """Refresh the Mainform."""
+        for widget in self.winfo_children():
+            widget.destroy()  # Clear all widgets
+        self.create_widgets()  # Recreate widgets
 
     def on_close(self):
-        """Handle Mainform close event and reopen Launcher."""
+        """Handle Mainform close event."""
         self.destroy()
-        root = tk.Tk()
-        root.withdraw()  # Hide the root window
-        from src.ui.launcher import Launcher  # Import here to avoid circular import
-        Launcher(root, self.theme).mainloop()
 
 if __name__ == "__main__":
     # Example usage
