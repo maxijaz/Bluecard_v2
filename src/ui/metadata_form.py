@@ -10,8 +10,8 @@ class MetadataForm(tk.Toplevel):
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
-        self.geometry("650x650")
-        self.center_window(650, 650)
+        self.geometry("450x650")
+        self.center_window(450, 650)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
