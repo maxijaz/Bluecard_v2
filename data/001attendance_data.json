@@ -13,7 +13,8 @@
                 "FinishDate": "15/06/2025",
                 "Days": "Tuesday, Thursday",
                 "Time": "17:00 - 19:00",
-                "ClassNo": "OLO123"
+                "ClassNo": "OLO123",
+                "archive": "Yes"
             },
             "students": {},
             "archive": "No"
