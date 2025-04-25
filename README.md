@@ -52,26 +52,34 @@ All class and student data is stored in `data/001attendance_data.json`. The pars
 
 ## Updated Project Structure
 ```plaintext
-Bluecard_v2/
+📁 Bluecard_v2/
 ├── data/
 │   ├── 001attendance_data.json
-│   ├── logo.png
+│   ├── attendance_data.json ← (from old bluecard, could merge or archive older)
+│   ├── themes.json ← (from old bluecard)
 │   ├── settings.json
+│   ├── logo.png
+│   ├── Project_Outline.txt ← (keep for documentation/reference)
 │   └── backup/
-│       └── (timestamped .json backups)
+│   └── (timestamped .json backups)
+
 ├── src/
 │   ├── main.py
 │   ├── logic/
 │   │   ├── parser.py
 │   │   └── attendance_utils.py
 │   └── ui/
-│       └── launcher.py (upcoming)
+│   ├── launcher.py (GUI or interactive launcher in progress)
+│   └── cli.py (CLI version, keep for optional use or testing)
+
 ├── tests/
 │   └── test_attendance.py
-├── merge_bluecard.py
+
+├── .gitignore ← (from old bluecard)
+├── merge_bluecard.py (optional, for one-time merges or conversions)
 ├── create_exe.bat
 ├── requirements.txt
-└── README.md
+└── README.md ← (merge notes from both READMEs)
 
 ## Notes
 - All errors are logged to: `data/bluecard_errors.log`
