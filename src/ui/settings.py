@@ -16,11 +16,14 @@ class SettingsForm(tk.Toplevel):
         self.attributes("-topmost", True)
 
         self.current_theme = current_theme
-        self.on_theme_change = on_theme_change  # Callback to reopen Launcher
+        self.on_theme_change = on_theme_change  # Callback to refresh Launcher
         self.themes = self.load_themes()
 
         # Create UI components
         self.create_widgets()
+
+        # Handle close button (X)
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def center_window(self, width, height):
         """Center the window on the screen."""
@@ -33,16 +36,12 @@ class SettingsForm(tk.Toplevel):
     def load_themes(self):
         """Load themes from themes.json."""
         if not os.path.exists(THEMES_PATH):
-            messagebox.showerror("Error", "Themes file not found!")
-            self.destroy()
             return []
         try:
             with open(THEMES_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return [theme["name"] for theme in data["themes"]]
         except json.JSONDecodeError:
-            messagebox.showerror("Error", "Invalid themes.json format!")
-            self.destroy()
             return []
 
     def create_widgets(self):
@@ -56,16 +55,19 @@ class SettingsForm(tk.Toplevel):
         tk.Button(self, text="Save", command=self.save_theme).pack(pady=10)
 
     def save_theme(self):
-        """Save the selected theme to settings.json and reopen the Launcher."""
+        """Save the selected theme to settings.json and refresh the Launcher."""
         selected_theme = self.theme_var.get()
         if not selected_theme:
-            messagebox.showwarning("Warning", "Please select a theme!")
             return
         try:
             with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
                 json.dump({"theme": selected_theme}, f, indent=4)
-            messagebox.showinfo("Success", "Theme saved successfully!")
-            self.destroy()
-            self.on_theme_change(selected_theme)  # Trigger callback to reopen Launcher
+            self.on_theme_change(selected_theme)  # Refresh Launcher
+            self.destroy()  # Close SettingsForm
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to save theme: {e}")
+            print(f"Failed to save theme: {e}")
+
+    def on_close(self):
+        """Handle close button (X)."""
+        self.on_theme_change(self.current_theme)  # Refresh Launcher with current theme
+        self.destroy()

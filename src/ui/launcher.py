@@ -81,12 +81,12 @@ class Launcher(tk.Toplevel):
 
     def open_settings(self):
         """Open the Settings form."""
-        self.withdraw()  # Hide the Launcher instead of destroying it
-        SettingsForm(self, self.theme, self.reopen_launcher).mainloop()
+        SettingsForm(self, self.theme, self.refresh).mainloop()
 
-    def reopen_launcher(self, new_theme):
-        """Reopen the Launcher with the new theme."""
-        self.destroy()  # Destroy the hidden Launcher
-        root = tk.Tk()
-        root.withdraw()  # Hide the root window
-        Launcher(root, new_theme).mainloop()
+    def refresh(self, new_theme):
+        """Refresh the Launcher with the new theme."""
+        self.theme = new_theme
+        self.configure_theme()
+        for widget in self.winfo_children():
+            widget.destroy()  # Clear all widgets
+        self.create_widgets()  # Recreate widgets
