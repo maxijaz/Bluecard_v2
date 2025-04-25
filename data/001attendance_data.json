@@ -8,7 +8,7 @@
                 "CourseBook": "IEX",
                 "MaxClasses": 10.0,
                 "CourseHours": 20,
-                "ClassTime": 120.0,
+                "ClassTime": 2,
                 "StartDate": "01/05/2025",
                 "FinishDate": "15/06/2025",
                 "Days": "Tuesday, Thursday",
@@ -17,7 +17,7 @@
                 "archive": "Yes"
             },
             "students": {},
-            "archive": "No"
+            "active": "No"
         }
     }
 }
