@@ -65,25 +65,35 @@ class Launcher(tk.Toplevel):
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        tk.Button(button_frame, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
+        buttons = tk.Frame(button_frame, bg=self["bg"])
+        buttons.pack(anchor=tk.CENTER)
+
+        tk.Button(buttons, text="Open", command=self.open_class, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Edit", command=self.edit_class, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Add New Class", command=self.add_new_class, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Archive", command=self.archive_class, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager, width=15).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="TTR", command=self.placeholder_ttr, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Settings", command=self.open_settings, width=12).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
-        print("Populating table with class data...")
         for class_id, class_data in self.classes.items():
             metadata = class_data.get("metadata", {})
-            print(f"Processing class_id: {class_id}, metadata: {metadata}")  # Debugging
-
-            # Ensure class_no is set in the metadata
-            if not metadata.get("class_no"):
-                metadata["class_no"] = class_id
-
-            # Only show classes that are not archived
             if metadata.get("archive", "No") == "No":
                 company = metadata.get("Company", "Unknown")
                 archived = metadata.get("archive", "No")
-                print(f"Inserting into tree: {class_id}, {company}, {archived}")  # Debugging
                 self.tree.insert("", tk.END, values=(class_id, company, archived))
+
+    def open_class(self):
+        """Open the selected class in the Mainform."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a class to open.", parent=self)
+            return
+        class_id = self.tree.item(selected_item, "values")[0]
+        self.destroy()  # Close the Launcher
+        Mainform(self, class_id, self.data, self.theme).mainloop()
 
     def edit_class(self):
         """Open the Add or Edit Metadata form to edit the selected class."""
@@ -94,6 +104,36 @@ class Launcher(tk.Toplevel):
         class_id = self.tree.item(selected_item, "values")[0]
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
+    def add_new_class(self):
+        """Open the Add or Edit Metadata form to add a new class."""
+        MetadataForm(self, None, self.data, self.theme, self.refresh).mainloop()
+
+    def archive_class(self):
+        """Archive the selected class."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a class to archive.", parent=self)
+            return
+        class_id = self.tree.item(selected_item, "values")[0]
+        confirm = messagebox.askyesno("Archive Class", f"Are you sure you want to archive class {class_id}?", parent=self)
+        if confirm:
+            self.classes[class_id]["metadata"]["archive"] = "Yes"
+            save_data(self.data)
+            self.refresh()
+
+    def open_archive_manager(self):
+        """Open the Archive Manager form."""
+        self.destroy()  # Close the Launcher
+        ArchiveManager(self, self.data, self.theme).mainloop()
+
+    def placeholder_ttr(self):
+        """Placeholder for TTR functionality."""
+        messagebox.showinfo("TTR", "This feature is under development.", parent=self)
+
+    def open_settings(self):
+        """Open the Settings form."""
+        SettingsForm(self, self.theme, self.refresh).mainloop()
+
     def refresh(self):
         """Refresh the Launcher."""
         for widget in self.winfo_children():
@@ -102,14 +142,7 @@ class Launcher(tk.Toplevel):
 
     def on_close(self):
         """Handle Launcher close event."""
-        self.backup_data()
+        confirm = messagebox.askyesno("Exit", "Do you want to back up your data before exiting?", parent=self)
+        if confirm:
+            save_data(self.data)
         self.destroy()
-
-    def backup_data(self):
-        """Back up 001attendance_data.json to data/backup with a timestamp."""
-        backup_dir = "data/backup"
-        os.makedirs(backup_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_file = os.path.join(backup_dir, f"001attendance_data_{timestamp}.json")
-        shutil.copy("data/001attendance_data.json", backup_file)
-        print(f"Backup created: {backup_file}")
