@@ -1,15 +1,18 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from src.logic.parser import load_data
+from src.logic.parser import load_data, save_data
+from src.ui.mainform import Mainform
 from src.ui.settings import SettingsForm
+from src.ui.archive_manager import ArchiveManager
+from src.ui.metadata_form import MetadataForm
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
         super().__init__(root)
         self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("450x450")
-        self.center_window(450, 450)
+        self.geometry("650x500")
+        self.center_window(650, 500)
         self.resizable(False, False)
 
         # Apply theme
@@ -58,6 +61,11 @@ class Launcher(tk.Toplevel):
         buttons.pack(anchor=tk.CENTER)
 
         tk.Button(buttons, text="Open", command=self.open_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager).pack(side=tk.LEFT, padx=5)
+        tk.Button(buttons, text="TTR", command=self.ttr_placeholder).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
@@ -77,7 +85,42 @@ class Launcher(tk.Toplevel):
             return
         class_id = self.tree.item(selected_item, "values")[0]
         self.destroy()  # Close the Launcher
-        # Open Mainform (not shown here)
+        Mainform(class_id, self.data, self.theme).mainloop()
+
+    def edit_class(self):
+        """Open the Add or Edit Metadata form to edit the selected class."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a class to edit.")
+            return
+        class_id = self.tree.item(selected_item, "values")[0]
+        MetadataForm(self, class_id, self.data, self.theme).mainloop()
+
+    def add_new_class(self):
+        """Open the Add or Edit Metadata form to add a new class."""
+        MetadataForm(self, None, self.data, self.theme).mainloop()
+
+    def archive_class(self):
+        """Archive the selected class."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a class to archive.")
+            return
+        class_id = self.tree.item(selected_item, "values")[0]
+        confirm = messagebox.askyesno("Archive Class", f"Are you sure you want to archive class {class_id}?")
+        if confirm:
+            self.classes[class_id]["metadata"]["archive"] = "Yes"
+            save_data(self.data)
+            self.refresh(self.theme)
+
+    def open_archive_manager(self):
+        """Open the Archive Manager form."""
+        self.destroy()  # Close the Launcher
+        ArchiveManager(self, self.data, self.theme).mainloop()
+
+    def ttr_placeholder(self):
+        """Placeholder for TTR functionality."""
+        messagebox.showinfo("TTR", "TTR functionality is not implemented yet.")
 
     def open_settings(self):
         """Open the Settings form."""
