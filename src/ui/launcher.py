@@ -71,8 +71,6 @@ class Launcher(tk.Toplevel):
         tk.Button(buttons, text="Edit", command=self.edit_class).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Add New Class", command=self.add_new_class).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Archive", command=self.archive_class).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="TTR", command=self.ttr_placeholder).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Settings", command=self.open_settings).pack(side=tk.LEFT, padx=5)
 
     def populate_table(self):
@@ -88,7 +86,7 @@ class Launcher(tk.Toplevel):
         """Open the selected class in the Mainform."""
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a class to open.")
+            messagebox.showwarning("No Selection", "Please select a class to open.", parent=self)
             return
         class_id = self.tree.item(selected_item, "values")[0]
         self.destroy()  # Close the Launcher
@@ -98,7 +96,7 @@ class Launcher(tk.Toplevel):
         """Open the Add or Edit Metadata form to edit the selected class."""
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a class to edit.")
+            messagebox.showwarning("No Selection", "Please select a class to edit.", parent=self)
             return
         class_id = self.tree.item(selected_item, "values")[0]
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
@@ -111,23 +109,14 @@ class Launcher(tk.Toplevel):
         """Archive the selected class."""
         selected_item = self.tree.selection()
         if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a class to archive.")
+            messagebox.showwarning("No Selection", "Please select a class to archive.", parent=self)
             return
         class_id = self.tree.item(selected_item, "values")[0]
-        confirm = messagebox.askyesno("Archive Class", f"Are you sure you want to archive class {class_id}?")
+        confirm = messagebox.askyesno("Archive Class", f"Are you sure you want to archive class {class_id}?", parent=self)
         if confirm:
             self.classes[class_id]["metadata"]["archive"] = "Yes"
             save_data(self.data)
-            self.refresh(self.theme)
-
-    def open_archive_manager(self):
-        """Open the Archive Manager form."""
-        self.destroy()  # Close the Launcher
-        ArchiveManager(self, self.data, self.theme).mainloop()
-
-    def ttr_placeholder(self):
-        """Placeholder for TTR functionality."""
-        messagebox.showinfo("TTR", "TTR functionality is not implemented yet.")
+            self.refresh()
 
     def open_settings(self):
         """Open the Settings form."""

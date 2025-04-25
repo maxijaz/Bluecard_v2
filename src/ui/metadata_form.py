@@ -9,10 +9,11 @@ class MetadataForm(tk.Toplevel):
         self.class_id = class_id
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher or Mainform
-        self.title("Metadata Form")
-        self.geometry("400x300")
-        self.center_window(400, 300)
+        self.title("Add / Edit Class Information")
+        self.geometry("650x650")
+        self.center_window(650, 650)
         self.resizable(False, False)
+        self.attributes("-topmost", True)  # Make MetadataForm always on top
 
         # Apply theme
         self.configure_theme()
@@ -47,9 +48,9 @@ class MetadataForm(tk.Toplevel):
         """Save metadata for the class."""
         # Placeholder logic for saving metadata
         if self.class_id:
-            messagebox.showinfo("Save Metadata", f"Metadata for class {self.class_id} saved.")
+            messagebox.showinfo("Save Metadata", f"Metadata for class {self.class_id} saved.", parent=self)
         else:
-            messagebox.showinfo("Save Metadata", "New class metadata saved.")
+            messagebox.showinfo("Save Metadata", "New class metadata saved.", parent=self)
         save_data(self.data)
         self.on_metadata_save()  # Trigger callback to refresh Launcher or Mainform
         self.destroy()
