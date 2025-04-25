@@ -79,10 +79,19 @@ def backup_data() -> None:
 def cleanup_old_backups(days: int = 90) -> None:
     """Deletes backup files older than the specified number of days."""
     now = datetime.now()
+    if not os.path.exists(BACKUP_DIR):
+        return  # If the backup directory doesn't exist, nothing to clean up
+
     for filename in os.listdir(BACKUP_DIR):
-        if filename.startswith("001attendance_data_") and filename.endswith(".json"):
-            filepath = os.path.join(BACKUP_DIR, filename)
-            file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
-            if (now - file_time) > timedelta(days=days):
-                os.remove(filepath)
-                log_error(f"Deleted old backup: {filename}")
+        file_path = os.path.join(BACKUP_DIR, filename)
+        if os.path.isfile(file_path):
+            # Extract the timestamp from the filename
+            try:
+                timestamp_str = filename.split("_")[-1].replace(".json", "")
+                file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                # Check if the file is older than the specified number of days
+                if (now - file_date).days > days:
+                    os.remove(file_path)
+            except ValueError:
+                # Skip files that don't match the expected timestamp format
+                continue
