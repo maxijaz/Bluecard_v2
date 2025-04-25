@@ -75,8 +75,16 @@ class Launcher(tk.Toplevel):
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
+        print("Populating table with class data...")
         for class_id, class_data in self.classes.items():
             metadata = class_data.get("metadata", {})
+            print(f"Processing class_id: {class_id}, metadata: {metadata}")  # Debugging
+
+            # Ensure class_no is set in the metadata
+            if not metadata.get("class_no"):
+                metadata["class_no"] = class_id
+
+            # Only show classes that are not archived
             if metadata.get("archive", "No") == "No":
                 company = metadata.get("Company", "Unknown")
                 archived = metadata.get("archive", "No")
