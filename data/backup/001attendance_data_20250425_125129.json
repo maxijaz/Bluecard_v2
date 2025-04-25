@@ -1,0 +1,113 @@
+{
+    "classes": {
+        "OLO123": {
+            "metadata": {
+                "Company": "ACERs",
+                "Consultant": "Fraser",
+                "Teacher": "Paul R",
+                "Room": "Floor 23",
+                "CourseBook": "IEX",
+                "MaxClasses": 10,
+                "CourseHours": 40,
+                "ClassTime": 2,
+                "StartDate": "01/05/2025",
+                "FinishDate": "15/06/2025",
+                "Days": "Tuesday, Thursday",
+                "Time": "17:00 - 19:00",
+                "Notes": "Bring Projector and screen",
+                "archive": "Yes"
+            },
+            "students": {
+                "S001": {
+                    "name": "Alice Kim",
+                    "gender": "Female",
+                    "nickname": "Ali",
+                    "score": "82% - A",
+                    "pre_test": "70%",
+                    "post_test": "90%",
+                    "active": "Yes",
+                    "note": "Very punctual and loves discussions",
+                    "attendance": {
+                        "01/05/2025": "P",
+                        "06/05/2025": "A",
+                        "08/05/2025": "P",
+                        "13/05/2025": "L",
+                        "15/05/2025": "P"
+                    }
+                },
+                "S002": {
+                    "name": "Ben Lee",
+                    "gender": "Male",
+                    "nickname": "Nok",
+                    "score": "55% - B",
+                    "pre_test": "50%",
+                    "post_test": "75%",
+                    "active": "Yes",
+                    "note": "Likes conversations and grammar",
+                    "attendance": {
+                        "01/05/2025": "L",
+                        "06/05/2025": "P",
+                        "08/05/2025": "P",
+                        "13/05/2025": "A",
+                        "15/05/2025": "P"
+                    }
+                }
+            },
+            "archive": "No"
+        },
+        "OLO124": {
+            "metadata": {
+                "Company": "BCErs",
+                "Consultant": "Fraser",
+                "Teacher": "Paul R",
+                "Room": "Floor 24",
+                "CourseBook": "IEX",
+                "MaxClasses": 10,
+                "CourseHours": 40,
+                "ClassTime": 2,
+                "StartDate": "02/05/2025",
+                "FinishDate": "16/06/2025",
+                "Days": "Monday, Wednesday",
+                "Time": "14:00 - 16:00",
+                "Notes": "Class prefers group activities"
+            },
+            "students": {
+                "S003": {
+                    "name": "David Tran",
+                    "gender": "Male",
+                    "nickname": "D",
+                    "score": "68% - B",
+                    "pre_test": "60%",
+                    "post_test": "75%",
+                    "active": "Yes",
+                    "note": "Asks good questions, prefers group work",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "07/05/2025": "P",
+                        "09/05/2025": "L",
+                        "14/05/2025": "A",
+                        "16/05/2025": "P"
+                    }
+                },
+                "S004": {
+                    "name": "Emma Zhou",
+                    "gender": "Female",
+                    "nickname": "Em",
+                    "score": "90% - A",
+                    "pre_test": "85%",
+                    "post_test": "95%",
+                    "active": "Yes",
+                    "note": "Highly motivated and organized",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "07/05/2025": "P",
+                        "09/05/2025": "P",
+                        "14/05/2025": "P",
+                        "16/05/2025": "P"
+                    }
+                }
+            },
+            "archive": "No"
+        }
+    }
+}
