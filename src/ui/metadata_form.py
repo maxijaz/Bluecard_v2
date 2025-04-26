@@ -71,15 +71,30 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Class No field is read-only and displays the class_id
-                entry = tk.Entry(self, width=40, fg="red", bg="lightyellow")  # Set text to red and background to light yellow
+                # Ensure Class No is always visible and updated
+                entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="lightyellow")
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.metadata.get(key, self.class_id))  # Use class_id as default if class_no is missing
-                entry.configure(state="readonly")  # Set back to readonly after setting value and colors
+                entry.insert(0, self.class_id if self.class_id else "New Class")
+            elif key in ["StartDate", "FinishDate"]:
+                # Date fields with a placeholder for date picker
+                frame = tk.Frame(self)
+                frame.grid(row=i, column=1, padx=10, pady=5, sticky="w")
+                entry = tk.Entry(frame, width=30)
+                entry.pack(side=tk.LEFT)
+                entry.insert(0, self.metadata.get(key, ""))
+                tk.Button(frame, text="Pick", command=self.placeholder).pack(side=tk.LEFT, padx=5)
+            elif key == "Days":
+                # Days field with a placeholder for day picker
+                frame = tk.Frame(self)
+                frame.grid(row=i, column=1, padx=10, pady=5, sticky="w")
+                entry = tk.Entry(frame, width=30)
+                entry.pack(side=tk.LEFT)
+                entry.insert(0, self.metadata.get(key, ""))
+                tk.Button(frame, text="Clear", command=self.placeholder).pack(side=tk.LEFT, padx=5)
             else:
                 entry = tk.Entry(self, width=40)
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.metadata.get(key, ""))  # Pre-fill with existing data
+                entry.insert(0, self.metadata.get(key, ""))
 
             self.entries[key] = entry
 
