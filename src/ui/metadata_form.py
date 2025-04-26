@@ -71,7 +71,7 @@ class MetadataForm(tk.Toplevel):
         self.entries = {}
 
         for i, (label_text, key) in enumerate(fields):
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
                 # Debugging: Print when creating the Class No field
@@ -90,7 +90,7 @@ class MetadataForm(tk.Toplevel):
                 # Debugging: Print after adding the Class No field
                 print(f"Class No field added to row {i}")
             else:
-                entry = tk.Entry(self, width=40)
+                entry = tk.Entry(self, width=40, bg="white")
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.metadata.get(key, ""))
 
@@ -100,7 +100,7 @@ class MetadataForm(tk.Toplevel):
         self.update_idletasks()
 
         # Buttons
-        button_frame = tk.Frame(self)
+        button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
 
         tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
