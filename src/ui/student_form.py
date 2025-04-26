@@ -1,12 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from logic.parser import save_data
 import sys
 import os
 
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
-from logic.parser import save_data
 print(sys.path)
 
 class StudentForm(tk.Toplevel):

@@ -67,3 +67,6 @@ if __name__ == "__main__":
         on_close()
 
 print("sys.path:", sys.path)
+
+import sys
+print("sys.path:", sys.path)
