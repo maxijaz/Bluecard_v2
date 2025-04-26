@@ -58,6 +58,9 @@ class Launcher(tk.Toplevel):
         self.tree.heading("Archived", text="Archived")
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        # Bind double-click event to open the Mainform
+        self.tree.bind("<Double-1>", self.on_double_click)
+
         # Populate table
         self.populate_table()
 
@@ -75,6 +78,13 @@ class Launcher(tk.Toplevel):
         tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager, width=15).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="TTR", command=self.placeholder_ttr, width=12).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Settings", command=self.open_settings, width=12).pack(side=tk.LEFT, padx=5)
+
+    def on_double_click(self, event):
+        """Handle double-click on a table row to open the Mainform."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            return  # Do nothing if no row is selected
+        self.open_class()
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""

@@ -79,13 +79,6 @@ class MetadataForm(tk.Toplevel):
         tk.Button(buttons, text="TTR", command=self.placeholder_ttr, width=12).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons, text="Settings", command=self.open_settings, width=12).pack(side=tk.LEFT, padx=5)
 
-    def on_double_click(self, event):
-        """Handle double-click on a table row to open the Edit Class form."""
-        selected_item = self.tree.selection()
-        if not selected_item:
-            return  # Do nothing if no row is selected
-        self.edit_class()
-
     def save_metadata(self):
         """Save metadata for the class."""
         if not self.entries["class_no"].get() and not self.is_edit:
