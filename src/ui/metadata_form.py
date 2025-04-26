@@ -10,8 +10,8 @@ class MetadataForm(tk.Toplevel):
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
-        self.geometry("450x650")
-        self.center_window(450, 650)
+        self.geometry("400x600")
+        self.center_window(400, 600)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
@@ -59,17 +59,17 @@ class MetadataForm(tk.Toplevel):
 
             if key == "class_no":
                 if self.is_edit:
-                    self.class_no_entry = tk.Entry(self, width=40, state="readonly", fg="black", font=("Arial", 14))
+                    self.class_no_entry = tk.Entry(self, width=30, state="readonly", fg="black", font=("Arial", 12))
                     self.class_no_entry.configure(readonlybackground="yellow")
                     self.class_no_entry.insert(0, self.class_id)
                 else:
-                    self.class_no_entry = tk.Entry(self, width=40, fg="black", bg="white", font=("Arial", 14))
+                    self.class_no_entry = tk.Entry(self, width=30, fg="black", bg="white", font=("Arial", 12))
                     self.class_no_entry.insert(0, "")
 
                 self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
                 self.entries[key] = self.class_no_entry
             else:
-                entry = tk.Entry(self, width=40, bg="white", font=("Arial", 14))
+                entry = tk.Entry(self, width=30, bg="white", font=("Arial", 12))
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
                 self.entries[key] = entry
