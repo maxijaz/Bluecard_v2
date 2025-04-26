@@ -50,34 +50,48 @@ class MetadataForm(tk.Toplevel):
         self.geometry(f"{width}x{height}+{x}+{y}")
 
     def create_widgets(self):
-        """Create the table and buttons."""
-        # Table for class data
-        self.tree = ttk.Treeview(self, columns=("Class No", "Company", "Archived"), show="headings")
-        self.tree.heading("Class No", text="Class No")
-        self.tree.heading("Company", text="Company")
-        self.tree.heading("Archived", text="Archived")
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        """Create the layout and fields for editing metadata."""
+        fields = [
+            ("Class No:", "class_no"),
+            ("Company:", "Company"),
+            ("Consultant:", "Consultant"),
+            ("Teacher:", "Teacher"),
+            ("Room:", "Room"),
+            ("CourseBook:", "CourseBook"),
+            ("CourseHours:", "CourseHours"),
+            ("ClassTime:", "ClassTime"),
+            ("MaxClasses:", "MaxClasses"),
+            ("StartDate:", "StartDate"),
+            ("FinishDate:", "FinishDate"),
+            ("Days:", "Days"),
+            ("Time:", "Time"),
+            ("Notes:", "Notes"),
+        ]
 
-        # Bind double-click event to open the Edit Class form
-        self.tree.bind("<Double-1>", self.on_double_click)
+        self.entries = {}
 
-        # Populate table
-        self.populate_table()
+        for i, (label_text, key) in enumerate(fields):
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+
+            if key == "class_no":
+                # Class No field: Read-only for edit, editable for add
+                state = "readonly" if self.is_edit else "normal"
+                entry = tk.Entry(self, width=40, state=state, fg="black", bg="lightyellow")
+                entry.grid(row=i, column=1, padx=10, pady=5)
+                entry.insert(0, self.class_id if self.is_edit else "")
+            else:
+                entry = tk.Entry(self, width=40)
+                entry.grid(row=i, column=1, padx=10, pady=5)
+                entry.insert(0, self.metadata.get(key, ""))
+
+            self.entries[key] = entry
 
         # Buttons
-        button_frame = tk.Frame(self, bg=self["bg"])
-        button_frame.pack(fill=tk.X, pady=10)
+        button_frame = tk.Frame(self)
+        button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
 
-        buttons = tk.Frame(button_frame, bg=self["bg"])
-        buttons.pack(anchor=tk.CENTER)
-
-        tk.Button(buttons, text="Open", command=self.open_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Edit", command=self.edit_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Add New Class", command=self.add_new_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive", command=self.archive_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager, width=15).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="TTR", command=self.placeholder_ttr, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Settings", command=self.open_settings, width=12).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
+        tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
 
     def save_metadata(self):
         """Save metadata for the class."""
