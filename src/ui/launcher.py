@@ -1,13 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from logic.parser import load_data, save_data
-from src.ui.mainform import Mainform
+from ui.mainform import Mainform
 from src.ui.settings import SettingsForm
 from src.ui.archive_manager import ArchiveManager
 from src.ui.metadata_form import MetadataForm
 import os
 import shutil
 from datetime import datetime
+import sys
+print(sys.path)
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
