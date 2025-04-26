@@ -35,6 +35,17 @@ class MetadataForm(tk.Toplevel):
 
     def create_widgets(self):
         """Create the layout and fields for editing metadata."""
+        # Add a heading to display the Class ID
+        heading = tk.Label(
+            self,
+            text=f"Class ID = {self.class_id}" if self.class_id else "New Class",
+            font=("Arial", 14, "bold"),
+            bg="white",
+            fg="blue"
+        )
+        heading.grid(row=0, column=0, columnspan=2, pady=10)
+
+        # Fields for metadata
         fields = [
             ("Class No:", "class_no"),
             ("Company:", "Company"),
@@ -55,7 +66,7 @@ class MetadataForm(tk.Toplevel):
         self.entries = {}
 
         for i, (label_text, key) in enumerate(fields):
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=i + 1, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
                 if self.is_edit:
@@ -66,17 +77,17 @@ class MetadataForm(tk.Toplevel):
                     self.class_no_entry = tk.Entry(self, width=30, fg="black", bg="white", font=("Arial", 12))
                     self.class_no_entry.insert(0, "")
 
-                self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
+                self.class_no_entry.grid(row=i + 1, column=1, padx=10, pady=5)
                 self.entries[key] = self.class_no_entry
             else:
                 entry = tk.Entry(self, width=30, bg="white", font=("Arial", 12))
-                entry.grid(row=i, column=1, padx=10, pady=5)
+                entry.grid(row=i + 1, column=1, padx=10, pady=5)
                 entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
                 self.entries[key] = entry
 
         # Buttons
         button_frame = tk.Frame(self, bg="white")
-        button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
+        button_frame.grid(row=len(fields) + 1, column=0, columnspan=2, pady=20)
 
         tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
         tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
