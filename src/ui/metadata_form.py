@@ -77,15 +77,15 @@ class MetadataForm(tk.Toplevel):
                 # Debugging: Print when creating the Class No field
                 print(f"Creating Class No field. is_edit={self.is_edit}, class_id={self.class_id}")
 
-                # Class No field: Read-only for edit, editable for add
+                # Class No field: Editable for add, read-only for edit
                 if self.is_edit:
-                    entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="yellow")  # Debugging: Yellow background
-                    entry.grid(row=i, column=1, padx=10, pady=5)
-                    entry.insert(0, self.class_id)  # Display the existing class ID
+                    self.class_no_entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="yellow")
+                    self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
+                    self.class_no_entry.insert(0, self.class_id)  # Display the existing class ID
                 else:
-                    entry = tk.Entry(self, width=40, fg="black", bg="white")
-                    entry.grid(row=i, column=1, padx=10, pady=5)
-                    entry.insert(0, "")  # Leave the field empty for new class ID input
+                    self.class_no_entry = tk.Entry(self, width=40, fg="black", bg="white")
+                    self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
+                    self.class_no_entry.insert(0, "")  # Leave the field empty for new class ID input
 
                 # Debugging: Print after adding the Class No field
                 print(f"Class No field added to row {i}")
@@ -108,7 +108,9 @@ class MetadataForm(tk.Toplevel):
 
     def save_metadata(self):
         """Save metadata for the class."""
-        if not self.entries["class_no"].get() and not self.is_edit:
+        class_no = self.class_no_entry.get()
+
+        if not class_no and not self.is_edit:
             messagebox.showerror("Error", "Class No is required for new classes.", parent=self)
             return
 
@@ -118,7 +120,6 @@ class MetadataForm(tk.Toplevel):
 
         # Save metadata
         metadata = {key: entry.get() for key, entry in self.entries.items() if key != "class_no"}
-        class_no = self.entries["class_no"].get()
 
         if self.is_edit:
             self.data["classes"][self.class_id]["metadata"] = metadata
@@ -128,6 +129,9 @@ class MetadataForm(tk.Toplevel):
                 messagebox.showerror("Error", f"Class No '{class_no}' already exists.", parent=self)
                 return
             self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+            self.class_id = class_no  # Set the class ID after saving
+            self.is_edit = True  # Mark as edit mode
+            self.class_no_entry.config(state="readonly", bg="yellow")  # Make Class No read-only
 
         # Save changes to the data
         try:
