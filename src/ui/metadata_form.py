@@ -75,10 +75,14 @@ class MetadataForm(tk.Toplevel):
 
             if key == "class_no":
                 # Class No field: Read-only for edit, editable for add
-                state = "readonly" if self.is_edit else "normal"
-                entry = tk.Entry(self, width=40, state=state, fg="black", bg="lightyellow")
-                entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.class_id if self.is_edit else "")
+                if self.is_edit:
+                    entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="red")
+                    entry.grid(row=i, column=1, padx=10, pady=5)
+                    entry.insert(0, self.class_id)  # Display the existing class ID
+                else:
+                    entry = tk.Entry(self, width=40, fg="black", bg="white")
+                    entry.grid(row=i, column=1, padx=10, pady=5)
+                    entry.insert(0, "")  # Leave the field empty for new class ID input
             else:
                 entry = tk.Entry(self, width=40)
                 entry.grid(row=i, column=1, padx=10, pady=5)
