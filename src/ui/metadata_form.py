@@ -15,9 +15,12 @@ class MetadataForm(tk.Toplevel):
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
+        # Determine if this is an edit or add operation
+        self.is_edit = bool(self.class_id)
+        self.metadata = self.data["classes"].get(self.class_id, {}).get("metadata", {}) if self.is_edit else {}
+
         # Debugging: Print class_id and metadata
         print(f"Class ID: {self.class_id}")
-        self.metadata = self.data["classes"].get(self.class_id, {}).get("metadata", {})
         print(f"Metadata: {self.metadata}")
 
         # Apply theme
@@ -71,10 +74,11 @@ class MetadataForm(tk.Toplevel):
             tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Ensure Class No is always visible and updated
-                entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="lightyellow")
+                # Class No field: Read-only for edit, editable for add
+                state = "readonly" if self.is_edit else "normal"
+                entry = tk.Entry(self, width=40, state=state, fg="black", bg="lightyellow")
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.class_id if self.class_id else "New Class")
+                entry.insert(0, self.class_id if self.is_edit else "")
             elif key in ["StartDate", "FinishDate"]:
                 # Date fields with a placeholder for date picker
                 frame = tk.Frame(self)
@@ -110,14 +114,30 @@ class MetadataForm(tk.Toplevel):
 
     def save_metadata(self):
         """Save metadata for the class."""
-        for key, entry in self.entries.items():
-            if key != "class_no":  # Skip saving the read-only Class No field
-                self.metadata[key] = entry.get()
+        if not self.entries["class_no"].get() and not self.is_edit:
+            messagebox.showerror("Error", "Class No is required for new classes.", parent=self)
+            return
 
-        # Save changes to the data using parser.py
+        if not self.entries["Company"].get():
+            messagebox.showerror("Error", "Company is required.", parent=self)
+            return
+
+        # Save metadata
+        metadata = {key: entry.get() for key, entry in self.entries.items() if key != "class_no"}
+        class_no = self.entries["class_no"].get()
+
+        if self.is_edit:
+            self.data["classes"][self.class_id]["metadata"] = metadata
+        else:
+            # Add new class
+            if class_no in self.data["classes"]:
+                messagebox.showerror("Error", f"Class No '{class_no}' already exists.", parent=self)
+                return
+            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+
+        # Save changes to the data
         try:
-            self.data["classes"][self.class_id]["metadata"] = self.metadata
-            save_data(self.data)  # Use parser.py to save data
+            save_data(self.data)
             messagebox.showinfo("Success", "Metadata saved successfully!", parent=self)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save metadata: {e}", parent=self)
@@ -127,6 +147,10 @@ class MetadataForm(tk.Toplevel):
 
         # Close the form
         self.destroy()
+
+    def placeholder(self):
+        """Placeholder for future functionality."""
+        messagebox.showinfo("Placeholder", "This feature is under development.", parent=self)
 
     def close_form(self):
         """Close the Metadata Form."""
