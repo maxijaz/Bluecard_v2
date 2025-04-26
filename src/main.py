@@ -18,14 +18,17 @@ import json
 import signal
 import sys
 import tkinter as tk
-from src.logic import parser
-from src.ui.launcher import Launcher
+from logic import parser
+from ui.launcher import Launcher
 
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+print("sys.path:", sys.path)
 
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
+
+print("sys.path:", sys.path)
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -63,4 +66,4 @@ if __name__ == "__main__":
     finally:
         on_close()
 
-print(sys.path)
+print("sys.path:", sys.path)
