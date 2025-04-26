@@ -6,7 +6,7 @@ class MetadataForm(tk.Toplevel):
     def __init__(self, parent, class_id, data, theme, on_metadata_save):
         super().__init__(parent)
         self.theme = theme
-        self.class_id = class_id  # Class ID (e.g., OLO123)
+        self.class_id = class_id  # Class ID (e.g., OLO124)
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
@@ -17,6 +17,10 @@ class MetadataForm(tk.Toplevel):
 
         # Determine if this is an edit or add operation
         self.is_edit = class_id is not None
+
+        # Debugging: Print the data being passed
+        print(f"Initializing MetadataForm: is_edit={self.is_edit}, class_id={self.class_id}")
+        print(f"Data: {self.data}")
 
         # Create widgets
         self.create_widgets()
@@ -65,9 +69,9 @@ class MetadataForm(tk.Toplevel):
                 self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
                 self.entries[key] = self.class_no_entry
             else:
-                entry = tk.Entry(self, width=40, bg="white")
+                entry = tk.Entry(self, width=40, bg="white", font=("Arial", 14))
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.data.get(key, ""))
+                entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
                 self.entries[key] = entry
 
         # Buttons
