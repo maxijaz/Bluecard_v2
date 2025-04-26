@@ -134,7 +134,7 @@ class Launcher(tk.Toplevel):
     def open_archive_manager(self):
         """Open the Archive Manager form."""
         self.destroy()  # Close the Launcher
-        ArchiveManager(self, self.data, self.theme).mainloop()
+        ArchiveManager(self.master, self.data, self.theme).mainloop()
 
     def placeholder_ttr(self):
         """Placeholder for TTR functionality."""
