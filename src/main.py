@@ -62,3 +62,5 @@ if __name__ == "__main__":
         start_launcher()
     finally:
         on_close()
+
+print(sys.path)
