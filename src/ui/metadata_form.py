@@ -87,13 +87,14 @@ class MetadataForm(tk.Toplevel):
                     self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
                     self.class_no_entry.insert(0, "")  # Leave the field empty for new class ID input
 
-                # Debugging: Print after adding the Class No field
-                print(f"Class No field added to row {i}")
+                # Assign self.class_no_entry to entry for consistency
+                entry = self.class_no_entry
             else:
                 entry = tk.Entry(self, width=40, bg="white")
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.metadata.get(key, ""))
 
+            # Add the entry to the entries dictionary
             self.entries[key] = entry
 
         # Force layout update
