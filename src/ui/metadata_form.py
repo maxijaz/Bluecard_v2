@@ -96,6 +96,9 @@ class MetadataForm(tk.Toplevel):
 
             self.entries[key] = entry
 
+        # Force layout update
+        self.update_idletasks()
+
         # Buttons
         button_frame = tk.Frame(self)
         button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
