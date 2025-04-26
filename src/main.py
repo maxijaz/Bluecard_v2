@@ -21,6 +21,9 @@ import tkinter as tk
 from logic import parser
 from ui.launcher import Launcher
 
+# Add the project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
 
