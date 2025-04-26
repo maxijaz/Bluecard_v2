@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from src.logic.parser import save_data
+from logic.parser import save_data
 
 class StudentForm(tk.Toplevel):
     def __init__(self, parent, student_id, students, refresh_callback):
