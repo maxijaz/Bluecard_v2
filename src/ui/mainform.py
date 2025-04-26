@@ -4,7 +4,6 @@ from src.logic.parser import load_data, save_data
 from src.ui.student_form import StudentForm
 from src.ui.metadata_form import MetadataForm
 from src.ui.student_manager import StudentManager
-from src.ui.launcher import Launcher
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
