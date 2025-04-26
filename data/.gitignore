@@ -1,11 +1,21 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
-*.exe
+
+# Virtual environment (you might name it .venv, venv, env, etc.)
+.venv/
+env/
+venv/
+
+# VSCode settings (optional)
+.vscode/
+
+# Backup / log / temp files
 *.log
 *.bak
-.env
+*.tmp
+
+# OS stuff
 .DS_Store
-.idea/
-build/
-dist/
+Thumbs.db
