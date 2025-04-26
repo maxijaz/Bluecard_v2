@@ -16,30 +16,10 @@ class MetadataForm(tk.Toplevel):
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
         # Determine if this is an edit or add operation
-        self.is_edit = bool(self.class_id)
-        self.metadata = self.data["classes"].get(self.class_id, {}).get("metadata", {}) if self.is_edit else {}
+        self.is_edit = class_id is not None
 
-        # Debugging: Print class_id and metadata
-        print(f"Class ID: {self.class_id}")
-        print(f"Metadata: {self.metadata}")
-
-        # Apply theme
-        self.configure_theme()
-
-        # Create UI components
+        # Create widgets
         self.create_widgets()
-
-        # Handle close event
-        self.protocol("WM_DELETE_WINDOW", self.close_form)
-
-    def configure_theme(self):
-        """Apply the selected theme to the Metadata Form."""
-        if self.theme == "dark":
-            self.configure(bg="black")
-        elif self.theme == "clam":
-            self.configure(bg="lightblue")
-        else:  # Default theme
-            self.configure(bg="white")
 
     def center_window(self, width, height):
         """Center the window on the screen."""
@@ -71,39 +51,27 @@ class MetadataForm(tk.Toplevel):
         self.entries = {}
 
         for i, (label_text, key) in enumerate(fields):
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=i, column=0, sticky="e", padx=10, pady=5)
 
             if key == "class_no":
-                # Debugging: Print when creating the Class No field
-                print(f"Creating Class No field. is_edit={self.is_edit}, class_id={self.class_id}")
-
-                # Class No field: Editable for add, read-only for edit
                 if self.is_edit:
-                    self.class_no_entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="yellow")
-                    self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
-                    self.class_no_entry.insert(0, self.class_id)  # Display the existing class ID
-                    print(f"Class No field (Edit Mode): state=readonly, bg=yellow, value={self.class_id}")
+                    self.class_no_entry = tk.Entry(self, width=40, state="readonly", fg="black", font=("Arial", 14))
+                    self.class_no_entry.configure(readonlybackground="yellow")
+                    self.class_no_entry.insert(0, self.class_id)
                 else:
-                    self.class_no_entry = tk.Entry(self, width=40, fg="black", bg="white")
-                    self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
-                    self.class_no_entry.insert(0, "")  # Leave the field empty for new class ID input
-                    print("Class No field (Add Mode): state=normal, bg=white, value=''")
+                    self.class_no_entry = tk.Entry(self, width=40, fg="black", bg="white", font=("Arial", 14))
+                    self.class_no_entry.insert(0, "")
 
-                # Assign self.class_no_entry to entry for consistency
-                entry = self.class_no_entry
+                self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
+                self.entries[key] = self.class_no_entry
             else:
                 entry = tk.Entry(self, width=40, bg="white")
                 entry.grid(row=i, column=1, padx=10, pady=5)
-                entry.insert(0, self.metadata.get(key, ""))
-
-            # Add the entry to the entries dictionary
-            self.entries[key] = entry
-
-        # Force layout update
-        self.update_idletasks()
+                entry.insert(0, self.data.get(key, ""))
+                self.entries[key] = entry
 
         # Buttons
-        button_frame = tk.Frame(self, bg=self["bg"])
+        button_frame = tk.Frame(self, bg="white")
         button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
 
         tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
@@ -113,12 +81,8 @@ class MetadataForm(tk.Toplevel):
         """Save metadata for the class."""
         class_no = self.class_no_entry.get()
 
-        if not class_no and not self.is_edit:
-            messagebox.showerror("Error", "Class No is required for new classes.", parent=self)
-            return
-
-        if not self.entries["Company"].get():
-            messagebox.showerror("Error", "Company is required.", parent=self)
+        if not class_no:
+            messagebox.showerror("Error", "Class No cannot be empty!", parent=self)
             return
 
         # Save metadata
@@ -127,21 +91,17 @@ class MetadataForm(tk.Toplevel):
         if self.is_edit:
             self.data["classes"][self.class_id]["metadata"] = metadata
         else:
-            # Add new class
             if class_no in self.data["classes"]:
-                messagebox.showerror("Error", f"Class No '{class_no}' already exists.", parent=self)
+                messagebox.showerror("Error", f"Class No '{class_no}' already exists!", parent=self)
                 return
             self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
-            self.class_id = class_no  # Set the class ID after saving
-            self.is_edit = True  # Mark as edit mode
-            self.class_no_entry.config(state="readonly", bg="yellow")  # Make Class No read-only
+            self.class_id = class_no
+            self.is_edit = True
+            self.class_no_entry.configure(state="readonly", readonlybackground="yellow")
 
         # Save changes to the data
-        try:
-            save_data(self.data)
-            messagebox.showinfo("Success", "Metadata saved successfully!", parent=self)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save metadata: {e}", parent=self)
+        save_data(self.data)
+        messagebox.showinfo("Success", "Metadata saved successfully!", parent=self)
 
         # Notify the parent to refresh
         self.on_metadata_save()
@@ -149,10 +109,6 @@ class MetadataForm(tk.Toplevel):
         # Close the form
         self.destroy()
 
-    def placeholder(self):
-        """Placeholder for future functionality."""
-        messagebox.showinfo("Placeholder", "This feature is under development.", parent=self)
-
     def close_form(self):
-        """Close the Metadata Form."""
+        """Close the form."""
         self.destroy()

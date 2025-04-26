@@ -106,7 +106,7 @@ class Launcher(tk.Toplevel):
         Mainform(self.master, class_id, self.data, self.theme).mainloop()  # Open the Mainform
 
     def edit_class(self):
-        """Open the Add or Edit Metadata form to edit the selected class."""
+        """Open the MetadataForm to edit an existing class."""
         selected_item = self.tree.selection()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a class to edit.", parent=self)
@@ -115,7 +115,7 @@ class Launcher(tk.Toplevel):
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
     def add_new_class(self):
-        """Open the Add or Edit Metadata form to add a new class."""
+        """Open the MetadataForm to add a new class."""
         MetadataForm(self, None, self.data, self.theme, self.refresh).mainloop()
 
     def archive_class(self):
