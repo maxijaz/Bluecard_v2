@@ -82,10 +82,12 @@ class MetadataForm(tk.Toplevel):
                     self.class_no_entry = tk.Entry(self, width=40, state="readonly", fg="black", bg="yellow")
                     self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
                     self.class_no_entry.insert(0, self.class_id)  # Display the existing class ID
+                    print(f"Class No field (Edit Mode): state=readonly, bg=yellow, value={self.class_id}")
                 else:
                     self.class_no_entry = tk.Entry(self, width=40, fg="black", bg="white")
                     self.class_no_entry.grid(row=i, column=1, padx=10, pady=5)
                     self.class_no_entry.insert(0, "")  # Leave the field empty for new class ID input
+                    print("Class No field (Add Mode): state=normal, bg=white, value=''")
 
                 # Assign self.class_no_entry to entry for consistency
                 entry = self.class_no_entry
