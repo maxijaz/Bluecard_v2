@@ -103,7 +103,7 @@ class Launcher(tk.Toplevel):
             return
         class_id = self.tree.item(selected_item, "values")[0]
         self.destroy()  # Close the Launcher
-        Mainform(class_id, self.data, self.theme).mainloop()
+        Mainform(self.master, class_id, self.data, self.theme).mainloop()  # Open the Mainform
 
     def edit_class(self):
         """Open the Add or Edit Metadata form to edit the selected class."""

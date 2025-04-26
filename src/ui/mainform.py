@@ -4,6 +4,7 @@ from src.logic.parser import load_data, save_data
 from src.ui.student_form import StudentForm
 from src.ui.metadata_form import MetadataForm
 from src.ui.student_manager import StudentManager
+from src.ui.launcher import Launcher
 
 class Mainform(tk.Toplevel):
     def __init__(self, class_id, data, theme):
@@ -185,7 +186,8 @@ class Mainform(tk.Toplevel):
 
     def on_close(self):
         """Handle Mainform close event."""
-        self.destroy()
+        self.destroy()  # Close the Mainform
+        Launcher(self.master, self.theme).mainloop()  # Reopen the Launcher
 
 if __name__ == "__main__":
     # Example usage
