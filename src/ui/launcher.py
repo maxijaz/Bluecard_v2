@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from src.logic.parser import load_data, save_data
+from logic.parser import load_data, save_data
 from src.ui.mainform import Mainform
 from src.ui.settings import SettingsForm
 from src.ui.archive_manager import ArchiveManager
