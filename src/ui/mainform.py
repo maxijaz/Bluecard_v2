@@ -6,8 +6,8 @@ from src.ui.metadata_form import MetadataForm
 from src.ui.student_manager import StudentManager
 
 class Mainform(tk.Toplevel):
-    def __init__(self, class_id, data, theme):
-        super().__init__()
+    def __init__(self, master, class_id, data, theme):
+        super().__init__(master)  # Pass the master to the Toplevel constructor
         self.class_id = class_id
         self.data = data
         self.theme = theme
