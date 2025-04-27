@@ -9,6 +9,8 @@ import os
 import shutil
 from datetime import datetime
 import sys
+import json
+from tkinter import ttk
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -179,8 +181,13 @@ class Launcher(tk.Toplevel):
         messagebox.showinfo("TTR", "This feature is under development.", parent=self)
 
     def open_settings(self):
-        """Open the Settings form."""
-        SettingsForm(self, self.theme, self.refresh).mainloop()
+        """Open the settings window."""
+        SettingsForm(self, "data/default.json", self.refresh_launcher)
+
+    def refresh_launcher(self):
+        """Refresh the launcher after settings are saved."""
+        self.theme = self.load_theme()  # Reload theme or other settings
+        self.configure_theme()
 
     def refresh(self):
         """Refresh the Launcher."""
@@ -194,3 +201,102 @@ class Launcher(tk.Toplevel):
         if confirm:
             save_data(self.data)
         self.destroy()
+
+class SettingsForm(tk.Toplevel):
+    def __init__(self, parent, settings_file, on_save_callback):
+        super().__init__(parent)
+        self.settings_file = settings_file
+        self.on_save_callback = on_save_callback
+        self.title("Settings")
+        self.geometry("375x475")
+        self.center_window(375, 475)
+        self.resizable(False, False)
+        self.attributes("-topmost", True)  # Make SettingsForm always on top
+
+        # Load settings
+        self.settings = self.load_settings()
+
+        # Create widgets
+        self.create_widgets()
+
+    def center_window(self, width, height):
+        """Center the window on the screen."""
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.geometry(f"{width}x{height}+{x}+{y}")
+
+    def load_settings(self):
+        """Load settings from the JSON file."""
+        try:
+            with open(self.settings_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError:
+            return {}
+
+    def save_settings(self):
+        """Save settings to the JSON file."""
+        try:
+            with open(self.settings_file, "w", encoding="utf-8") as f:
+                json.dump(self.settings, f, indent=4, ensure_ascii=False)
+            self.on_save_callback()  # Notify the parent to refresh
+            self.destroy()  # Close the settings window
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save settings: {e}", parent=self)
+
+    def create_widgets(self):
+        """Create the layout and fields for settings."""
+        # Heading
+        heading = tk.Label(self, text="Set-up Default Values Here...", font=("Arial", 16, "bold"))
+        heading.grid(row=0, column=0, columnspan=2, pady=(10, 5))
+
+        subheading = tk.Label(self, text="Values can be changed in metadata.", font=("Arial", 10), fg="gray")
+        subheading.grid(row=1, column=0, columnspan=2, pady=(0, 20))
+
+        # Fields for settings
+        fields = [
+            ("Default Teacher", "def_teacher"),
+            ("Teacher No", "def_teacher_no"),
+            ("Course Hours", "def_course_hours"),
+            ("Class Time", "def_class_time"),
+            ("Rate", "def_rate"),
+            ("CCP", "def_ccp"),
+            ("Travel", "def_travel"),
+            ("Bonus", "def_bonus"),
+        ]
+
+        self.entries = {}
+
+        # Theme dropdown
+        tk.Label(self, text="Theme:", font=("Arial", 12, "bold")).grid(row=2, column=0, sticky="e", padx=10, pady=5)
+        self.theme_var = tk.StringVar(value=self.settings.get("theme", "normal"))
+        theme_dropdown = ttk.Combobox(self, textvariable=self.theme_var, values=["normal", "dark", "light"], state="readonly", width=27)
+        theme_dropdown.grid(row=2, column=1, padx=10, pady=5)
+
+        # Add fields from default.json
+        for i, (label_text, key) in enumerate(fields, start=3):
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold")).grid(row=i, column=0, sticky="e", padx=10, pady=5)
+            entry = tk.Entry(self, width=30)
+            entry.insert(0, self.settings.get(key, ""))
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            self.entries[key] = entry
+
+        # Buttons
+        button_frame = tk.Frame(self)
+        button_frame.grid(row=len(fields) + 3, column=0, columnspan=2, pady=20)
+
+        tk.Button(button_frame, text="Save", command=self.on_save, width=10).pack(side=tk.LEFT, padx=10)
+        tk.Button(button_frame, text="Cancel", command=self.destroy, width=10).pack(side=tk.LEFT, padx=10)
+
+    def on_save(self):
+        """Handle the save button click."""
+        # Update settings from entries
+        self.settings["theme"] = self.theme_var.get()
+        for key, entry in self.entries.items():
+            self.settings[key] = entry.get()
+
+        # Save settings to file
+        self.save_settings()
