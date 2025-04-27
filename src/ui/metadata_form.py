@@ -10,8 +10,8 @@ class MetadataForm(tk.Toplevel):
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
-        self.geometry("500x600")  # width x height
-        self.center_window(500, 600)
+        self.geometry("1000x500")  # width x height
+        self.center_window(1000, 500)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
@@ -31,92 +31,106 @@ class MetadataForm(tk.Toplevel):
 
     def create_widgets(self):
         """Create the layout and fields for editing metadata."""
-        # Fields for metadata
         fields = [
-            ("Class No:", "class_no"),
-            ("Company:", "Company"),
+            ("Class No*:", "class_no", "def_class_no"),
+            ("Company*:", "Company", "def_company"),
             ("Consultant:", "Consultant"),
-            ("Teacher:", "Teacher"),
+            ("Teacher:", "Teacher", "def_teacher"),
+            ("Teacher No:", "TeacherNo", "def_teacher_no"),
             ("Room:", "Room"),
             ("CourseBook:", "CourseBook"),
-            ("CourseHours:", "CourseHours"),
-            ("ClassTime:", "ClassTime"),
-            ("MaxClasses:", "MaxClasses"),
-            ("StartDate:", "StartDate"),
-            ("FinishDate:", "FinishDate"),
+            ("Course Hours:", "CourseHours", "def_course_hours"),
+            ("Class Time:", "ClassTime", "def_class_time"),
+            ("Max Classes:", "MaxClasses"),
+            ("Start Date:", "StartDate"),
+            ("Finish Date:", "FinishDate"),
             ("Days:", "Days"),
             ("Time:", "Time"),
             ("Notes:", "Notes"),
+            ("Rate:", "rate", "def_rate"),
+            ("CCP:", "ccp", "def_ccp"),
+            ("Travel:", "travel", "def_travel"),
+            ("Bonus:", "bonus", "def_bonus"),
         ]
 
         self.entries = {}
 
-        for i, (label_text, key) in enumerate(fields):
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=i + 1, column=0, sticky="e", padx=10, pady=5)
+        # Create fields in 4-column layout
+        for i, field in enumerate(fields):
+            label_text = field[0]
+            key = field[1]
+            default_key = field[2] if len(field) > 2 else None
 
-            if key == "class_no":
-                class_no_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get("class_no", self.class_id)
+            # Determine row and column positions
+            row = i // 2  # Two fields per row
+            col = (i % 2) * 2  # Column 0 or 2 for labels, 1 or 3 for metadata
 
-                if self.is_edit:
-                    # Create a read-only Entry widget for editing
-                    self.class_no_entry = tk.Entry(self, width=30, fg="black", font=("Arial", 12))
-                    self.class_no_entry.configure(readonlybackground="yellow")
-                    self.class_no_entry.grid(row=i + 1, column=1, padx=10, pady=5)  # Place the widget first
-                    self.class_no_entry.delete(0, tk.END)  # Clear the field before inserting
-                    self.class_no_entry.insert(0, class_no_value)  # Insert the value into the field
-                    self.class_no_entry.configure(state="readonly")  # Set to readonly after inserting
-                else:
-                    # Create a normal Entry widget for new classes
-                    self.class_no_entry = tk.Entry(self, width=30, fg="black", bg="white", font=("Arial", 12))
-                    self.class_no_entry.grid(row=i + 1, column=1, padx=10, pady=5)  # Place the widget first
-                    self.class_no_entry.delete(0, tk.END)  # Clear the field before inserting
-                    self.class_no_entry.insert(0, "")  # Leave blank for new classes
+            # Add label
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
 
-                self.entries[key] = self.class_no_entry
+            # Add entry field
+            entry_bg = "yellow" if key in ["class_no", "Company"] else "white"  # Yellow for mandatory fields
+            entry = tk.Entry(self, width=30, bg=entry_bg, font=("Arial", 12))
+            entry.grid(row=row, column=col + 1, padx=10, pady=5)
+
+            # Pre-fill with default value if in Add Class mode and default_key is provided
+            if not self.is_edit and default_key:
+                default_value = self.data.get(default_key, "")
+                entry.insert(0, default_value)
             else:
-                entry = tk.Entry(self, width=30, bg="white", font=("Arial", 12))
-                entry.grid(row=i + 1, column=1, padx=10, pady=5)
+                # Pre-fill with existing metadata if in Edit Class mode
                 entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
-                self.entries[key] = entry
+
+            self.entries[key] = entry
+
+        # Add mandatory message at the bottom
+        tk.Label(self, text="      * = Mandatory (OLOxxx and Company)", font=("Arial", 10), fg="black", anchor="w").grid(
+            row=(len(fields) + 1) // 2, column=0, columnspan=4, sticky="w", padx=10, pady=(10, 5)
+        )
 
         # Buttons
         button_frame = tk.Frame(self, bg="white")
-        button_frame.grid(row=len(fields) + 1, column=0, columnspan=2, pady=20)
+        button_frame.grid(row=(len(fields) + 2) // 2, column=0, columnspan=4, pady=20)
 
         tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
         tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
 
     def save_metadata(self):
         """Save metadata for the class."""
-        class_no = self.class_no_entry.get()
+        # Validate mandatory fields
+        class_no = self.entries["class_no"].get().strip()
+        company = self.entries["Company"].get().strip()
 
-        if not class_no:
-            messagebox.showerror("Error", "Class No cannot be empty!", parent=self)
+        if not class_no or not company:
+            # Highlight mandatory fields in yellow if empty
+            if not class_no:
+                self.entries["class_no"].config(bg="yellow")
+            if not company:
+                self.entries["Company"].config(bg="yellow")
+
+            # Show error message
+            messagebox.showerror("Validation Error", "Class No and Company are mandatory fields.", parent=self)
             return
 
+        # Reset background color for mandatory fields
+        self.entries["class_no"].config(bg="white")
+        self.entries["Company"].config(bg="white")
+
+        # Collect metadata
+        metadata = {key: entry.get().strip() for key, entry in self.entries.items()}
+
         # Save metadata
-        metadata = {key: entry.get() for key, entry in self.entries.items() if key != "class_no"}
-
-        if self.is_edit:
-            self.data["classes"][self.class_id]["metadata"] = metadata
+        if self.class_id is None:
+            # Generate a new class ID if adding a new class
+            self.class_id = f"OLO{len(self.data.get('classes', {})) + 1:03}"
+            self.data["classes"][self.class_id] = {"metadata": metadata, "students": {}, "archive": "No"}
         else:
-            if class_no in self.data["classes"]:
-                messagebox.showerror("Error", f"Class No '{class_no}' already exists!", parent=self)
-                return
-            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
-            self.class_id = class_no
-            self.is_edit = True
-            self.class_no_entry.configure(state="readonly", readonlybackground="yellow")
+            # Update existing class metadata
+            self.data["classes"][self.class_id]["metadata"] = metadata
 
-        # Save changes to the data
-        save_data(self.data)
-        messagebox.showinfo("Success", "Metadata saved successfully!", parent=self)
-
-        # Notify the parent to refresh
-        self.on_metadata_save()
-
-        # Close the form
-        self.destroy()
+        save_data(self.data)  # Save to file
+        self.on_metadata_save()  # Refresh Launcher
+        self.destroy()  # Close the form
 
     def close_form(self):
         """Close the form."""

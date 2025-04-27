@@ -17,10 +17,10 @@
                 "Time": "17:00 - 19:00",
                 "Notes": "Bring Projector and screen",
                 "class_no": "OLO123",
-                "rate" : "530",
-                "ccp" : "120",
-                "travel" : "200",
-                "bonus" : "1000"
+                "rate": "530",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
             },
             "students": {
                 "S001": {

@@ -22,6 +22,9 @@ class Launcher(tk.Toplevel):
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
 
+        # Load default settings
+        self.default_settings = self.load_default_settings()
+
         # Apply theme
         self.configure_theme()
 
@@ -34,6 +37,20 @@ class Launcher(tk.Toplevel):
 
         # Handle close event
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def load_default_settings(self):
+        """Load default settings from default.json."""
+        try:
+            with open("data/default.json", "r", encoding="utf-8") as f:
+                settings = json.load(f)
+                print("Loaded default settings:", settings)  # Debugging
+                return settings
+        except FileNotFoundError:
+            print("default.json not found. Returning empty settings.")  # Debugging
+            return {}
+        except json.JSONDecodeError:
+            print("Error decoding default.json. Returning empty settings.")  # Debugging
+            return {}
 
     def configure_theme(self):
         """Apply the selected theme to the Launcher."""
@@ -156,7 +173,8 @@ class Launcher(tk.Toplevel):
 
     def add_new_class(self):
         """Open the MetadataForm to add a new class."""
-        MetadataForm(self, None, self.data, self.theme, self.refresh).mainloop()
+        print("Passing default settings to Add Class:", self.default_settings)  # Debugging
+        MetadataForm(self, None, self.default_settings, self.theme, self.refresh).mainloop()
 
     def archive_class(self):
         """Archive the selected class."""
@@ -201,6 +219,11 @@ class Launcher(tk.Toplevel):
         if confirm:
             save_data(self.data)
         self.destroy()
+
+    def open_add_class(self):
+        """Open the Add Class form."""
+        print("Passing default settings to Add Class:", self.default_settings)  # Debugging
+        MetadataForm(self, None, self.default_settings, self.theme, self.refresh_launcher)
 
 class SettingsForm(tk.Toplevel):
     def __init__(self, parent, settings_file, on_save_callback):
