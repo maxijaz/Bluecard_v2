@@ -69,16 +69,23 @@ class Launcher(tk.Toplevel):
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        buttons = tk.Frame(button_frame, bg=self["bg"])
-        buttons.pack(anchor=tk.CENTER)
+        # Arrange buttons in two rows
+        btn_open = tk.Button(button_frame, text="Open", command=self.open_class, width=15)
+        btn_edit = tk.Button(button_frame, text="Edit", command=self.edit_class, width=15)
+        btn_add = tk.Button(button_frame, text="Add New Class", command=self.add_new_class, width=15)
+        btn_archive = tk.Button(button_frame, text="Archive", command=self.archive_class, width=15)
+        btn_archive_manager = tk.Button(button_frame, text="Archive Manager", command=self.open_archive_manager, width=15)
+        btn_ttr = tk.Button(button_frame, text="TTR", command=self.placeholder_ttr, width=15)
+        btn_settings = tk.Button(button_frame, text="Settings", command=self.open_settings, width=15)
 
-        tk.Button(buttons, text="Open", command=self.open_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Edit", command=self.edit_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Add New Class", command=self.add_new_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive", command=self.archive_class, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Archive Manager", command=self.open_archive_manager, width=15).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="TTR", command=self.placeholder_ttr, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons, text="Settings", command=self.open_settings, width=12).pack(side=tk.LEFT, padx=5)
+        # Use grid layout for two rows
+        btn_open.grid(row=0, column=0, padx=5, pady=5)
+        btn_edit.grid(row=0, column=1, padx=5, pady=5)
+        btn_add.grid(row=0, column=2, padx=5, pady=5)
+        btn_archive.grid(row=1, column=0, padx=5, pady=5)
+        btn_archive_manager.grid(row=1, column=1, padx=5, pady=5)
+        btn_ttr.grid(row=1, column=2, padx=5, pady=5)
+        btn_settings.grid(row=1, column=3, padx=5, pady=5)
 
     def on_double_click(self, event):
         """Handle double-click on a table row to open the Mainform."""
