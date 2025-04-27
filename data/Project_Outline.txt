@@ -175,31 +175,34 @@ attendance = {
 📁 Bluecard_v2/
 ├── data/
 │   ├── 001attendance_data.json
-│   ├── attendance_data.json ← (could backup or archive older)
+│   ├── 001attendance_data_YYYYMMDD_HHMMSS.json ← (backup with TimeStamp)
 │   ├── themes.json ← (from old bluecard)
 │   ├── settings.json
-│   ├── logo.png
+│   ├── default.json
 │   ├── Project_Outline.txt ← (keep for documentation/reference)
 │   └── backup/
 │   └── (timestamped .json backups)
 
 ├── src/
-│   ├── main.py
+│   ├── 
 │   ├── logic/
-│   │   ├── parser.py
-│   │   └── attendance_utils.py
+│   │   └── parser.py
+│   │   
 │   └── ui/
 │   ├── launcher.py (GUI or interactive launcher in progress)
-│   └── cli.py (CLI version, keep for optional use or testing)
-
+│   ├── archive_manager.py
+│   ├── mainform.py
+│   ├── metadata_form.py
+│   ├── settings.py
+│   └── student_manager.py
+│
 ├── tests/
 │   └── test_attendance.py
-
+│
 ├── .gitignore ← (from old bluecard)
-├── merge_bluecard.py (optional, for one-time merges or conversions)
-├── create_exe.bat
+├── main.py
 ├── requirements.txt
-└── README.md ← (merge notes from both READMEs)
+└── README.md 
 
 ----------------------------------------------------------------
 
