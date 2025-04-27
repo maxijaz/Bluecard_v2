@@ -15,8 +15,8 @@ class Launcher(tk.Toplevel):
         super().__init__(root)
         self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("600x500")
-        self.center_window(600,500)
+        self.geometry("450x500")
+        self.center_window(450,500)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
 
@@ -70,19 +70,23 @@ class Launcher(tk.Toplevel):
         )
         self.tree.heading("Class No", text="Class No", anchor="center")
         self.tree.heading("Company", text="Company", anchor="center")
-        self.tree.heading("Archived", text="Archived", anchor="center")
+        self.tree.heading("Archived", text="Arch", anchor="center")
 
         # Set column widths
-        self.tree.column("Class No", width=100, anchor="center")
+        self.tree.column("Class No", width=150, anchor="center")
         self.tree.column("Company", width=200, anchor="center")
         self.tree.column("Archived", width=100, anchor="center")
 
         # Apply custom font and padding to rows and headings
         style = ttk.Style(self)
         style.configure("Treeview.Heading", font=("Arial", 18, "bold"), padding=(0, 5))  # Header font and padding
-        style.configure("Treeview", font=("Arial", 16), rowheight=35)  # Row font and height
+        style.configure("Treeview", font=("Arial", 16), rowheight=30)  # Row font and height
 
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Calculate the total height of the table
+        total_table_height = 30 * 8  # rowheight * number_of_rows
+        table_frame.config(height=total_table_height)
+
+        self.tree.pack(side=tk.LEFT, fill=tk.Y)  # Adjust to fit the calculated height
         scrollbar.config(command=self.tree.yview)
 
         # Bind double-click event to open the Mainform
