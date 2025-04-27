@@ -15,8 +15,8 @@ class Launcher(tk.Toplevel):
         super().__init__(root)
         self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("600x300")
-        self.center_window(600,300)
+        self.geometry("600x500")
+        self.center_window(600,500)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
 
@@ -52,23 +52,38 @@ class Launcher(tk.Toplevel):
 
     def create_widgets(self):
         """Create the table and buttons."""
+        # Frame for the table and scrollbar
+        table_frame = tk.Frame(self)
+        table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # Vertical scrollbar
+        scrollbar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         # Table for class data
-        self.tree = ttk.Treeview(self, columns=("Class No", "Company", "Archived"), show="headings", height=15)
+        self.tree = ttk.Treeview(
+            table_frame,
+            columns=("Class No", "Company", "Archived"),
+            show="headings",
+            height=8,  # Limit to 8 rows
+            yscrollcommand=scrollbar.set
+        )
         self.tree.heading("Class No", text="Class No", anchor="center")
         self.tree.heading("Company", text="Company", anchor="center")
         self.tree.heading("Archived", text="Archived", anchor="center")
 
         # Set column widths
-        self.tree.column("Class No", width=200, anchor="center")
+        self.tree.column("Class No", width=100, anchor="center")
         self.tree.column("Company", width=200, anchor="center")
-        self.tree.column("Archived", width=200, anchor="center")
+        self.tree.column("Archived", width=100, anchor="center")
 
-        # Apply custom font to headers
+        # Apply custom font and padding to rows and headings
         style = ttk.Style(self)
-        style.configure("Treeview.Heading", font=("Arial", 18, "bold"))  # Header font
-        style.configure("Treeview", font=("Arial", 18))  # Table content font
+        style.configure("Treeview.Heading", font=("Arial", 18, "bold"), padding=(0, 5))  # Header font and padding
+        style.configure("Treeview", font=("Arial", 16), rowheight=35)  # Row font and height
 
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.tree.yview)
 
         # Bind double-click event to open the Mainform
         self.tree.bind("<Double-1>", self.on_double_click)
