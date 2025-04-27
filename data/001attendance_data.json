@@ -5,6 +5,7 @@
                 "Company": "ACERs",
                 "Consultant": "Fraser",
                 "Teacher": "Paul R",
+                "TeacherNo": "A20049",
                 "Room": "Floor 23",
                 "CourseBook": "IEX",
                 "CourseHours": "40",
@@ -18,7 +19,8 @@
                 "class_no": "OLO123",
                 "rate" : "530",
                 "ccp" : "120",
-                "travel" : "200"
+                "travel" : "200",
+                "bonus" : "1000"
             },
             "students": {
                 "S001": {

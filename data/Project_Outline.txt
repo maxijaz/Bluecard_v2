@@ -12,6 +12,7 @@ List of sections / forms:
 # 7. ADD or Edit Metadata            - Form for editing metadata
 # 8. Add or EDIT Student information - Form for adding and editing student data
 # 9. Student Active Manager - Simliar to Archive manager (active = "Yes" or "No") + Option to DELETE class
+# 10. Mapping Settings -> Default values to # 7. ADD or Edit Metadata
 
 ----------------------------------------------------------------
 
@@ -452,5 +453,16 @@ Active [     Yes    ]   [     No     ]    →   Toggle switch between male/femal
 
 ----------------------------------------------------------------
 
+# 10. Mapping Settings -> Default values to # 7. ADD or Edit Metadata
 
+File Location: /data/default.json  
+Field Mapping: Launcher -> Settings to Launcher -> Add Class (metadata)
 
+"Teacher" = "def_teacher" (Paul R),
+"TeacherNo" = "def_teacher_no" (A20049),
+"CourseHours" = "def_course_hours" (40),
+"ClassTime" = "def_class_time" (2),
+"rate" = "def_rate" (520"),
+"ccp" = "def_ccp" (120),
+"travel" = "def_travel" (200),
+"bonus" = "def_bonus" (1000)
