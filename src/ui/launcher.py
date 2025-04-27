@@ -15,8 +15,8 @@ class Launcher(tk.Toplevel):
         super().__init__(root)
         self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("450x500")
-        self.center_window(450,500)
+        self.geometry("450x400")
+        self.center_window(450,400)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
 
@@ -74,7 +74,7 @@ class Launcher(tk.Toplevel):
 
         # Set column widths
         self.tree.column("Class No", width=150, anchor="center")
-        self.tree.column("Company", width=200, anchor="center")
+        self.tree.column("Company", width=150, anchor="center")
         self.tree.column("Archived", width=100, anchor="center")
 
         # Apply custom font and padding to rows and headings
@@ -82,11 +82,7 @@ class Launcher(tk.Toplevel):
         style.configure("Treeview.Heading", font=("Arial", 18, "bold"), padding=(0, 5))  # Header font and padding
         style.configure("Treeview", font=("Arial", 16), rowheight=30)  # Row font and height
 
-        # Calculate the total height of the table
-        total_table_height = 30 * 8  # rowheight * number_of_rows
-        table_frame.config(height=total_table_height)
-
-        self.tree.pack(side=tk.LEFT, fill=tk.Y)  # Adjust to fit the calculated height
+        self.tree.pack(side=tk.LEFT, fill=tk.Y)
         scrollbar.config(command=self.tree.yview)
 
         # Bind double-click event to open the Mainform
@@ -99,14 +95,18 @@ class Launcher(tk.Toplevel):
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        # Arrange buttons (example layout)
-        btn_open = tk.Button(button_frame, text="Open", command=self.open_class, width=15)
-        btn_edit = tk.Button(button_frame, text="Edit", command=self.edit_class, width=15)
-        btn_add = tk.Button(button_frame, text="Add New Class", command=self.add_new_class, width=15)
-        btn_archive = tk.Button(button_frame, text="Archive", command=self.archive_class, width=15)
-        btn_archive_manager = tk.Button(button_frame, text="Archive Manager", command=self.open_archive_manager, width=15)
-        btn_ttr = tk.Button(button_frame, text="TTR", command=self.placeholder_ttr, width=15)
-        btn_settings = tk.Button(button_frame, text="Settings", command=self.open_settings, width=15)
+        # Center the buttons
+        buttons_inner_frame = tk.Frame(button_frame, bg=self["bg"])
+        buttons_inner_frame.pack(anchor="center")
+
+        # Arrange buttons with fixed width
+        btn_open = tk.Button(buttons_inner_frame, text="Open", command=self.open_class, width=10)
+        btn_edit = tk.Button(buttons_inner_frame, text="Edit", command=self.edit_class, width=10)
+        btn_add = tk.Button(buttons_inner_frame, text="Add Class", command=self.add_new_class, width=10)
+        btn_archive = tk.Button(buttons_inner_frame, text="Archive", command=self.archive_class, width=10)
+        btn_archive_manager = tk.Button(buttons_inner_frame, text="Arch Mger", command=self.open_archive_manager, width=10)
+        btn_ttr = tk.Button(buttons_inner_frame, text="TTR", command=self.placeholder_ttr, width=10)
+        btn_settings = tk.Button(buttons_inner_frame, text="Settings", command=self.open_settings, width=10)
 
         # Use grid layout for two rows
         btn_open.grid(row=0, column=0, padx=5, pady=5)
