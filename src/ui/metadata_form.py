@@ -10,8 +10,8 @@ class MetadataForm(tk.Toplevel):
         self.data = data
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.title("Add / Edit Class Information")
-        self.geometry("650x550")
-        self.center_window(650, 550)
+        self.geometry("500x600") #  width x height
+        self.center_window(500, 600)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make MetadataForm always on top
 
@@ -70,16 +70,17 @@ class MetadataForm(tk.Toplevel):
 
             if key == "class_no":
                 # Debugging: Print the value being inserted into the Class No field
-                class_no_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
+                class_no_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get("class_no", self.class_id)
                 print(f"Populating Class No field: {class_no_value}")  # Debugging
 
                 if self.is_edit:
                     # Create a read-only Entry widget for editing
-                    self.class_no_entry = tk.Entry(self, width=30, state="readonly", fg="black", font=("Arial", 12))
+                    self.class_no_entry = tk.Entry(self, width=30, fg="black", font=("Arial", 12))
                     self.class_no_entry.configure(readonlybackground="yellow")
                     self.class_no_entry.grid(row=i + 1, column=1, padx=10, pady=5)  # Place the widget first
                     self.class_no_entry.delete(0, tk.END)  # Clear the field before inserting
                     self.class_no_entry.insert(0, class_no_value)  # Insert the value into the field
+                    self.class_no_entry.configure(state="readonly")  # Set to readonly after inserting
                     print(f"Class No Entry widget value after insert: {self.class_no_entry.get()}")  # Debugging
                 else:
                     # Create a normal Entry widget for new classes
