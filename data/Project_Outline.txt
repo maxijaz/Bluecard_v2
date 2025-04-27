@@ -458,11 +458,12 @@ Active [     Yes    ]   [     No     ]    →   Toggle switch between male/femal
 File Location: /data/default.json  
 Field Mapping: Launcher -> Settings to Launcher -> Add Class (metadata)
 
-"Teacher" = "def_teacher" (Paul R),
-"TeacherNo" = "def_teacher_no" (A20049),
+metadata      = default.json
+"Teacher"     = "def_teacher" (Paul R),
+"TeacherNo"   = "def_teacher_no" (A20049),
 "CourseHours" = "def_course_hours" (40),
-"ClassTime" = "def_class_time" (2),
-"rate" = "def_rate" (520"),
-"ccp" = "def_ccp" (120),
-"travel" = "def_travel" (200),
-"bonus" = "def_bonus" (1000)
+"ClassTime"   = "def_class_time" (2),
+"rate"        = "def_rate" (520"),
+"ccp"         = "def_ccp" (120),
+"travel"      = "def_travel" (200),
+"bonus"       = "def_bonus" (1000)
