@@ -9,7 +9,6 @@ import os
 import shutil
 from datetime import datetime
 import sys
-print(sys.path)
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):

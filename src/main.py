@@ -23,12 +23,9 @@ from ui.launcher import Launcher
 
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-print("sys.path:", sys.path)
 
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
-
-print("sys.path:", sys.path)
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -43,14 +40,12 @@ def load_theme():
 
 def on_close():
     """Handles cleanup and backup on app close."""
-    print("Auto backing up 001attendance_data.JSON to /data/backup")
     parser.backup_data()
     sys.exit(0)
 
 def start_launcher():
     """Start the Launcher form."""
     theme = load_theme()
-    print(f"Launching Bluecard_v2 with theme: {theme}")
     root = tk.Tk()
     root.withdraw()  # Hide the root window
     launcher = Launcher(root, theme)
@@ -65,8 +60,3 @@ if __name__ == "__main__":
         start_launcher()
     finally:
         on_close()
-
-print("sys.path:", sys.path)
-
-import sys
-print("sys.path:", sys.path)
