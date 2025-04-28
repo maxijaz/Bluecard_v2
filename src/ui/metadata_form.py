@@ -83,14 +83,28 @@ class MetadataForm(tk.Toplevel):
 
             # Pre-fill with default value if in Add Class mode
             if not self.is_edit:
-                default_value = self.default_values.get(f"def_{key.lower()}", "")
-                # Treat "" as a valid default and avoid logging warnings
+                # Normalize key to lowercase to match default.json keys
+                default_key = f"def_{key.lower()}"
+                default_value = self.default_values.get(default_key, f"[Missing default for {key}]")
+                if default_key not in self.default_values:
+                    logging.warning(f"Default value for {key} is missing in default.json")
+                logging.debug(f"Default value for {key}: {default_value}")
                 entry.insert(0, default_value)
             else:
                 existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
                 entry.insert(0, existing_value)
 
             self.entries[key] = entry
+
+        # Add Save and Cancel buttons
+        button_frame = tk.Frame(self, bg="white")
+        button_frame.grid(row=len(fields) // 2 + 1, column=0, columnspan=4, pady=10)
+
+        save_button = tk.Button(button_frame, text="Save", font=("Arial", 12, "bold"), bg="green", fg="white", command=self.save_metadata)
+        save_button.pack(side="left", padx=10)
+
+        cancel_button = tk.Button(button_frame, text="Cancel", font=("Arial", 12, "bold"), bg="red", fg="white", command=self.close_form)
+        cancel_button.pack(side="left", padx=10)
 
     def save_metadata(self):
         """Save metadata for the class."""
