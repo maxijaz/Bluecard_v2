@@ -119,11 +119,14 @@ class MetadataForm(tk.Toplevel):
         # Collect metadata
         metadata = {key: entry.get().strip() for key, entry in self.entries.items()}
 
+        # Ensure 'classes' key exists in self.data
+        if "classes" not in self.data:
+            self.data["classes"] = {}
+
         # Save metadata
         if self.class_id is None:
-            # Generate a new class ID if adding a new class
-            self.class_id = f"OLO{len(self.data.get('classes', {})) + 1:03}"
-            self.data["classes"][self.class_id] = {"metadata": metadata, "students": {}, "archive": "No"}
+            # Add a new class with the collected metadata
+            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
         else:
             # Update existing class metadata
             self.data["classes"][self.class_id]["metadata"] = metadata
@@ -133,5 +136,20 @@ class MetadataForm(tk.Toplevel):
         self.destroy()  # Close the form
 
     def close_form(self):
-        """Close the form."""
-        self.destroy()
+        """Close the form and save defaults if adding a new class."""
+        if self.class_id is None:
+            # Ensure 'classes' key exists in self.data
+            if "classes" not in self.data:
+                self.data["classes"] = {}
+
+            # Collect metadata with default values
+            metadata = {key: entry.get().strip() for key, entry in self.entries.items()}
+
+            # Add the new class to the data
+            class_no = metadata.get("class_no", f"OLO{len(self.data['classes']) + 1:03}")
+            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+
+            save_data(self.data)  # Save to file
+            self.on_metadata_save()  # Refresh Launcher
+
+        self.destroy()  # Close the form

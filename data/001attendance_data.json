@@ -62,7 +62,8 @@
         },
         "OLO124": {
             "metadata": {
-                "Company": "ACERs",
+                "class_no": "OLO124",
+                "Company": "ABC",
                 "Consultant": "Fraser",
                 "Teacher": "Paul R",
                 "TeacherNo": "A20049",
@@ -76,7 +77,6 @@
                 "Days": "Monday, Wednesday",
                 "Time": "10:00 - 12:00",
                 "Notes": "Bring Projector and screen",
-                "class_no": "OLO124",
                 "rate": "530",
                 "ccp": "120",
                 "travel": "200",
