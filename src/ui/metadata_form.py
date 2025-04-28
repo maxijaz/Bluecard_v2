@@ -109,50 +109,47 @@ class MetadataForm(tk.Toplevel):
     def save_metadata(self):
         """Save metadata for the class."""
         logging.debug("Saving metadata...")
-        metadata = {}
-        for key, entry in self.entries.items():
-            value = entry.get().strip()
-            if not value:  # If the field is empty, use the default value
-                value = self.default_values.get(f"def_{key.lower()}", "")
-            metadata[key] = value
-            logging.debug(f"Metadata field {key}: {value}")
+        class_no = self.entries["class_no"].get().strip()
 
-        # Validate mandatory fields
-        class_no = metadata.get("class_no", "").strip()
-        company = metadata.get("Company", "").strip()
+        # Disable the Save button to prevent multiple clicks
+        for widget in self.winfo_children():
+            if isinstance(widget, tk.Button) and widget.cget("text") == "Save":
+                widget.config(state="disabled")
 
-        if not class_no or not company:
-            # Highlight mandatory fields in yellow if empty
-            if not class_no:
-                self.entries["class_no"].config(bg="yellow")
-            if not company:
-                self.entries["Company"].config(bg="yellow")
+        # Check if ClassID already exists
+        if class_no in self.data.get("classes", {}) and not self.is_edit:
+            # Show error message as topmost and centered
+            error_window = tk.Toplevel(self)
+            error_window.title("Error")
+            error_window.geometry("300x100")
+            error_window.attributes("-topmost", True)
 
-            # Show error message
-            messagebox.showerror("Validation Error", "Class No and Company are mandatory fields.", parent=self)
+            # Center the error window
+            error_window.update_idletasks()
+            screen_width = error_window.winfo_screenwidth()
+            screen_height = error_window.winfo_screenheight()
+            x = (screen_width - error_window.winfo_width()) // 2
+            y = (screen_height - error_window.winfo_height()) // 2
+            error_window.geometry(f"300x100+{x}+{y}")
+
+            tk.Label(error_window, text=f"ClassID '{class_no}' already exists.\nPlease use a unique ClassID.", font=("Arial", 10), fg="red").pack(pady=10)
+            tk.Button(error_window, text="OK", command=error_window.destroy, font=("Arial", 10, "bold")).pack(pady=5)
+            logging.warning(f"Attempted to save duplicate ClassID: {class_no}")
             return
 
-        # Reset background color for mandatory fields
-        self.entries["class_no"].config(bg="white")
-        self.entries["Company"].config(bg="white")
+        metadata = {}
+        for key, entry in self.entries.items():
+            metadata[key] = entry.get().strip()
 
-        # Ensure 'classes' key exists in self.data
-        if "classes" not in self.data:
-            self.data["classes"] = {}
-
-        # Save metadata
-        if self.class_id is None:
-            # Add a new class with the collected metadata
+        # Save the metadata
+        if not self.is_edit:
             self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
-            logging.debug(f"New class added: {class_no}")
         else:
-            # Update existing class metadata
             self.data["classes"][self.class_id]["metadata"] = metadata
-            logging.debug(f"Class {self.class_id} updated.")
 
-        save_data(self.data)  # Save to file
-        self.on_metadata_save()  # Refresh Launcher
-        self.destroy()  # Close the form
+        logging.debug(f"New class added: {class_no}")
+        self.on_metadata_save()
+        self.destroy()
 
     def close_form(self):
         """Close the form and save defaults if adding a new class."""
