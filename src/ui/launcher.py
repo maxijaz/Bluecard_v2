@@ -173,7 +173,6 @@ class Launcher(tk.Toplevel):
 
     def add_new_class(self):
         """Open the MetadataForm to add a new class."""
-        print("Passing default settings to Add Class:", self.default_settings)  # Debugging
         MetadataForm(self, None, self.default_settings, self.theme, self.refresh).mainloop()
 
     def archive_class(self):

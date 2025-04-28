@@ -25,16 +25,22 @@ List of sections / forms:
                 "Company": "ACERs",
                 "Consultant": "Fraser",
                 "Teacher": "Paul R",
+                "TeacherNo": "A20049",
                 "Room": "Floor 23",
                 "CourseBook": "IEX",
-                "MaxClasses": 10,
-                "CourseHours": 40,
-                "ClassTime": 2,
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "10",
                 "StartDate": "01/05/2025",
                 "FinishDate": "15/06/2025",
                 "Days": "Tuesday, Thursday",
                 "Time": "17:00 - 19:00",
-                "Notes": "Bring Projector and screen"
+                "Notes": "Bring Projector and screen",
+                "class_no": "OLO123",
+                "rate": "530",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
             },
             "students": {
                 "S001": {
@@ -61,7 +67,7 @@ List of sections / forms:
                     "score": "55% - B",
                     "pre_test": "50%",
                     "post_test": "75%",
-                    "active": "No",
+                    "active": "Yes",
                     "note": "Likes conversations and grammar",
                     "attendance": {
                         "01/05/2025": "L",
@@ -69,60 +75,6 @@ List of sections / forms:
                         "08/05/2025": "P",
                         "13/05/2025": "A",
                         "15/05/2025": "P"
-                    }
-                }
-            },
-            "archive": "No"
-        },
-        "OLO124": {
-            "metadata": {
-                "Company": "BCErs",
-                "Consultant": "Fraser",
-                "Teacher": "Paul R",
-                "Room": "Floor 24",
-                "CourseBook": "IEX",
-                "MaxClasses": 10,
-                "CourseHours": 40,
-                "ClassTime": 2,
-                "StartDate": "02/05/2025",
-                "FinishDate": "16/06/2025",
-                "Days": "Monday, Wednesday",
-                "Time": "14:00 - 16:00",
-                "Notes": "Class prefers group activities"
-            },
-            "students": {
-                "S003": {
-                    "name": "David Tran",
-                    "gender": "Male",
-                    "nickname": "D",
-                    "score": "68% - B",
-                    "pre_test": "60%",
-                    "post_test": "75%",
-                    "active": "Yes",
-                    "note": "Asks good questions, prefers group work",
-                    "attendance": {
-                        "02/05/2025": "P",
-                        "07/05/2025": "P",
-                        "09/05/2025": "L",
-                        "14/05/2025": "A",
-                        "16/05/2025": "P"
-                    }
-                },
-                "S004": {
-                    "name": "Emma Zhou",
-                    "gender": "Female",
-                    "nickname": "Em",
-                    "score": "90% - A",
-                    "pre_test": "85%",
-                    "post_test": "95%",
-                    "active": "Yes",
-                    "note": "Highly motivated and organized",
-                    "attendance": {
-                        "02/05/2025": "P",
-                        "07/05/2025": "P",
-                        "09/05/2025": "P",
-                        "14/05/2025": "P",
-                        "16/05/2025": "P"
                     }
                 }
             },

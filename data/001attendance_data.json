@@ -119,6 +119,31 @@
                 }
             },
             "archive": "No"
+        },
+        "OLO125": {
+            "metadata": {
+                "class_no": "OLO125",
+                "Company": "Comon",
+                "Consultant": "",
+                "Teacher": "",
+                "TeacherNo": "",
+                "Room": "",
+                "CourseBook": "",
+                "CourseHours": "",
+                "ClassTime": "",
+                "MaxClasses": "",
+                "StartDate": "",
+                "FinishDate": "",
+                "Days": "",
+                "Time": "",
+                "Notes": "",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
+            },
+            "students": {},
+            "archive": "No"
         }
     }
 }
