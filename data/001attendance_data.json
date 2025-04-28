@@ -144,6 +144,31 @@
             },
             "students": {},
             "archive": "No"
+        },
+        "OLO126": {
+            "metadata": {
+                "class_no": "OLO126",
+                "Company": "Paul",
+                "Consultant": "",
+                "Teacher": "",
+                "TeacherNo": "",
+                "Room": "",
+                "CourseBook": "",
+                "CourseHours": "",
+                "ClassTime": "",
+                "MaxClasses": "",
+                "StartDate": "",
+                "FinishDate": "",
+                "Days": "",
+                "Time": "",
+                "Notes": "",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
+            },
+            "students": {},
+            "archive": "No"
         }
     }
 }

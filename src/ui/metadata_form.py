@@ -82,7 +82,9 @@ class MetadataForm(tk.Toplevel):
 
             # Pre-fill with default value if in Add Class mode
             if not self.is_edit:
-                entry.insert(0, self.default_values.get(f"def_{key}", ""))
+                # Map default.json keys (e.g., def_rate -> rate)
+                default_value = self.default_values.get(f"def_{key}", "")
+                entry.insert(0, default_value)
             else:
                 # Pre-fill with existing metadata if in Edit Class mode
                 entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
