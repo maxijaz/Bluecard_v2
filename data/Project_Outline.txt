@@ -1,4 +1,4 @@
-Project Bluecard STR outline, wants and needs.
+Project Bluecard STR outline, wants and needs. Version 1.1
 This is an app to manage the work life of an esl Teacher (Me - Teacher Paul) and maybe a few friends.
 A local database, with everything held locally, but portable (once complete) as an .exe for friends to install and use.
 
