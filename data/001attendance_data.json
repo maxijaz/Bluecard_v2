@@ -59,6 +59,66 @@
                 }
             },
             "archive": "No"
+        },
+        "OLO124": {
+            "metadata": {
+                "Company": "ACERs",
+                "Consultant": "Fraser",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "Floor 24",
+                "CourseBook": "IEX",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "10",
+                "StartDate": "02/05/2025",
+                "FinishDate": "16/06/2025",
+                "Days": "Monday, Wednesday",
+                "Time": "10:00 - 12:00",
+                "Notes": "Bring Projector and screen",
+                "class_no": "OLO124",
+                "rate": "530",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
+            },
+            "students": {
+                "S003": {
+                    "name": "Clara Nguyen",
+                    "gender": "Female",
+                    "nickname": "Claire",
+                    "score": "78% - B",
+                    "pre_test": "65%",
+                    "post_test": "85%",
+                    "active": "Yes",
+                    "note": "Always on time, great at group work",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "04/05/2025": "P",
+                        "09/05/2025": "P",
+                        "11/05/2025": "P",
+                        "13/05/2025": "P"
+                    }
+                },
+                "S004": {
+                    "name": "David Kim",
+                    "gender": "Male",
+                    "nickname": "Dave",
+                    "score": "65% - C",
+                    "pre_test": "60%",
+                    "post_test": "70%",
+                    "active": "Yes",
+                    "note": "Shy but attentive, needs more participation",
+                    "attendance": {
+                        "02/05/2025": "P",
+                        "04/05/2025": "A",
+                        "09/05/2025": "P",
+                        "11/05/2025": "A",
+                        "13/05/2025": "P"
+                    }
+                }
+            },
+            "archive": "No"
         }
     }
 }
