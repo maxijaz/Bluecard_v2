@@ -84,26 +84,13 @@ class MetadataForm(tk.Toplevel):
             # Pre-fill with default value if in Add Class mode
             if not self.is_edit:
                 default_value = self.default_values.get(f"def_{key.lower()}", "")
-                if not default_value:
-                    logging.warning(f"Missing default value for field: {key}")
+                # Treat "" as a valid default and avoid logging warnings
                 entry.insert(0, default_value)
             else:
                 existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
                 entry.insert(0, existing_value)
 
             self.entries[key] = entry
-
-        # Add mandatory message at the bottom
-        tk.Label(self, text="      * = Mandatory (OLOxxx and Company)", font=("Arial", 10), fg="black", anchor="w").grid(
-            row=(len(fields) + 1) // 2, column=0, columnspan=4, sticky="w", padx=10, pady=(10, 5)
-        )
-
-        # Buttons
-        button_frame = tk.Frame(self, bg="white")
-        button_frame.grid(row=(len(fields) + 2) // 2, column=0, columnspan=4, pady=20)
-
-        tk.Button(button_frame, text="Save", command=self.save_metadata, width=10).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
 
     def save_metadata(self):
         """Save metadata for the class."""
@@ -113,8 +100,6 @@ class MetadataForm(tk.Toplevel):
             value = entry.get().strip()
             if not value:  # If the field is empty, use the default value
                 value = self.default_values.get(f"def_{key.lower()}", "")
-                if not value:
-                    logging.warning(f"Missing default value for field: {key}")
             metadata[key] = value
             logging.debug(f"Metadata field {key}: {value}")
 
