@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from src.logic.parser import save_data
+import logging
 
 class MetadataForm(tk.Toplevel):
     def __init__(self, parent, class_id, default_values, theme, on_metadata_save):
@@ -82,12 +83,13 @@ class MetadataForm(tk.Toplevel):
 
             # Pre-fill with default value if in Add Class mode
             if not self.is_edit:
-                # Map default.json keys (e.g., def_rate -> rate)
-                default_value = self.default_values.get(f"def_{key}", "")
+                default_value = self.default_values.get(f"def_{key.lower()}", "")
+                if not default_value:
+                    logging.warning(f"Missing default value for field: {key}")
                 entry.insert(0, default_value)
             else:
-                # Pre-fill with existing metadata if in Edit Class mode
-                entry.insert(0, self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, ""))
+                existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
+                entry.insert(0, existing_value)
 
             self.entries[key] = entry
 
@@ -105,9 +107,20 @@ class MetadataForm(tk.Toplevel):
 
     def save_metadata(self):
         """Save metadata for the class."""
+        logging.debug("Saving metadata...")
+        metadata = {}
+        for key, entry in self.entries.items():
+            value = entry.get().strip()
+            if not value:  # If the field is empty, use the default value
+                value = self.default_values.get(f"def_{key.lower()}", "")
+                if not value:
+                    logging.warning(f"Missing default value for field: {key}")
+            metadata[key] = value
+            logging.debug(f"Metadata field {key}: {value}")
+
         # Validate mandatory fields
-        class_no = self.entries["class_no"].get().strip()
-        company = self.entries["Company"].get().strip()
+        class_no = metadata.get("class_no", "").strip()
+        company = metadata.get("Company", "").strip()
 
         if not class_no or not company:
             # Highlight mandatory fields in yellow if empty
@@ -124,9 +137,6 @@ class MetadataForm(tk.Toplevel):
         self.entries["class_no"].config(bg="white")
         self.entries["Company"].config(bg="white")
 
-        # Collect metadata
-        metadata = {key: entry.get().strip() for key, entry in self.entries.items()}
-
         # Ensure 'classes' key exists in self.data
         if "classes" not in self.data:
             self.data["classes"] = {}
@@ -135,9 +145,11 @@ class MetadataForm(tk.Toplevel):
         if self.class_id is None:
             # Add a new class with the collected metadata
             self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+            logging.debug(f"New class added: {class_no}")
         else:
             # Update existing class metadata
             self.data["classes"][self.class_id]["metadata"] = metadata
+            logging.debug(f"Class {self.class_id} updated.")
 
         save_data(self.data)  # Save to file
         self.on_metadata_save()  # Refresh Launcher
