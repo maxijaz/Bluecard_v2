@@ -225,6 +225,64 @@ class Mainform(tk.Toplevel):
         self.destroy()  # Close the Mainform
         Launcher(self.master, self.theme).mainloop()  # Reopen the Launcher
 
+    def open_add_edit_student_form(self, student_data=None):
+        """Open a form to add or edit a student."""
+        form = tk.Toplevel(self)
+        form.title("Add/Edit Student")
+        form.geometry("400x300")
+        form.configure(bg=self["bg"])
+
+        # Name Field
+        tk.Label(form, text="Name:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=0, column=0, sticky="e", padx=10, pady=10)
+        name_var = tk.StringVar(value=student_data.get("Name", "") if student_data else "")
+        name_entry = tk.Entry(form, textvariable=name_var, font=("Arial", 12), width=15)
+        name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        # Other Fields (Example: Nickname)
+        tk.Label(form, text="Nickname:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=1, column=0, sticky="e", padx=10, pady=10)
+        nickname_var = tk.StringVar(value=student_data.get("Nickname", "") if student_data else "")
+        nickname_entry = tk.Entry(form, textvariable=nickname_var, font=("Arial", 12), width=15)
+        nickname_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Save Button
+        save_button = tk.Button(
+            form,
+            text="Save",
+            command=lambda: self.save_student(form, name_var, nickname_var),
+            bg="green",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=10
+        )
+        save_button.grid(row=2, column=0, padx=10, pady=20)
+
+        # Cancel Button
+        cancel_button = tk.Button(
+            form,
+            text="Cancel",
+            command=form.destroy,
+            bg="red",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=10
+        )
+        cancel_button.grid(row=2, column=1, padx=10, pady=20)
+
+    def save_student(self, form, name_var, nickname_var):
+        """Save the student data."""
+        name = name_var.get().title()  # Capitalize each word in the name
+        nickname = nickname_var.get()
+
+        # Save the data (example logic)
+        new_student = {
+            "Name": name,
+            "Nickname": nickname,
+        }
+        # Add logic to save `new_student` to the data source
+        print(f"Saved student: {new_student}")
+
+        form.destroy()  # Close the form
+
 if __name__ == "__main__":
     # Example usage
     data = load_data()

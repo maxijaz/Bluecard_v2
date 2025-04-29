@@ -14,8 +14,8 @@ class Launcher(tk.Toplevel):
         super().__init__(root)
         self.theme = theme
         self.title("Bluecard Launcher")
-        self.geometry("450x400")
-        self.center_window(450, 400)
+        self.geometry("450x450")
+        self.center_window(450, 450)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
 
