@@ -85,17 +85,17 @@
             "students": {},
             "archive": "No"
         },
-        "OLO222": {
+        "OLO001": {
             "metadata": {
-                "class_no": "OLO222",
+                "class_no": "OLO001",
                 "Company": "Default Company",
                 "Consultant": "Default Consultant",
                 "Teacher": "Paul R",
-                "TeacherNo": "",
+                "TeacherNo": "A20049",
                 "Room": "Default Room",
                 "CourseBook": "Default CourseBook",
-                "CourseHours": "",
-                "ClassTime": "",
+                "CourseHours": "40",
+                "ClassTime": "2",
                 "MaxClasses": "10",
                 "StartDate": "01/01/2025",
                 "FinishDate": "31/12/2025",
@@ -110,9 +110,9 @@
             "students": {},
             "archive": "No"
         },
-        "OLO001": {
+        "OLO002": {
             "metadata": {
-                "class_no": "OLO001",
+                "class_no": "OLO002",
                 "Company": "Default Company",
                 "Consultant": "Default Consultant",
                 "Teacher": "Paul R",
