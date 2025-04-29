@@ -131,6 +131,9 @@ class Launcher(tk.Toplevel):
 
     def create_widgets(self):
         """Create the table and buttons."""
+        # Apply Treeview styles before creating the widget
+        self.apply_treeview_styles()
+
         # Frame for the table and scrollbar
         table_frame = tk.Frame(self)
         table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -148,20 +151,17 @@ class Launcher(tk.Toplevel):
             yscrollcommand=scrollbar.set,
             style="Treeview"
         )
-        self.tree.heading("Class No", text="Class No", anchor="center")
-        self.tree.heading("Company", text="Company", anchor="center")
-        self.tree.heading("Archived", text="Arch", anchor="center")
+        self.tree.heading("Class No", text="Class No", anchor="center")  # Center-align header
+        self.tree.heading("Company", text="Company", anchor="center")  # Center-align header
+        self.tree.heading("Archived", text="Arch", anchor="center")  # Center-align header
 
-        # Set column widths
-        self.tree.column("Class No", width=150, anchor="center")
-        self.tree.column("Company", width=150, anchor="center")
-        self.tree.column("Archived", width=100, anchor="center")
+        # Set column widths and justify data to the left
+        self.tree.column("Class No", width=130, anchor="w")  # Left-align data
+        self.tree.column("Company", width=200, anchor="w")  # Left-align data
+        self.tree.column("Archived", width=70, anchor="center")  # Center-align header
 
         self.tree.pack(side=tk.LEFT, fill=tk.Y)
         scrollbar.config(command=self.tree.yview)
-
-        # Bind double-click event to open the Mainform
-        self.tree.bind("<Double-1>", self.on_double_click)
 
         # Bind hover effect
         self.tree.bind("<Motion>", self.on_hover)
@@ -214,8 +214,15 @@ class Launcher(tk.Toplevel):
             self.tree.item(row_id, tags=("hover",))
 
     def populate_table(self):
-        """Populate the table with class data where archive = 'No'."""
-        for class_id, class_data in self.classes.items():
+        """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
+        # Extract and sort the data by the 'Company' field
+        sorted_classes = sorted(
+            self.classes.items(),
+            key=lambda item: item[1].get("metadata", {}).get("Company", "Unknown")
+        )
+
+        # Populate the Treeview with sorted data
+        for class_id, class_data in sorted_classes:
             metadata = class_data.get("metadata", {})
             if metadata.get("archive", "No") == "No":
                 company = metadata.get("Company", "Unknown")
