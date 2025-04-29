@@ -83,7 +83,7 @@ class Launcher(tk.Toplevel):
         background = treeview_config.get("background", "white")
         foreground = treeview_config.get("foreground", "black")
         fieldbackground = treeview_config.get("fieldbackground", "white")
-        rowheight = treeview_config.get("rowheight", 30)
+        rowheight = treeview_config.get("rowheight", 30) + 5  # Increase row height by 5
 
         # Configure Treeview styles
         style.configure(
@@ -99,7 +99,7 @@ class Launcher(tk.Toplevel):
         heading_config = treeview_config.get("heading", {})
         style.configure(
             "Treeview.Heading",
-            font=("Arial", 18, "bold"),  # Increase font size to 18
+            font=("Arial", 18, "bold"),
             background=heading_config.get("background", "lightblue"),
             foreground=heading_config.get("foreground", "black")
         )
@@ -166,6 +166,9 @@ class Launcher(tk.Toplevel):
         # Bind hover effect
         self.tree.bind("<Motion>", self.on_hover)
 
+        # Bind double-click event
+        self.tree.bind("<Double-1>", self.on_double_click)
+
         # Populate table
         self.populate_table()
 
@@ -196,11 +199,21 @@ class Launcher(tk.Toplevel):
         btn_settings.grid(row=1, column=3, padx=5, pady=5)
 
     def on_double_click(self, event):
-        """Handle double-click on a table row to open the Mainform."""
+        """Handle double-click on a table row to highlight and open the Mainform."""
         selected_item = self.tree.selection()
         if not selected_item:
             return  # Do nothing if no row is selected
-        self.open_class()
+
+        # Highlight the selected row in blue
+        self.tree.tag_configure("selected", background="#1E90FF", foreground="white")  # Blue for selected row
+        for row in self.tree.get_children():
+            self.tree.item(row, tags=())  # Reset tags for all rows
+        self.tree.item(selected_item, tags=("selected",))
+
+        # Open the Mainform with the selected data
+        class_id = self.tree.item(selected_item, "values")[0]
+        self.destroy()  # Close the Launcher
+        Mainform(self.master, class_id, self.data, self.theme).mainloop()  # Open the Mainform
 
     def on_hover(self, event):
         """Handle hover effect for Treeview rows."""

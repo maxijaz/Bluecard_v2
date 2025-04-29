@@ -40,12 +40,12 @@ class Mainform(tk.Toplevel):
     def create_widgets(self):
         """Create the layout and fields for the Mainform."""
         # Header Section
-        header_label = tk.Label(self, text="Class Information - MainForm", font=("Arial", 24, "bold"), bg=self["bg"])
-        header_label.pack(pady=10)
+        header_label = tk.Label(self, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
+        header_label.pack(pady=1)
 
         # Main Layout Frame
         layout_frame = tk.Frame(self, bg=self["bg"])
-        layout_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        layout_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=1)
 
         # Column 1 and Column 2: Metadata (Labels and Data)
         metadata_fields = [
@@ -56,8 +56,8 @@ class Mainform(tk.Toplevel):
             ("CourseBook:", self.metadata.get("CourseBook", "")),
         ]
         for i, (label_text, value) in enumerate(metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=0, sticky="e", padx=5, pady=2)
-            tk.Label(layout_frame, text=value, font=("Arial", 12), bg=self["bg"], anchor="center").grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=0, sticky="e", padx=1, pady=1)
+            tk.Label(layout_frame, text=value, font=("Arial", 10), bg=self["bg"], anchor="center", width=25).grid(row=i, column=1, sticky="w", padx=1, pady=1)
 
         # Column 3 and Column 4: Additional Metadata (Labels and Data)
         additional_metadata_fields = [
@@ -71,11 +71,11 @@ class Mainform(tk.Toplevel):
             ("Notes:", self.metadata.get("Notes", "")),
         ]
         for i, (label_text, value) in enumerate(additional_metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=2, sticky="e", padx=5, pady=2)
-            tk.Label(layout_frame, text=value, font=("Arial", 12), bg=self["bg"], anchor="center").grid(row=i, column=3, sticky="w", padx=5, pady=2)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=2, sticky="e", padx=1, pady=1)
+            tk.Label(layout_frame, text=value, font=("Arial", 10), bg=self["bg"], anchor="center", width=25).grid(row=i, column=3, sticky="w", padx=1, pady=1)
 
         # Column 5: Blank
-        tk.Label(layout_frame, text="oo", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
+        tk.Label(layout_frame, text="00000", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
 
         # Column 6: Buttons
         buttons_col_6 = [
@@ -85,7 +85,7 @@ class Mainform(tk.Toplevel):
             ("Manage Students", self.manage_students),
         ]
         for i, (text, command) in enumerate(buttons_col_6):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=5, padx=10, pady=5)
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=5, padx=10, pady=1)
 
         # Column 7: Buttons
         buttons_col_7 = [
@@ -95,7 +95,7 @@ class Mainform(tk.Toplevel):
             ("Unused 1", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_7):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=6, padx=10, pady=5)
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=6, padx=10, pady=1)
 
         # Column 8: Buttons
         buttons_col_8 = [
@@ -105,7 +105,7 @@ class Mainform(tk.Toplevel):
             ("Unused 5", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_8):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=7, padx=10, pady=5)
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=7, padx=10, pady=1)
 
         # Column 9: Buttons
         buttons_col_9 = [
@@ -115,7 +115,7 @@ class Mainform(tk.Toplevel):
             ("Unused 9", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_9):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=8, padx=10, pady=5)
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=8, padx=10, pady=1)
 
         # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
