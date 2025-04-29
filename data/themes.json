@@ -19,6 +19,24 @@
       "size_modifiers": {
         "small": 0.7,
         "large": 1.5
+      },
+      "treeview": {
+        "background": "white",
+        "foreground": "black",
+        "fieldbackground": "white",
+        "rowheight": 30,
+        "heading": {
+          "font": ["Arial", 12, "bold"],
+          "background": "lightblue",
+          "foreground": "black"
+        },
+        "selected": {
+          "background": "lightblue",
+          "foreground": "black"
+        },
+        "hover": {
+          "background": "#d0e7ff"
+        }
       }
     },
     {
@@ -40,6 +58,24 @@
       "size_modifiers": {
         "small": 0.7,
         "large": 1.5
+      },
+      "treeview": {
+        "background": "#2e2e2e",
+        "foreground": "white",
+        "fieldbackground": "#2e2e2e",
+        "rowheight": 30,
+        "heading": {
+          "font": ["Arial", 12, "bold"],
+          "background": "#4e4e4e",
+          "foreground": "white"
+        },
+        "selected": {
+          "background": "#4e4e4e",
+          "foreground": "white"
+        },
+        "hover": {
+          "background": "#5a5a5a"
+        }
       }
     },
     {

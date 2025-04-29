@@ -6,10 +6,8 @@ from src.ui.settings import SettingsForm
 from src.ui.archive_manager import ArchiveManager
 from src.ui.metadata_form import MetadataForm
 import os
-import shutil
-from datetime import datetime
-import sys
 import json
+import logging
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -20,6 +18,12 @@ class Launcher(tk.Toplevel):
         self.center_window(450, 400)
         self.resizable(False, False)
         self.attributes("-topmost", True)  # Make Launcher always on top
+
+        # Load theme configuration
+        self.theme_config = self.load_theme_config()
+
+        # Apply Treeview styles
+        self.apply_treeview_styles()
 
         # Load default settings
         self.default_settings = self.load_default_settings()
@@ -37,6 +41,25 @@ class Launcher(tk.Toplevel):
         # Handle close event
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
+    def load_theme_config(self):
+        """Load theme configuration from themes.json."""
+        try:
+            with open("data/themes.json", "r", encoding="utf-8") as f:
+                themes = json.load(f).get("themes", [])
+                # Find the theme by name in the list
+                for theme in themes:
+                    if theme.get("name") == self.theme:
+                        return theme
+                # Fallback to the default theme
+                for theme in themes:
+                    if theme.get("name") == "default":
+                        return theme
+                return {}  # Return an empty config if no theme is found
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError:
+            return {}
+
     def load_default_settings(self):
         """Load default settings from default.json."""
         try:
@@ -44,9 +67,50 @@ class Launcher(tk.Toplevel):
                 settings = json.load(f)
                 return settings
         except FileNotFoundError:
+            # Log a warning if the default.json file is missing
+            logging.warning("default.json not found. Using empty default settings.")
             return {}
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            # Log an error if the JSON file is invalid
+            logging.error(f"Error decoding default.json: {e}")
             return {}
+
+    def apply_treeview_styles(self):
+        """Apply styles for Treeview based on the selected theme."""
+        style = ttk.Style()
+
+        treeview_config = self.theme_config.get("treeview", {})
+        background = treeview_config.get("background", "white")
+        foreground = treeview_config.get("foreground", "black")
+        fieldbackground = treeview_config.get("fieldbackground", "white")
+        rowheight = treeview_config.get("rowheight", 30)
+
+        # Configure Treeview styles
+        style.configure(
+            "Treeview",
+            background=background,
+            foreground=foreground,
+            fieldbackground=fieldbackground,
+            rowheight=rowheight,
+            font=("Arial", 18)  # Increase font size to 18
+        )
+
+        # Configure heading styles
+        heading_config = treeview_config.get("heading", {})
+        style.configure(
+            "Treeview.Heading",
+            font=("Arial", 18, "bold"),  # Increase font size to 18
+            background=heading_config.get("background", "lightblue"),
+            foreground=heading_config.get("foreground", "black")
+        )
+
+        # Configure selected row styles
+        selected_config = treeview_config.get("selected", {})
+        style.map(
+            "Treeview",
+            background=[("selected", "#1E90FF")],  # Darker blue for selected row
+            foreground=[("selected", "white")]
+        )
 
     def configure_theme(self):
         """Apply the selected theme to the Launcher."""
@@ -81,7 +145,8 @@ class Launcher(tk.Toplevel):
             columns=("Class No", "Company", "Archived"),
             show="headings",
             height=8,  # Limit to 8 rows
-            yscrollcommand=scrollbar.set
+            yscrollcommand=scrollbar.set,
+            style="Treeview"
         )
         self.tree.heading("Class No", text="Class No", anchor="center")
         self.tree.heading("Company", text="Company", anchor="center")
@@ -92,16 +157,14 @@ class Launcher(tk.Toplevel):
         self.tree.column("Company", width=150, anchor="center")
         self.tree.column("Archived", width=100, anchor="center")
 
-        # Apply custom font and padding to rows and headings
-        style = ttk.Style(self)
-        style.configure("Treeview.Heading", font=("Arial", 18, "bold"), padding=(0, 5))  # Header font and padding
-        style.configure("Treeview", font=("Arial", 16), rowheight=30)  # Row font and height
-
         self.tree.pack(side=tk.LEFT, fill=tk.Y)
         scrollbar.config(command=self.tree.yview)
 
         # Bind double-click event to open the Mainform
         self.tree.bind("<Double-1>", self.on_double_click)
+
+        # Bind hover effect
+        self.tree.bind("<Motion>", self.on_hover)
 
         # Populate table
         self.populate_table()
@@ -138,6 +201,17 @@ class Launcher(tk.Toplevel):
         if not selected_item:
             return  # Do nothing if no row is selected
         self.open_class()
+
+    def on_hover(self, event):
+        """Handle hover effect for Treeview rows."""
+        row_id = self.tree.identify_row(event.y)
+        # Reset hover effect for all rows
+        for row in self.tree.get_children():
+            self.tree.item(row, tags=())
+        # Apply hover effect to the current row
+        if row_id:
+            self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
+            self.tree.item(row_id, tags=("hover",))
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No'."""
@@ -195,12 +269,15 @@ class Launcher(tk.Toplevel):
 
     def open_settings(self):
         """Open the settings window."""
-        SettingsForm(self, "data/default.json", self.refresh_launcher)
+        SettingsForm(self, self.theme, self.refresh_launcher)
 
-    def refresh_launcher(self):
+    def refresh_launcher(self, theme=None):
         """Refresh the launcher after settings are saved."""
-        self.theme = self.load_theme()  # Reload theme or other settings
-        self.configure_theme()
+        if theme:
+            self.theme = theme  # Update the theme if provided
+        self.theme_config = self.load_theme_config()  # Reload theme configuration
+        self.configure_theme()  # Apply the new theme
+        self.refresh()  # Refresh the UI components
 
     def refresh(self):
         """Refresh the Launcher."""

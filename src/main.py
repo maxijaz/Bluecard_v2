@@ -29,7 +29,10 @@ SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.WARNING,  # Set to WARNING to suppress DEBUG messages
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -69,5 +72,6 @@ if __name__ == "__main__":
         signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
-    finally:
-        on_close()
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+    # Remove the finally block to prevent premature exit
