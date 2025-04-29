@@ -56,8 +56,8 @@ class Mainform(tk.Toplevel):
             ("CourseBook:", self.metadata.get("CourseBook", "")),
         ]
         for i, (label_text, value) in enumerate(metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 14, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=0, sticky="e", padx=5, pady=2)
-            tk.Label(layout_frame, text=value, font=("Arial", 14), bg=self["bg"], anchor="center").grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=0, sticky="e", padx=5, pady=2)
+            tk.Label(layout_frame, text=value, font=("Arial", 12), bg=self["bg"], anchor="center").grid(row=i, column=1, sticky="w", padx=5, pady=2)
 
         # Column 3 and Column 4: Additional Metadata (Labels and Data)
         additional_metadata_fields = [
@@ -71,8 +71,8 @@ class Mainform(tk.Toplevel):
             ("Notes:", self.metadata.get("Notes", "")),
         ]
         for i, (label_text, value) in enumerate(additional_metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 14, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=2, sticky="e", padx=5, pady=2)
-            tk.Label(layout_frame, text=value, font=("Arial", 14), bg=self["bg"], anchor="center").grid(row=i, column=3, sticky="w", padx=5, pady=2)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=2, sticky="e", padx=5, pady=2)
+            tk.Label(layout_frame, text=value, font=("Arial", 12), bg=self["bg"], anchor="center").grid(row=i, column=3, sticky="w", padx=5, pady=2)
 
         # Column 5: Blank
         tk.Label(layout_frame, text="oo", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
