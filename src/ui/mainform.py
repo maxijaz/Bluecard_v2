@@ -40,8 +40,20 @@ class Mainform(tk.Toplevel):
     def create_widgets(self):
         """Create the layout and fields for the Mainform."""
         # Header Section
-        header_label = tk.Label(self, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
-        header_label.pack(pady=1)
+        header_frame = tk.Frame(self, bg=self["bg"])
+        header_frame.pack(fill=tk.X, padx=20, pady=5)
+
+        # Header Label (Centered)
+        header_label = tk.Label(header_frame, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
+        header_label.pack(side=tk.TOP, pady=2)
+
+        # Separator under the header label
+        separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
+        separator.pack(fill=tk.X, padx=20, pady=2)
+
+        # Header Columns (1-9)
+        header_columns_frame = tk.Frame(self, bg=self["bg"])
+        header_columns_frame.pack(fill=tk.X, padx=10, pady=5)
 
         # Main Layout Frame
         layout_frame = tk.Frame(self, bg=self["bg"])
