@@ -138,8 +138,8 @@ class StudentForm(tk.Toplevel):
             form,
             text="Save",
             command=lambda: self.save_student(form, name_var, nickname_var),
-            bg="green",
-            fg="white",
+            bg="green",  # Green background for Save
+            fg="white",  # White text
             font=("Arial", 12, "bold"),
             width=10
         )
@@ -150,8 +150,8 @@ class StudentForm(tk.Toplevel):
             form,
             text="Cancel",
             command=form.destroy,
-            bg="red",
-            fg="white",
+            bg="red",  # Red background for Cancel
+            fg="white",  # White text
             font=("Arial", 12, "bold"),
             width=10
         )
