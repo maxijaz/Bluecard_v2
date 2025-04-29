@@ -244,6 +244,55 @@ attendance = {
 | 4 | ...           |    ...     |   ...    |     -      |     -      |     -      |     -      |    -       |  -  |  -  |  -  |              |     -      |     -       |
 +---+---------------+------------+----------+------------+------------+------------+------------+------------+-----+-----+-----+--------------+------------+-------------+
 
+6. 9 x column layout (Font 14)
+
+Column 1: (label) + Column 2: (data)
+Company: (ACERs)
+Consultant: (Fraser)
+Teacher: (Paul R)
+Room: (Floor 23)
+CourseBook: (IEX)
+
+Column 3: (label) + Column 4: (data)
+CourseHours: (40)
+ClassTime: (2)
+MaxClasses: (10)
+StartDate: (01/05/2025)
+FinishDate: (01/07/2025)
+Days: (Tuesday, Thursday)
+Time: (17:00 - 19:00)
+Notes: (Bring Projector)
+
+Column 5:
+"Blank"
+
+Column 6:- Buttons
+[ Add Student ]
+[ Edit Student ]
+[ Remove Student ]
+[ Manage Students ]
+
+Column 7:
+[ Add Date ]
+[ Edit Date ]
+[ Metadata ]
+[ Unused 1]
+
+Column 8:
+[ Unused 2 ]
+[ Unused 3 ]
+[ Unused 4 ]
+[ Unused 5 ]
+
+Column 9:
+[ Unused 6 ]
+[ Unused 7 ]
+[ Unused 8 ]
+[ Unused 9 ]
+
+
+Column 1: Labels
+
 6. Mainform and Button format, sequence and logic:
 
 1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).

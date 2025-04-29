@@ -40,48 +40,84 @@ class Mainform(tk.Toplevel):
     def create_widgets(self):
         """Create the layout and fields for the Mainform."""
         # Header Section
-        header_frame = tk.Frame(self, bg=self["bg"])
-        header_frame.pack(fill=tk.X, padx=20, pady=10)
+        header_label = tk.Label(self, text="Class Information - MainForm", font=("Arial", 24, "bold"), bg=self["bg"])
+        header_label.pack(pady=10)
 
-        fields = [
+        # Main Layout Frame
+        layout_frame = tk.Frame(self, bg=self["bg"])
+        layout_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        # Column 1 and Column 2: Metadata (Labels and Data)
+        metadata_fields = [
             ("Company:", self.metadata.get("Company", "")),
             ("Consultant:", self.metadata.get("Consultant", "")),
             ("Teacher:", self.metadata.get("Teacher", "")),
             ("Room:", self.metadata.get("Room", "")),
-            ("Course Book:", self.metadata.get("CourseBook", "")),
-            ("Course Hours:", self.metadata.get("CourseHours", "")),
-            ("Class Time (hrs):", self.metadata.get("ClassTime", "")),
-            ("Max Classes:", self.metadata.get("MaxClasses", "")),
-            ("Start Date:", self.metadata.get("StartDate", "")),
-            ("Finish Date:", self.metadata.get("FinishDate", "")),
+            ("CourseBook:", self.metadata.get("CourseBook", "")),
+        ]
+        for i, (label_text, value) in enumerate(metadata_fields):
+            tk.Label(layout_frame, text=label_text, font=("Arial", 14, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=0, sticky="e", padx=5, pady=2)
+            tk.Label(layout_frame, text=value, font=("Arial", 14), bg=self["bg"], anchor="center").grid(row=i, column=1, sticky="w", padx=5, pady=2)
+
+        # Column 3 and Column 4: Additional Metadata (Labels and Data)
+        additional_metadata_fields = [
+            ("CourseHours:", self.metadata.get("CourseHours", "")),
+            ("ClassTime:", self.metadata.get("ClassTime", "")),
+            ("MaxClasses:", self.metadata.get("MaxClasses", "")),
+            ("StartDate:", self.metadata.get("StartDate", "")),
+            ("FinishDate:", self.metadata.get("FinishDate", "")),
             ("Days:", self.metadata.get("Days", "")),
             ("Time:", self.metadata.get("Time", "")),
             ("Notes:", self.metadata.get("Notes", "")),
         ]
+        for i, (label_text, value) in enumerate(additional_metadata_fields):
+            tk.Label(layout_frame, text=label_text, font=("Arial", 14, "bold"), bg=self["bg"], anchor="w").grid(row=i, column=2, sticky="e", padx=5, pady=2)
+            tk.Label(layout_frame, text=value, font=("Arial", 14), bg=self["bg"], anchor="center").grid(row=i, column=3, sticky="w", padx=5, pady=2)
 
-        for i, (label_text, value) in enumerate(fields):
-            tk.Label(header_frame, text=label_text, font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=i, column=0, sticky="e", padx=10, pady=5)
-            tk.Label(header_frame, text=value, font=("Arial", 12), bg=self["bg"]).grid(row=i, column=1, sticky="w", padx=10, pady=5)
+        # Column 5: Blank
+        tk.Label(layout_frame, text="oo", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
 
-        # Buttons Section
-        button_frame = tk.Frame(self, bg=self["bg"])
-        button_frame.pack(fill=tk.X, pady=10)
-
-        buttons = [
+        # Column 6: Buttons
+        buttons_col_6 = [
             ("Add Student", self.add_student),
             ("Edit Student", self.edit_student),
             ("Remove Student", self.remove_student),
             ("Manage Students", self.manage_students),
+        ]
+        for i, (text, command) in enumerate(buttons_col_6):
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=5, padx=10, pady=5)
+
+        # Column 7: Buttons
+        buttons_col_7 = [
             ("Add Date", self.placeholder),
             ("Edit Date", self.placeholder),
             ("Metadata", self.edit_metadata),
-            ("Settings", self.open_settings),
+            ("Unused 1", self.placeholder),
         ]
+        for i, (text, command) in enumerate(buttons_col_7):
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=6, padx=10, pady=5)
 
-        for i, (text, command) in enumerate(buttons):
-            tk.Button(button_frame, text=text, command=command, width=15).grid(row=i // 4, column=i % 4, padx=10, pady=5)
+        # Column 8: Buttons
+        buttons_col_8 = [
+            ("Unused 2", self.placeholder),
+            ("Unused 3", self.placeholder),
+            ("Unused 4", self.placeholder),
+            ("Unused 5", self.placeholder),
+        ]
+        for i, (text, command) in enumerate(buttons_col_8):
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=7, padx=10, pady=5)
 
-        # Attendance Table
+        # Column 9: Buttons
+        buttons_col_9 = [
+            ("Unused 6", self.placeholder),
+            ("Unused 7", self.placeholder),
+            ("Unused 8", self.placeholder),
+            ("Unused 9", self.placeholder),
+        ]
+        for i, (text, command) in enumerate(buttons_col_9):
+            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=8, padx=10, pady=5)
+
+        # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
         attendance_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
