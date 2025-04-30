@@ -204,19 +204,32 @@ class Mainform(tk.Toplevel):
                 present_count = sum(1 for v in attendance.values() if v == "P")
                 absent_count = sum(1 for v in attendance.values() if v == "A")
                 late_count = sum(1 for v in attendance.values() if v == "L")
-                self.tree.insert("", tk.END, values=(
-                    idx,
-                    student_data["name"],
-                    student_data["nickname"],
-                    student_data["score"],
-                    *attendance_values,
-                    present_count,
-                    absent_count,
-                    late_count,
-                    present_count,  # Total attendance
-                    student_data["pre_test"],
-                    student_data["post_test"],
-                ))
+
+                # Determine the tag for alternating row colors
+                row_tag = "odd" if idx % 2 != 0 else "even"
+
+                self.tree.insert(
+                    "",
+                    tk.END,
+                    values=(
+                        idx,
+                        student_data["name"],
+                        student_data["nickname"],
+                        student_data["score"],
+                        *attendance_values,
+                        present_count,
+                        absent_count,
+                        late_count,
+                        present_count,  # Total attendance
+                        student_data["pre_test"],
+                        student_data["post_test"],
+                    ),
+                    tags=(row_tag,)  # Assign the tag
+                )
+
+        # Configure styles for the tags with increased contrast
+        self.tree.tag_configure("odd", background="#e0e0e0")  # Darker gray for odd rows
+        self.tree.tag_configure("even", background="#ffffff")  # White for even rows
 
     def add_student(self):
         """Open the Add Student form."""

@@ -106,7 +106,7 @@ class StudentForm(tk.Toplevel):
         tk.Button(
             button_frame,
             text="Save",
-            command=self.save_student,
+            command=lambda: self.save_student(self.entries["name"], self.entries["nickname"]),
             bg=save_bg,
             fg=save_fg,
             font=("Arial", 12, "bold"),
@@ -124,26 +124,88 @@ class StudentForm(tk.Toplevel):
             width=10
         ).pack(side=tk.LEFT, padx=10)
 
-    def save_student(self):
-        """Save student information."""
-        if not self.entries["name"].get():
-            messagebox.showerror("Error", "Name is required.", parent=self)
-            return
+    def save_student(self, name_var, nickname_var):
+        """Save or update student information."""
+        try:
+            if not name_var.get():
+                messagebox.showerror("Error", "Name is required.", parent=self)
+                print("[DEBUG] Name field is empty. Cannot save student.")
+                return
 
-        student_data = {
-            "name": self.entries["name"].get(),
-            "nickname": self.entries["nickname"].get(),
-        }
+            # Prepare student data
+            student_data = {
+                "name": name_var.get(),
+                "nickname": nickname_var.get(),
+                "gender": self.entries["gender"].get(),
+                "score": self.entries["score"].get(),
+                "pre_test": self.entries["pre_test"].get(),
+                "post_test": self.entries["post_test"].get(),
+                "note": self.entries["note"].get(),
+                "active": self.entries["active"].get(),
+                "attendance": self.student_data.get("attendance", {})  # Preserve existing attendance
+            }
+            print(f"[DEBUG] Prepared student data: {student_data}")
 
-        if self.student_id:
-            self.students[self.student_id] = student_data
-        else:
-            new_id = f"S{len(self.students) + 1:03}"
-            self.students[new_id] = student_data
+            if self.student_id:
+                # Update existing student
+                self.students[self.student_id] = student_data
+                print(f"[DEBUG] Updated student ID: {self.student_id}")
+            else:
+                # Create a new student ID
+                new_id = f"S{len(self.students) + 1:03}"
+                self.students[new_id] = student_data
+                print(f"[DEBUG] Generated new student ID: {new_id}")
 
-        save_data(self.students)
-        self.refresh_callback()
-        self.close_form()
+            # Save to JSON file
+            self.save_to_json()
+
+            # Refresh the main form
+            self.refresh_callback()
+            print("[DEBUG] Mainform refreshed.")
+
+            # Clear the form fields for adding another student
+            if not self.student_id:  # Only clear fields if adding a new student
+                name_var.set("")
+                nickname_var.set("")
+                for key, widget in self.entries.items():
+                    if isinstance(widget, tk.StringVar):
+                        widget.set("")
+                    elif isinstance(widget, tk.Entry):
+                        widget.delete(0, tk.END)
+                print("[DEBUG] Form fields cleared for next student.")
+
+        except Exception as e:
+            print(f"[DEBUG] Error in save_student: {e}")
+            messagebox.showerror("Error", f"Failed to save student: {e}", parent=self)
+
+    def save_to_json(self):
+        """Save the updated students to the JSON file."""
+        try:
+            with open("c:/Temp/Bluecard_v2/data/001attendance_data.json", "r") as file:
+                data = json.load(file)
+            print("[DEBUG] Loaded JSON data successfully.")
+
+            # Find the appropriate class and update its students
+            class_found = False
+            for class_id, class_data in data["classes"].items():
+                if class_id == "OLO123":  # Replace with logic to identify the correct class
+                    class_data["students"] = self.students
+                    class_found = True
+                    print(f"[DEBUG] Updated students for class ID: {class_id}")
+                    break
+
+            if not class_found:
+                print("[DEBUG] Class ID 'OLO123' not found in JSON data.")
+                raise ValueError("Class ID 'OLO123' not found.")
+
+            # Write the updated data back to the file
+            with open("c:/Temp/Bluecard_v2/data/001attendance_data.json", "w") as file:
+                json.dump(data, file, indent=4)
+            print("[DEBUG] JSON data saved successfully.")
+
+        except Exception as e:
+            print(f"[DEBUG] Error in save_to_json: {e}")
+            messagebox.showerror("Error", f"Failed to save data: {e}", parent=self)
 
     def close_form(self):
         """Close the form."""
@@ -175,7 +237,7 @@ class StudentForm(tk.Toplevel):
         save_button = tk.Button(
             form,
             text="Save",
-            command=lambda: self.save_student(form, name_var, nickname_var),
+            command=lambda: self.save_student(name_var, nickname_var),
             bg="green",  # Green background for Save
             fg="white",  # White text
             font=("Arial", 12, "bold"),
@@ -194,18 +256,3 @@ class StudentForm(tk.Toplevel):
             width=10
         )
         cancel_button.grid(row=2, column=1, padx=10, pady=20)
-
-    def save_student(self, form, name_var, nickname_var):
-        """Save the student data."""
-        name = name_var.get().title()  # Capitalize each word in the name
-        nickname = nickname_var.get()
-
-        # Save the data (example logic)
-        new_student = {
-            "Name": name,
-            "Nickname": nickname,
-        }
-        # Add logic to save `new_student` to the data source
-        print(f"Saved student: {new_student}")
-
-        form.destroy()  # Close the form

@@ -41,14 +41,14 @@
                     }
                 },
                 "S002": {
-                    "name": "Ben Lee",
+                    "name": "Ben Lees",
+                    "nickname": "Nokd",
                     "gender": "Male",
-                    "nickname": "Nok",
                     "score": "55% - B",
                     "pre_test": "50%",
                     "post_test": "75%",
-                    "active": "Yes",
                     "note": "Likes conversations and grammar",
+                    "active": "Yes",
                     "attendance": {
                         "01/05/2025": "L",
                         "06/05/2025": "P",
@@ -56,6 +56,39 @@
                         "13/05/2025": "A",
                         "15/05/2025": "P"
                     }
+                },
+                "S003": {
+                    "name": "ass",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S004": {
+                    "name": "mike",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S005": {
+                    "name": "Ben Leesd",
+                    "nickname": "Nok",
+                    "gender": "Male",
+                    "score": "55% - B",
+                    "pre_test": "50%",
+                    "post_test": "75%",
+                    "note": "Likes conversations and grammar",
+                    "active": "Yes",
+                    "attendance": {}
                 }
             },
             "archive": "No"
