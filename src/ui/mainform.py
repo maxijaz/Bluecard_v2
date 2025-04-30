@@ -98,18 +98,25 @@ class Mainform(tk.Toplevel):
             data_box.insert("1.0", value)  # Insert the value
             data_box.configure(state="disabled")  # Disable editing again
 
-        # Column 5: Blank
-        tk.Label(layout_frame, text="00000", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
+        # Configure column weights for dynamic resizing
+        layout_frame.columnconfigure(4, weight=1)  # Column 5 takes up remaining space
+        layout_frame.columnconfigure(5, weight=0)  # Columns 6–9 do not expand
+        layout_frame.columnconfigure(6, weight=0)
+        layout_frame.columnconfigure(7, weight=0)
+        layout_frame.columnconfigure(8, weight=0)
+
+        # Column 5: Blank (Dynamic Width)
+        tk.Label(layout_frame, text="", bg=self["bg"]).grid(row=0, column=4, rowspan=8, sticky="nsew")
 
         # Column 6: Buttons
         buttons_col_6 = [
-            ("Add Ss", self.add_student),
-            ("Edit Ss", self.edit_student),
-            ("Remove Ss", self.remove_student),
-            ("Manage Ss", self.manage_students),
+            ("Add Student", self.add_student),
+            ("Edit Student", self.edit_student),
+            ("Remove Student", self.remove_student),
+            ("Manage Students", self.manage_students),
         ]
         for i, (text, command) in enumerate(buttons_col_6):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=5)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=5, sticky="e")
 
         # Column 7: Buttons
         buttons_col_7 = [
@@ -119,7 +126,7 @@ class Mainform(tk.Toplevel):
             ("Unused 1", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_7):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=6)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=6, sticky="e")
 
         # Column 8: Buttons
         buttons_col_8 = [
@@ -129,7 +136,7 @@ class Mainform(tk.Toplevel):
             ("Unused 5", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_8):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=7)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=7, sticky="e")
 
         # Column 9: Buttons
         buttons_col_9 = [
@@ -139,7 +146,7 @@ class Mainform(tk.Toplevel):
             ("Unused 9", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_9):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=8)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=8, padx=(0, 5), sticky="e")
 
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
