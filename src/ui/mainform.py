@@ -39,13 +39,13 @@ class Mainform(tk.Toplevel):
 
     def create_widgets(self):
         """Create the layout and fields for the Mainform."""
-        # Header Section
-        header_frame = tk.Frame(self, bg=self["bg"])
-        header_frame.pack(fill=tk.X, padx=20, pady=5)
-
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
         separator.pack(fill=tk.X, padx=20, pady=2)
+
+        # Header Section
+        header_frame = tk.Frame(self, bg=self["bg"])
+        header_frame.pack(fill=tk.X, padx=20, pady=5)
 
         # Header Label (Centered)
         header_label = tk.Label(header_frame, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
@@ -133,11 +133,19 @@ class Mainform(tk.Toplevel):
         for i, (text, command) in enumerate(buttons_col_9):
             tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=8, padx=10, pady=1)
 
+        # Separator above the header label
+        separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
+        separator.pack(fill=tk.X, padx=20, pady=2)
+
         # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
         attendance_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=5)
+
+        # Separator above the header label
+        separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
+        separator.pack(fill=tk.X, padx=20, pady=2)
 
         # Define columns for attendance table
         columns = ["#", "Name", "Nickname", "Score"] + list(self.get_attendance_dates()) + ["P", "A", "L", "Attendance", "Pre-test", "Post-test"]
