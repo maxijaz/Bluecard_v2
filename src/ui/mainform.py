@@ -41,27 +41,27 @@ class Mainform(tk.Toplevel):
         """Create the layout and fields for the Mainform."""
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
-        separator.pack(fill=tk.X, padx=20, pady=2)
+        separator.pack(fill=tk.X, padx=10, pady=1)
 
         # Header Section
         header_frame = tk.Frame(self, bg=self["bg"])
-        header_frame.pack(fill=tk.X, padx=20, pady=5)
+        header_frame.pack(fill=tk.X, padx=10, pady=1)
 
         # Header Label (Centered)
         header_label = tk.Label(header_frame, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
-        header_label.pack(side=tk.TOP, pady=2)
+        header_label.pack(side=tk.TOP, pady=1)
 
         # Separator under the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
-        separator.pack(fill=tk.X, padx=20, pady=2)
+        separator.pack(fill=tk.X, padx=20, pady=1)
 
         # Header Columns (1-9)
         header_columns_frame = tk.Frame(self, bg=self["bg"])
-        header_columns_frame.pack(fill=tk.X, padx=10, pady=5)
+        header_columns_frame.pack(fill=tk.X, padx=10, pady=1)
 
         # Main Layout Frame
         layout_frame = tk.Frame(self, bg=self["bg"])
-        layout_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=1)
+        layout_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=1)
 
         # Column 1 and Column 2: Metadata (Labels and Data)
         metadata_fields = [
@@ -72,8 +72,12 @@ class Mainform(tk.Toplevel):
             ("CourseBook:", self.metadata.get("CourseBook", "")),
         ]
         for i, (label_text, value) in enumerate(metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=0, sticky="e", padx=1, pady=1)
-            tk.Label(layout_frame, text=value, font=("Arial", 10), bg="white", anchor="center", width=25).grid(row=i, column=1, sticky="w", padx=1, pady=1)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=0, sticky="e", padx=1)
+            data_box = tk.Text(layout_frame, font=("Arial", 10), bg="white", height=1, width=15, wrap="none", state="disabled")
+            data_box.grid(row=i, column=1, sticky="w", padx=1)
+            data_box.configure(state="normal")  # Temporarily enable editing to insert text
+            data_box.insert("1.0", value)  # Insert the value
+            data_box.configure(state="disabled")  # Disable editing again
 
         # Column 3 and Column 4: Additional Metadata (Labels and Data)
         additional_metadata_fields = [
@@ -87,21 +91,25 @@ class Mainform(tk.Toplevel):
             ("Notes:", self.metadata.get("Notes", "")),
         ]
         for i, (label_text, value) in enumerate(additional_metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=2, sticky="e", padx=1, pady=1)
-            tk.Label(layout_frame, text=value, font=("Arial", 10), bg="white", anchor="center", width=25).grid(row=i, column=3, sticky="w", padx=1, pady=1)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=2, sticky="e", padx=1)
+            data_box = tk.Text(layout_frame, font=("Arial", 10), bg="white", height=1, width=15, wrap="none", state="disabled")
+            data_box.grid(row=i, column=3, sticky="w", padx=1)
+            data_box.configure(state="normal")  # Temporarily enable editing to insert text
+            data_box.insert("1.0", value)  # Insert the value
+            data_box.configure(state="disabled")  # Disable editing again
 
         # Column 5: Blank
         tk.Label(layout_frame, text="00000", bg=self["bg"]).grid(row=0, column=4, rowspan=8)
 
         # Column 6: Buttons
         buttons_col_6 = [
-            ("Add Student", self.add_student),
-            ("Edit Student", self.edit_student),
-            ("Remove Student", self.remove_student),
-            ("Manage Students", self.manage_students),
+            ("Add Ss", self.add_student),
+            ("Edit Ss", self.edit_student),
+            ("Remove Ss", self.remove_student),
+            ("Manage Ss", self.manage_students),
         ]
         for i, (text, command) in enumerate(buttons_col_6):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=5, padx=10, pady=1)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=5)
 
         # Column 7: Buttons
         buttons_col_7 = [
@@ -111,7 +119,7 @@ class Mainform(tk.Toplevel):
             ("Unused 1", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_7):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=6, padx=10, pady=1)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=6)
 
         # Column 8: Buttons
         buttons_col_8 = [
@@ -121,7 +129,7 @@ class Mainform(tk.Toplevel):
             ("Unused 5", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_8):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=7, padx=10, pady=1)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=7)
 
         # Column 9: Buttons
         buttons_col_9 = [
@@ -131,21 +139,21 @@ class Mainform(tk.Toplevel):
             ("Unused 9", self.placeholder),
         ]
         for i, (text, command) in enumerate(buttons_col_9):
-            tk.Button(layout_frame, text=text, command=command, width=15).grid(row=i, column=8, padx=10, pady=1)
+            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=8)
 
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
-        separator.pack(fill=tk.X, padx=20, pady=2)
+        separator.pack(fill=tk.X, padx=10, pady=1)
 
         # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
-        attendance_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        attendance_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-        tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=5)
+        tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=2)
 
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
-        separator.pack(fill=tk.X, padx=20, pady=2)
+        separator.pack(fill=tk.X, padx=10, pady=1)
 
         # Define columns for attendance table
         columns = ["#", "Name", "Nickname", "Score"] + list(self.get_attendance_dates()) + ["P", "A", "L", "Attendance", "Pre-test", "Post-test"]
