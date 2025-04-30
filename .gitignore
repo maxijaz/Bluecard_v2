@@ -11,10 +11,11 @@ venv/
 # VSCode settings (optional)
 .vscode/
 
-# Backup / log / temp files
+# Backup / log / temp files / AHK
 *.log
 *.bak
 *.tmp
+*.ahk
 
 # OS stuff
 .DS_Store

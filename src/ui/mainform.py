@@ -43,6 +43,10 @@ class Mainform(tk.Toplevel):
         header_frame = tk.Frame(self, bg=self["bg"])
         header_frame.pack(fill=tk.X, padx=20, pady=5)
 
+        # Separator above the header label
+        separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
+        separator.pack(fill=tk.X, padx=20, pady=2)
+
         # Header Label (Centered)
         header_label = tk.Label(header_frame, text="Class Information - MainForm", font=("Arial", 22, "bold"), bg=self["bg"])
         header_label.pack(side=tk.TOP, pady=2)
