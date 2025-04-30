@@ -171,10 +171,16 @@ class Mainform(tk.Toplevel):
         style.configure("Treeview", font=("Arial", 12))  # Data: size 12, regular
 
         for col in columns:
-            if col == "Name":
-                self.tree.column(col, width=150, anchor="w")  # Name: left-aligned
+            if col == "#":
+                self.tree.column(col, width=35, anchor="center")  # Fix width for "#"
+            elif col == "Name":
+                self.tree.column(col, width=150, anchor="w")  # Fix width for "Name", left-aligned
+            elif col == "Nickname":
+                self.tree.column(col, width=100, anchor="center")  # Fix width for "Nickname"
+            elif col == "Score":
+                self.tree.column(col, width=100, anchor="center")  # Fix width for "Score"
             else:
-                self.tree.column(col, width=100, anchor="center")  # Other columns: centered
+                self.tree.column(col, width=100, anchor="center")  # Default width for other columns
             self.tree.heading(col, text=col)
 
         self.tree.pack(fill=tk.BOTH, expand=True)
