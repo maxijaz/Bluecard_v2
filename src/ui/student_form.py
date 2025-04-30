@@ -161,7 +161,9 @@ class StudentForm(tk.Toplevel):
         name_var = tk.StringVar(value=student_data.get("Name", "") if student_data else "")
         name_entry = tk.Entry(form, textvariable=name_var, font=("Arial", 12), width=15)
         name_entry.grid(row=0, column=1, padx=10, pady=10)
-        name_entry.focus_set()  # Set focus to the Name field
+
+        # Use `after()` to ensure focus is set after the window is fully initialized
+        form.after(10, lambda: name_entry.focus_force())
 
         # Other Fields (Example: Nickname)
         tk.Label(form, text="Nickname:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=1, column=0, sticky="e", padx=10, pady=10)
