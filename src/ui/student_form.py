@@ -19,8 +19,8 @@ class StudentForm(tk.Toplevel):
         self.theme = theme
 
         self.title("Add / Edit Student Information")
-        self.geometry("650x500")
-        self.center_window(650, 500)
+        self.geometry("400x350")
+        self.center_window(400, 350)
         self.resizable(False, False)
         self.attributes("-topmost", True)
 
@@ -161,6 +161,7 @@ class StudentForm(tk.Toplevel):
         name_var = tk.StringVar(value=student_data.get("Name", "") if student_data else "")
         name_entry = tk.Entry(form, textvariable=name_var, font=("Arial", 12), width=15)
         name_entry.grid(row=0, column=1, padx=10, pady=10)
+        name_entry.focus_set()  # Set focus to the Name field
 
         # Other Fields (Example: Nickname)
         tk.Label(form, text="Nickname:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=1, column=0, sticky="e", padx=10, pady=10)
