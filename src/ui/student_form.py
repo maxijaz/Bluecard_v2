@@ -3,24 +3,29 @@ from tkinter import ttk, messagebox
 from logic.parser import save_data
 import sys
 import os
+import json
 
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 print(sys.path)
 
 class StudentForm(tk.Toplevel):
-    def __init__(self, parent, student_id, students, refresh_callback):
+    def __init__(self, parent, student_id, students, refresh_callback, theme="default"):
         super().__init__(parent)
         self.student_id = student_id
         self.students = students
         self.refresh_callback = refresh_callback
         self.student_data = self.students.get(self.student_id, {}) if self.student_id else {}
+        self.theme = theme
 
         self.title("Add / Edit Student Information")
         self.geometry("650x500")
         self.center_window(650, 500)
         self.resizable(False, False)
         self.attributes("-topmost", True)
+
+        # Load theme configuration
+        self.theme_config = self.load_theme_config()
 
         # Create UI components
         self.create_widgets()
@@ -36,16 +41,25 @@ class StudentForm(tk.Toplevel):
         y = (screen_height - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
 
+    def load_theme_config(self):
+        """Load the theme configuration from themes.json."""
+        with open("c:/Temp/Bluecard_v2/data/themes.json", "r") as file:
+            themes = json.load(file)["themes"]
+        for theme in themes:
+            if theme["name"] == self.theme:
+                return theme
+        return themes[0]  # Default to the first theme if not found
+
     def create_widgets(self):
         """Create the layout and fields for editing student information."""
+        # Define fields to include (excluding "Student ID")
         fields = [
-            ("Student ID:", "student_id"),
             ("Name:", "name"),
             ("Nickname:", "nickname"),
             ("Gender:", "gender"),
             ("Score:", "score"),
-            ("Pre-Test:", "pre_test"),
-            ("Post-Test:", "post_test"),
+            ("PreTest:", "pre_test"),
+            ("PostTest:", "post_test"),
             ("Note:", "note"),
             ("Active:", "active"),
         ]
@@ -58,18 +72,21 @@ class StudentForm(tk.Toplevel):
             if key == "gender":
                 # Gender toggle buttons
                 gender_frame = tk.Frame(self)
-                gender_frame.grid(row=i, column=1, padx=10, pady=5, sticky="w")
-                self.gender_var = tk.StringVar(value=self.student_data.get(key, "Female"))
-                tk.Radiobutton(gender_frame, text="Male", variable=self.gender_var, value="Male").pack(side=tk.LEFT)
-                tk.Radiobutton(gender_frame, text="Female", variable=self.gender_var, value="Female").pack(side=tk.LEFT)
+                gender_frame.grid(row=i, column=1, sticky="w", padx=10, pady=5)
+                gender_var = tk.StringVar(value=self.student_data.get(key, "Female"))
+                tk.Radiobutton(gender_frame, text="Male", variable=gender_var, value="Male", font=("Arial", 12)).pack(side=tk.LEFT, padx=5)
+                tk.Radiobutton(gender_frame, text="Female", variable=gender_var, value="Female", font=("Arial", 12)).pack(side=tk.LEFT, padx=5)
+                self.entries[key] = gender_var
             elif key == "active":
                 # Active toggle buttons
                 active_frame = tk.Frame(self)
-                active_frame.grid(row=i, column=1, padx=10, pady=5, sticky="w")
-                self.active_var = tk.StringVar(value=self.student_data.get(key, "Yes"))
-                tk.Radiobutton(active_frame, text="Yes", variable=self.active_var, value="Yes").pack(side=tk.LEFT)
-                tk.Radiobutton(active_frame, text="No", variable=self.active_var, value="No").pack(side=tk.LEFT)
+                active_frame.grid(row=i, column=1, sticky="w", padx=10, pady=5)
+                active_var = tk.StringVar(value=self.student_data.get(key, "Yes"))
+                tk.Radiobutton(active_frame, text="Yes", variable=active_var, value="Yes", font=("Arial", 12)).pack(side=tk.LEFT, padx=5)
+                tk.Radiobutton(active_frame, text="No", variable=active_var, value="No", font=("Arial", 12)).pack(side=tk.LEFT, padx=5)
+                self.entries[key] = active_var
             else:
+                # Regular entry fields
                 entry = tk.Entry(self, width=40)
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entry.insert(0, self.student_data.get(key, ""))  # Pre-fill with existing data
@@ -79,8 +96,33 @@ class StudentForm(tk.Toplevel):
         button_frame = tk.Frame(self)
         button_frame.grid(row=len(fields), column=0, columnspan=2, pady=20)
 
-        tk.Button(button_frame, text="Save", command=self.save_student, width=10).pack(side=tk.LEFT, padx=10)
-        tk.Button(button_frame, text="Cancel", command=self.close_form, width=10).pack(side=tk.LEFT, padx=10)
+        # Get button colors from theme
+        save_bg = self.theme_config.get("buttons", {}).get("save", {}).get("background", "green")
+        save_fg = self.theme_config.get("buttons", {}).get("save", {}).get("foreground", "white")
+        cancel_bg = self.theme_config.get("buttons", {}).get("cancel", {}).get("background", "red")
+        cancel_fg = self.theme_config.get("buttons", {}).get("cancel", {}).get("foreground", "white")
+
+        # Save Button
+        tk.Button(
+            button_frame,
+            text="Save",
+            command=self.save_student,
+            bg=save_bg,
+            fg=save_fg,
+            font=("Arial", 12, "bold"),
+            width=10
+        ).pack(side=tk.LEFT, padx=10)
+
+        # Cancel Button
+        tk.Button(
+            button_frame,
+            text="Cancel",
+            command=self.close_form,
+            bg=cancel_bg,
+            fg=cancel_fg,
+            font=("Arial", 12, "bold"),
+            width=10
+        ).pack(side=tk.LEFT, padx=10)
 
     def save_student(self):
         """Save student information."""
@@ -91,13 +133,6 @@ class StudentForm(tk.Toplevel):
         student_data = {
             "name": self.entries["name"].get(),
             "nickname": self.entries["nickname"].get(),
-            "gender": self.gender_var.get(),
-            "score": self.entries["score"].get(),
-            "pre_test": self.entries["pre_test"].get(),
-            "post_test": self.entries["post_test"].get(),
-            "note": self.entries["note"].get(),
-            "active": self.active_var.get(),
-            "attendance": self.student_data.get("attendance", {}),
         }
 
         if self.student_id:

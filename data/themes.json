@@ -9,6 +9,16 @@
         "background": "white",
         "disabledbackground": "lightgrey"
       },
+      "buttons": {
+        "save": {
+          "background": "green",
+          "foreground": "white"
+        },
+        "cancel": {
+          "background": "red",
+          "foreground": "white"
+        }
+      },
       "date_entry": {
         "standard_size": 15,
         "font": "Arial 12",
@@ -47,6 +57,16 @@
         "foreground": "white",
         "background": "#2e2e2e",
         "disabledbackground": "#4e4e4e"
+      },
+      "buttons": {
+        "save": {
+          "background": "#228B22",  
+          "foreground": "white"
+        },
+        "cancel": {
+          "background": "#8B0000",  
+          "foreground": "white"
+        }
       },
       "date_entry": {
         "standard_size": 15,
