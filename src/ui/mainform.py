@@ -72,7 +72,7 @@ class Mainform(tk.Toplevel):
             ("CourseBook:", self.metadata.get("CourseBook", "")),
         ]
         for i, (label_text, value) in enumerate(metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=0, sticky="e", padx=1)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=12).grid(row=i, column=0, sticky="e", padx=1)
             data_box = tk.Text(layout_frame, font=("Arial", 10), bg="white", height=1, width=25, wrap="none", state="disabled")
             data_box.grid(row=i, column=1, sticky="w", padx=1)
             data_box.configure(state="normal")  # Temporarily enable editing to insert text
@@ -89,7 +89,7 @@ class Mainform(tk.Toplevel):
             ("Notes:", self.metadata.get("Notes", "")),
         ]
         for i, (label_text, value) in enumerate(additional_metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=10).grid(row=i, column=2, sticky="e", padx=1)
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=12).grid(row=i, column=2, sticky="e", padx=(5,1))
             data_box = tk.Text(layout_frame, font=("Arial", 10), bg="white", height=1, width=25, wrap="none", state="disabled")
             data_box.grid(row=i, column=3, sticky="w", padx=1)
             data_box.configure(state="normal")  # Temporarily enable editing to insert text
@@ -152,9 +152,10 @@ class Mainform(tk.Toplevel):
 
         # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
-        attendance_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        attendance_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=1)
 
-        tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 16, "bold"), bg=self["bg"]).pack(anchor="w", pady=2)
+        # Heading "Attendance Table"
+        tk.Label(attendance_frame, text="Attendance Table", font=("Arial", 14, "bold"), bg=self["bg"]).pack(anchor="w", pady=1)
 
         # Separator above the header label
         separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
@@ -165,9 +166,16 @@ class Mainform(tk.Toplevel):
         self.tree = ttk.Treeview(attendance_frame, columns=columns, show="headings")
 
         # Configure column headings
+        style = ttk.Style()
+        style.configure("Treeview.Heading", font=("Arial", 12, "bold"), anchor="center")  # Headers: size 12, bold, centered
+        style.configure("Treeview", font=("Arial", 12))  # Data: size 12, regular
+
         for col in columns:
+            if col == "Name":
+                self.tree.column(col, width=150, anchor="w")  # Name: left-aligned
+            else:
+                self.tree.column(col, width=100, anchor="center")  # Other columns: centered
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=100, anchor="center")
 
         self.tree.pack(fill=tk.BOTH, expand=True)
 
