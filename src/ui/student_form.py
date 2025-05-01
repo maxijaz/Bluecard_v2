@@ -141,8 +141,7 @@ class StudentForm(tk.Toplevel):
                 "pre_test": self.entries["pre_test"].get(),
                 "post_test": self.entries["post_test"].get(),
                 "note": self.entries["note"].get(),
-                "active": self.entries["active"].get(),
-                "attendance": self.student_data.get("attendance", {})  # Preserve existing attendance
+                "active": self.entries["active"].get()
             }
             print(f"[DEBUG] Prepared student data: {student_data}")
 

@@ -2,12 +2,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from src.logic.parser import save_data
 import logging
+import json
 
 class MetadataForm(tk.Toplevel):
     def __init__(self, parent, class_id, default_values, theme, on_metadata_save):
         super().__init__(parent)
         self.class_id = class_id  # Class ID (e.g., OLO123)
-        self.default_values = default_values  # Default values from default.json
+        self.default_values = self.load_default_values() if not default_values else default_values  # Default values from default.json
         self.theme = theme  # UI theme
         self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
         self.data = parent.data  # Reference to the main data dictionary
@@ -28,6 +29,18 @@ class MetadataForm(tk.Toplevel):
 
         # Focus cursor on the first field (Class ID)
         self.entries["class_no"].focus_set()
+
+    def load_default_values(self):
+        """Load default values from default.json."""
+        try:
+            with open("data/default.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            messagebox.showerror("Error", "Default values file (default.json) not found.", parent=self)
+            return {}
+        except json.JSONDecodeError:
+            messagebox.showerror("Error", "Error decoding default.json.", parent=self)
+            return {}
 
     def center_window(self):
         """Center the window on the screen."""
@@ -111,44 +124,38 @@ class MetadataForm(tk.Toplevel):
         logging.debug("Saving metadata...")
         class_no = self.entries["class_no"].get().strip()
 
-        # Disable the Save button to prevent multiple clicks
-        for widget in self.winfo_children():
-            if isinstance(widget, tk.Button) and widget.cget("text") == "Save":
-                widget.config(state="disabled")
-
-        # Check if ClassID already exists
+        # Validate that the class_no is unique
         if class_no in self.data.get("classes", {}) and not self.is_edit:
-            # Show error message as topmost and centered
-            error_window = tk.Toplevel(self)
-            error_window.title("Error")
-            error_window.geometry("300x100")
-            error_window.attributes("-topmost", True)
-
-            # Center the error window
-            error_window.update_idletasks()
-            screen_width = error_window.winfo_screenwidth()
-            screen_height = error_window.winfo_screenheight()
-            x = (screen_width - error_window.winfo_width()) // 2
-            y = (screen_height - error_window.winfo_height()) // 2
-            error_window.geometry(f"300x100+{x}+{y}")
-
-            tk.Label(error_window, text=f"ClassID '{class_no}' already exists.\nPlease use a unique ClassID.", font=("Arial", 10), fg="red").pack(pady=10)
-            tk.Button(error_window, text="OK", command=error_window.destroy, font=("Arial", 10, "bold")).pack(pady=5)
-            logging.warning(f"Attempted to save duplicate ClassID: {class_no}")
+            messagebox.showerror(
+                "Duplicate Class ID",
+                f"Class ID '{class_no}' already exists. Please use a unique Class ID.",
+                parent=self
+            )
+            logging.warning(f"Attempted to save duplicate Class ID: {class_no}")
             return
 
+        # Collect metadata from the form
         metadata = {}
         for key, entry in self.entries.items():
-            metadata[key] = entry.get().strip()
+            metadata[key] = entry.get().strip() or self.default_values.get(f"def_{key}", "")
 
         # Save the metadata
         if not self.is_edit:
+            # Add a new class
             self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+            logging.debug(f"New class added: {class_no}")
         else:
+            # Update an existing class
             self.data["classes"][self.class_id]["metadata"] = metadata
+            logging.debug(f"Class {self.class_id} updated.")
 
-        logging.debug(f"New class added: {class_no}")
+        # Save the updated data to the file
+        save_data(self.data)
+
+        # Refresh the launcher
         self.on_metadata_save()
+
+        # Close the form
         self.destroy()
 
     def close_form(self):

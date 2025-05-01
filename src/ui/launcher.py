@@ -262,47 +262,14 @@ class Launcher(tk.Toplevel):
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
     def add_new_class(self):
-        """Add a new class to the data."""
-        # Generate a unique class ID
-        existing_class_ids = self.data["classes"].keys()
-        next_class_id = self.generate_next_class_id(existing_class_ids)
-
-        # Default metadata for the new class
-        new_class_metadata = {
-            "Company": "New Company",
-            "Consultant": "",
-            "Teacher": "",
-            "TeacherNo": "",
-            "Room": "",
-            "CourseBook": "",
-            "CourseHours": "",
-            "ClassTime": "",
-            "MaxClasses": "",
-            "StartDate": "",
-            "FinishDate": "",
-            "Days": "",
-            "Time": "",
-            "Notes": "",
-            "class_no": next_class_id,
-            "rate": "",
-            "ccp": "",
-            "travel": "",
-            "bonus": "",
-            "archive": "No"
-        }
-
-        # Add the new class to the top-level "classes" dictionary
-        self.data["classes"][next_class_id] = {
-            "metadata": new_class_metadata,
-            "students": {}
-        }
-
-        # Save the updated data
-        save_data(self.data)
-
-        # Refresh the launcher to show the new class
-        self.refresh()
-        messagebox.showinfo("Success", f"Class {next_class_id} added successfully!", parent=self)
+        """Open the MetadataForm to add a new class."""
+        MetadataForm(
+            parent=self,
+            class_id=None,  # No class ID for a new class
+            default_values={},  # Empty default values for a new class
+            theme=self.theme,
+            on_metadata_save=self.refresh  # Refresh the launcher after saving
+        ).mainloop()
 
     def archive_class(self):
         """Archive the selected class."""
