@@ -89,6 +89,17 @@
                     "note": "",
                     "active": "Yes",
                     "attendance": {}
+                },
+                "S006": {
+                    "name": "Jee Monkey",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
                 }
             },
             "archive": "No"
