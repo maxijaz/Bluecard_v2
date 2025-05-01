@@ -60,14 +60,14 @@ class SettingsForm(tk.Toplevel):
         """Create UI components for settings."""
         # Theme selection
         theme_frame = tk.Frame(self)
-        theme_frame.pack(fill=tk.X, pady=5)  # Adjusted vertical spacing to match other rows
+        theme_frame.pack(fill=tk.X, pady=5)
         tk.Label(
             theme_frame,
             text="Select Theme:",
             font=("Arial", 12, "bold"),
             anchor="e",
-            width=12  # Same width as other labels
-        ).pack(side=tk.LEFT, padx=(5, 10))  # Same padding as other labels
+            width=12
+        ).pack(side=tk.LEFT, padx=(5, 10))
         self.theme_var = tk.StringVar(value=self.current_theme)
         self.theme_dropdown = ttk.Combobox(
             theme_frame,
@@ -75,11 +75,11 @@ class SettingsForm(tk.Toplevel):
             values=self.themes,
             state="readonly",
             font=("Arial", 12),
-            width=13  # Same width as entry fields
+            width=13
         )
-        self.theme_dropdown.pack(side=tk.LEFT, padx=(0, 5))  # Same padding as entry fields
+        self.theme_dropdown.pack(side=tk.LEFT, padx=(0, 5))
 
-        # Default settings fields (only specified fields)
+        # Default settings fields
         self.entries = {}
         fields_to_include = [
             "def_teacher",
@@ -94,27 +94,43 @@ class SettingsForm(tk.Toplevel):
         for key in fields_to_include:
             value = self.default_settings.get(key, "")
             frame = tk.Frame(self)
-            frame.pack(fill=tk.X, pady=5)  # Adjusted vertical spacing between rows
+            frame.pack(fill=tk.X, pady=5)
             tk.Label(
                 frame,
                 text=key.replace("def_", "").capitalize() + ":",
                 font=("Arial", 12, "bold"),
                 anchor="e",
-                width=12  # Same width as the theme label
-            ).pack(side=tk.LEFT, padx=(5, 10))  # Same padding as the theme label
-            entry = tk.Entry(frame, font=("Arial", 12), width=15)  # Fixed width for entry fields
+                width=12
+            ).pack(side=tk.LEFT, padx=(5, 10))
+            entry = tk.Entry(frame, font=("Arial", 12), width=15)
             entry.insert(0, value)
-            entry.pack(side=tk.LEFT, padx=(0, 5))  # Same padding as the theme dropdown
+            entry.pack(side=tk.LEFT, padx=(0, 5))
             self.entries[key] = entry
 
         # Buttons
         button_frame = tk.Frame(self)
         button_frame.pack(pady=20)
 
-        save_button = tk.Button(button_frame, text="Save", command=self.save_settings, bg="green", fg="white", font=("Arial", 12, "bold"), width=10)
+        save_button = tk.Button(
+            button_frame,
+            text="Save",
+            command=self.save_settings,
+            bg="green",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=10
+        )
         save_button.pack(side=tk.LEFT, padx=10)
 
-        cancel_button = tk.Button(button_frame, text="Cancel", command=self.on_close, bg="red", fg="white", font=("Arial", 12, "bold"), width=10)
+        cancel_button = tk.Button(
+            button_frame,
+            text="Cancel",
+            command=self.on_close,
+            bg="red",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            width=10
+        )
         cancel_button.pack(side=tk.RIGHT, padx=10)
 
     def save_settings(self):
@@ -137,8 +153,8 @@ class SettingsForm(tk.Toplevel):
 
         # Refresh Launcher with the new theme
         self.on_theme_change(selected_theme)
-        self.destroy()  # Close the settings window
+        self.destroy()
 
     def on_close(self):
         """Handle the close event for the settings window."""
-        self.destroy()  # Close the settings window
+        self.destroy()

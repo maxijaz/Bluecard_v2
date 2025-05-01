@@ -1,13 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from logic.parser import save_data
-import sys
 import os
 import json
-
-# Add the project root to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-print(sys.path)
 
 class StudentForm(tk.Toplevel):
     def __init__(self, parent, student_id, students, refresh_callback, theme="default"):
@@ -129,7 +124,6 @@ class StudentForm(tk.Toplevel):
         try:
             if not name_var.get():
                 messagebox.showerror("Error", "Name is required.", parent=self)
-                print("[DEBUG] Name field is empty. Cannot save student.")
                 return
 
             # Prepare student data
@@ -144,38 +138,25 @@ class StudentForm(tk.Toplevel):
                 "active": self.entries["active"].get(),
                 "attendance": {}  # Initialize attendance as an empty dictionary
             }
-            print(f"[DEBUG] Prepared student data: {student_data}")
 
             if self.student_id:
                 # Update existing student
                 self.students[self.student_id] = student_data
-                print(f"[DEBUG] Updated student ID: {self.student_id}")
             else:
                 # Create a new student ID
                 new_id = f"S{len(self.students) + 1:03}"
                 self.students[new_id] = student_data
-                print(f"[DEBUG] Generated new student ID: {new_id}")
 
             # Save to JSON file
             self.save_to_json()
 
             # Refresh the main form
             self.refresh_callback()
-            print("[DEBUG] Mainform refreshed.")
 
-            # Clear the form fields for adding another student
-            if not self.student_id:  # Only clear fields if adding a new student
-                name_var.set("")
-                nickname_var.set("")
-                for key, widget in self.entries.items():
-                    if isinstance(widget, tk.StringVar):
-                        widget.set("")
-                    elif isinstance(widget, tk.Entry):
-                        widget.delete(0, tk.END)
-                print("[DEBUG] Form fields cleared for next student.")
+            # Close the form
+            self.close_form()
 
         except Exception as e:
-            print(f"[DEBUG] Error in save_student: {e}")
             messagebox.showerror("Error", f"Failed to save student: {e}", parent=self)
 
     def save_to_json(self):
@@ -183,76 +164,20 @@ class StudentForm(tk.Toplevel):
         try:
             with open("c:/Temp/Bluecard_v2/data/001attendance_data.json", "r") as file:
                 data = json.load(file)
-            print("[DEBUG] Loaded JSON data successfully.")
 
             # Find the appropriate class and update its students
-            class_found = False
             for class_id, class_data in data["classes"].items():
                 if class_id == "OLO123":  # Replace with logic to identify the correct class
                     class_data["students"] = self.students
-                    class_found = True
-                    print(f"[DEBUG] Updated students for class ID: {class_id}")
                     break
-
-            if not class_found:
-                print("[DEBUG] Class ID 'OLO123' not found in JSON data.")
-                raise ValueError("Class ID 'OLO123' not found.")
 
             # Write the updated data back to the file
             with open("c:/Temp/Bluecard_v2/data/001attendance_data.json", "w") as file:
                 json.dump(data, file, indent=4)
-            print("[DEBUG] JSON data saved successfully.")
 
         except Exception as e:
-            print(f"[DEBUG] Error in save_to_json: {e}")
             messagebox.showerror("Error", f"Failed to save data: {e}", parent=self)
 
     def close_form(self):
         """Close the form."""
         self.destroy()
-
-    def open_add_edit_student_form(self, student_data=None):
-        """Open a form to add or edit a student."""
-        form = tk.Toplevel(self)
-        form.title("Add/Edit Student")
-        form.geometry("400x300")
-        form.configure(bg=self["bg"])
-
-        # Name Field
-        tk.Label(form, text="Name:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=0, column=0, sticky="e", padx=10, pady=10)
-        name_var = tk.StringVar(value=student_data.get("Name", "") if student_data else "")
-        name_entry = tk.Entry(form, textvariable=name_var, font=("Arial", 12), width=15)
-        name_entry.grid(row=0, column=1, padx=10, pady=10)
-
-        # Use `after()` to ensure focus is set after the window is fully initialized
-        form.after(10, lambda: name_entry.focus_force())
-
-        # Other Fields (Example: Nickname)
-        tk.Label(form, text="Nickname:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=1, column=0, sticky="e", padx=10, pady=10)
-        nickname_var = tk.StringVar(value=student_data.get("Nickname", "") if student_data else "")
-        nickname_entry = tk.Entry(form, textvariable=nickname_var, font=("Arial", 12), width=15)
-        nickname_entry.grid(row=1, column=1, padx=10, pady=10)
-
-        # Save Button
-        save_button = tk.Button(
-            form,
-            text="Save",
-            command=lambda: self.save_student(name_var, nickname_var),
-            bg="green",  # Green background for Save
-            fg="white",  # White text
-            font=("Arial", 12, "bold"),
-            width=10
-        )
-        save_button.grid(row=2, column=0, padx=10, pady=20)
-
-        # Cancel Button
-        cancel_button = tk.Button(
-            form,
-            text="Cancel",
-            command=form.destroy,
-            bg="red",  # Red background for Cancel
-            fg="white",  # White text
-            font=("Arial", 12, "bold"),
-            width=10
-        )
-        cancel_button.grid(row=2, column=1, padx=10, pady=20)

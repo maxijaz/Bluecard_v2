@@ -83,9 +83,6 @@ class StudentManager(tk.Toplevel):
         tk.Button(buttons_inner_frame, text="Delete", command=self.delete_student, width=12).pack(side=tk.LEFT, padx=5)
         tk.Button(buttons_inner_frame, text="Cancel", command=self.close_form, width=12).pack(side=tk.LEFT, padx=5)
 
-        # Add a button to test adding a new student
-        tk.Button(self, text="Add Student", command=self.test_add_student, width=12).pack(side=tk.LEFT, padx=5)
-
     def on_hover(self, event):
         """Handle hover effect for Treeview rows."""
         row_id = self.tree.identify_row(event.y)
@@ -160,9 +157,6 @@ class StudentManager(tk.Toplevel):
             messagebox.showwarning("No Selection", "Please select a student to delete.", parent=self)
             return
 
-        # Debug: Log the current state of the students dictionary
-        print("[DEBUG] Current students data before deletion:", self.students)
-
         # Confirm deletion
         confirm = messagebox.askyesno(
             "Delete Student",
@@ -175,19 +169,13 @@ class StudentManager(tk.Toplevel):
         # Delete each selected student
         for selected_item in selected_items:
             student_name = self.tree.item(selected_item, "values")[0]
-            print(f"[DEBUG] Selected student name for deletion: {student_name}")  # Debug: Log the selected student name
             student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
-            print(f"[DEBUG] Found student ID for deletion: {student_id}")  # Debug: Log the student ID
             if student_id:
                 # Remove the student from the class data
                 self.students.pop(student_id, None)
-                print(f"[DEBUG] Deleted student ID: {student_id}")  # Debug: Log the deletion
-
-        # Debug: Log the updated state of the students dictionary
-        print("[DEBUG] Updated students data after deletion:", self.students)
 
         # Save the updated data to the JSON file
-        save_data(self.students, class_id="OLO123")  # Pass the class ID explicitly
+        save_data(self.students)
 
         # Refresh the table and Mainform
         self.refresh_data()
@@ -203,11 +191,9 @@ class StudentManager(tk.Toplevel):
 
         # Generate a unique student ID
         new_student_id = generate_next_student_id(self.students)
-        print(f"[DEBUG] Generated new student ID: {new_student_id}")
 
         # Add the new student to the dictionary
         self.students[new_student_id] = student_data
-        print(f"[DEBUG] Added new student: {new_student_id} -> {student_data}")
 
         # Save the updated students data
         self.data["classes"][self.class_id]["students"] = self.students
@@ -224,18 +210,3 @@ class StudentManager(tk.Toplevel):
     def close_form(self):
         """Close the form."""
         self.destroy()
-
-    def test_add_student(self):
-        """Test adding a new student."""
-        new_student = {
-            "name": "New Student",
-            "nickname": "Newbie",
-            "gender": "Other",
-            "score": "",
-            "pre_test": "",
-            "post_test": "",
-            "note": "Test student",
-            "active": "Yes",
-            "attendance": {}
-        }
-        self.add_student(new_student)
