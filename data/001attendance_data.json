@@ -2,8 +2,9 @@
     "classes": {
         "OLO123": {
             "metadata": {
+                "class_no": "OLO123",
                 "Company": "ACERs",
-                "Consultant": "Fraser",
+                "Consultant": "Frasers",
                 "Teacher": "Paul R",
                 "TeacherNo": "A20049",
                 "Room": "Floor 23",
@@ -16,7 +17,6 @@
                 "Days": "Tuesday, Thursday",
                 "Time": "17:00 - 19:00",
                 "Notes": "Bring Projector and screen",
-                "class_no": "OLO123",
                 "rate": "530",
                 "ccp": "120",
                 "travel": "200",
@@ -91,6 +91,66 @@
                     "attendance": {}
                 },
                 "S007": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                }
+            },
+            "archive": "No"
+        },
+        "OLO001": {
+            "metadata": {
+                "class_no": "OLO001",
+                "Company": "Default Company",
+                "Consultant": "Default Consultant",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "Default Room",
+                "CourseBook": "Default CourseBook",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "10",
+                "StartDate": "01/01/2025",
+                "FinishDate": "31/12/2025",
+                "Days": "Monday, Wednesday",
+                "Time": "09:00 - 11:00",
+                "Notes": "Default Notes",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000",
+                "archive": "No"
+            },
+            "students": {
+                "S001": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S002": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S003": {
                     "name": "New Student",
                     "nickname": "Newbie",
                     "gender": "Other",
