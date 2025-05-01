@@ -34,7 +34,7 @@ def save_data(students: dict, class_id: str = "OLO123", filepath: str = DATA_FIL
 
         # Ensure the specific class exists
         if class_id not in existing_data["classes"]:
-            existing_data["classes"][class_id] = {"metadata": {}, "students": {}}
+            existing_data["classes"][class_id] = {"metadata": {}, "students": {}, "archive": "No"}
 
         # Update only the students section of the specified class
         existing_data["classes"][class_id]["students"] = students
