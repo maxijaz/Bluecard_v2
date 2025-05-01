@@ -46,69 +46,45 @@ class Launcher(tk.Toplevel):
         try:
             with open("data/themes.json", "r", encoding="utf-8") as f:
                 themes = json.load(f).get("themes", [])
-                # Find the theme by name in the list
                 for theme in themes:
                     if theme.get("name") == self.theme:
                         return theme
-                # Fallback to the default theme
                 for theme in themes:
                     if theme.get("name") == "default":
                         return theme
-                return {}  # Return an empty config if no theme is found
-        except FileNotFoundError:
-            return {}
-        except json.JSONDecodeError:
+                return {}
+        except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
     def load_default_settings(self):
         """Load default settings from default.json."""
         try:
             with open("data/default.json", "r", encoding="utf-8") as f:
-                settings = json.load(f)
-                return settings
-        except FileNotFoundError:
-            # Log a warning if the default.json file is missing
-            logging.warning("default.json not found. Using empty default settings.")
-            return {}
-        except json.JSONDecodeError as e:
-            # Log an error if the JSON file is invalid
-            logging.error(f"Error decoding default.json: {e}")
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
     def apply_treeview_styles(self):
         """Apply styles for Treeview based on the selected theme."""
         style = ttk.Style()
-
         treeview_config = self.theme_config.get("treeview", {})
-        background = treeview_config.get("background", "white")
-        foreground = treeview_config.get("foreground", "black")
-        fieldbackground = treeview_config.get("fieldbackground", "white")
-        rowheight = treeview_config.get("rowheight", 30) + 5  # Increase row height by 5
-
-        # Configure Treeview styles
         style.configure(
             "Treeview",
-            background=background,
-            foreground=foreground,
-            fieldbackground=fieldbackground,
-            rowheight=rowheight,
-            font=("Arial", 18)  # Increase font size to 18
+            background=treeview_config.get("background", "white"),
+            foreground=treeview_config.get("foreground", "black"),
+            fieldbackground=treeview_config.get("fieldbackground", "white"),
+            rowheight=treeview_config.get("rowheight", 30) + 5,
+            font=("Arial", 18)
         )
-
-        # Configure heading styles
-        heading_config = treeview_config.get("heading", {})
         style.configure(
             "Treeview.Heading",
             font=("Arial", 18, "bold"),
-            background=heading_config.get("background", "lightblue"),
-            foreground=heading_config.get("foreground", "black")
+            background=treeview_config.get("heading", {}).get("background", "lightblue"),
+            foreground=treeview_config.get("heading", {}).get("foreground", "black")
         )
-
-        # Configure selected row styles
-        selected_config = treeview_config.get("selected", {})
         style.map(
             "Treeview",
-            background=[("selected", "#1E90FF")],  # Darker blue for selected row
+            background=[("selected", "#1E90FF")],
             foreground=[("selected", "white")]
         )
 
@@ -118,7 +94,7 @@ class Launcher(tk.Toplevel):
             self.configure(bg="black")
         elif self.theme == "clam":
             self.configure(bg="lightblue")
-        else:  # Default theme
+        else:
             self.configure(bg="white")
 
     def center_window(self, width, height):
@@ -131,7 +107,6 @@ class Launcher(tk.Toplevel):
 
     def create_widgets(self):
         """Create the table and buttons."""
-        # Apply Treeview styles before creating the widget
         self.apply_treeview_styles()
 
         # Frame for the table and scrollbar
@@ -147,24 +122,20 @@ class Launcher(tk.Toplevel):
             table_frame,
             columns=("Class No", "Company", "Archived"),
             show="headings",
-            height=8,  # Limit to 8 rows
+            height=8,
             yscrollcommand=scrollbar.set,
             style="Treeview"
         )
-        self.tree.heading("Class No", text="Class No", anchor="center")  # Center-align header
-        self.tree.heading("Company", text="Company", anchor="center")  # Center-align header
-        self.tree.heading("Archived", text="Arch", anchor="center")  # Center-align header
+        self.tree.heading("Class No", text="Class No", anchor="center")
+        self.tree.heading("Company", text="Company", anchor="center")
+        self.tree.heading("Archived", text="Arch", anchor="center")
 
-        # Set column widths and justify data to the left
-        self.tree.column("Class No", width=130, anchor="w")  # Left-align data
-        self.tree.column("Company", width=200, anchor="w")  # Left-align data
-        self.tree.column("Archived", width=70, anchor="center")  # Center-align header
+        self.tree.column("Class No", width=130, anchor="w")
+        self.tree.column("Company", width=200, anchor="w")
+        self.tree.column("Archived", width=70, anchor="center")
 
         self.tree.pack(side=tk.LEFT, fill=tk.Y)
         scrollbar.config(command=self.tree.yview)
-
-        # Bind hover effect
-        self.tree.bind("<Motion>", self.on_hover)
 
         # Bind double-click event
         self.tree.bind("<Double-1>", self.on_double_click)
@@ -176,11 +147,9 @@ class Launcher(tk.Toplevel):
         button_frame = tk.Frame(self, bg=self["bg"])
         button_frame.pack(fill=tk.X, pady=10)
 
-        # Center the buttons
         buttons_inner_frame = tk.Frame(button_frame, bg=self["bg"])
         buttons_inner_frame.pack(anchor="center")
 
-        # Arrange buttons with fixed width
         btn_open = tk.Button(buttons_inner_frame, text="Open", command=self.open_class, width=10)
         btn_edit = tk.Button(buttons_inner_frame, text="Edit", command=self.edit_class, width=10)
         btn_add = tk.Button(buttons_inner_frame, text="Add Class", command=self.add_new_class, width=10)
@@ -189,7 +158,6 @@ class Launcher(tk.Toplevel):
         btn_ttr = tk.Button(buttons_inner_frame, text="TTR", command=self.placeholder_ttr, width=10)
         btn_settings = tk.Button(buttons_inner_frame, text="Settings", command=self.open_settings, width=10)
 
-        # Use grid layout for two rows
         btn_open.grid(row=0, column=0, padx=5, pady=5)
         btn_edit.grid(row=0, column=1, padx=5, pady=5)
         btn_add.grid(row=0, column=2, padx=5, pady=5)
@@ -202,39 +170,17 @@ class Launcher(tk.Toplevel):
         """Handle double-click on a table row to highlight and open the Mainform."""
         selected_item = self.tree.selection()
         if not selected_item:
-            return  # Do nothing if no row is selected
-
-        # Highlight the selected row in blue
-        self.tree.tag_configure("selected", background="#1E90FF", foreground="white")  # Blue for selected row
-        for row in self.tree.get_children():
-            self.tree.item(row, tags=())  # Reset tags for all rows
-        self.tree.item(selected_item, tags=("selected",))
-
-        # Open the Mainform with the selected data
+            return
         class_id = self.tree.item(selected_item, "values")[0]
-        self.destroy()  # Close the Launcher
-        Mainform(self.master, class_id, self.data, self.theme).mainloop()  # Open the Mainform
-
-    def on_hover(self, event):
-        """Handle hover effect for Treeview rows."""
-        row_id = self.tree.identify_row(event.y)
-        # Reset hover effect for all rows
-        for row in self.tree.get_children():
-            self.tree.item(row, tags=())
-        # Apply hover effect to the current row
-        if row_id:
-            self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
-            self.tree.item(row_id, tags=("hover",))
+        self.destroy()
+        Mainform(self.master, class_id, self.data, self.theme).mainloop()
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
-        # Extract and sort the data by the 'Company' field
         sorted_classes = sorted(
             self.classes.items(),
             key=lambda item: item[1].get("metadata", {}).get("Company", "Unknown")
         )
-
-        # Populate the Treeview with sorted data
         for class_id, class_data in sorted_classes:
             metadata = class_data.get("metadata", {})
             if metadata.get("archive", "No") == "No":
@@ -249,8 +195,8 @@ class Launcher(tk.Toplevel):
             messagebox.showwarning("No Selection", "Please select a class to open.", parent=self)
             return
         class_id = self.tree.item(selected_item, "values")[0]
-        self.destroy()  # Close the Launcher
-        Mainform(self.master, class_id, self.data, self.theme).mainloop()  # Open the Mainform
+        self.destroy()
+        Mainform(self.master, class_id, self.data, self.theme).mainloop()
 
     def edit_class(self):
         """Open the MetadataForm to edit an existing class."""
@@ -265,10 +211,10 @@ class Launcher(tk.Toplevel):
         """Open the MetadataForm to add a new class."""
         MetadataForm(
             parent=self,
-            class_id=None,  # No class ID for a new class
-            default_values={},  # Empty default values for a new class
+            class_id=None,
+            default_values={},
             theme=self.theme,
-            on_metadata_save=self.refresh  # Refresh the launcher after saving
+            on_metadata_save=self.refresh
         ).mainloop()
 
     def archive_class(self):
@@ -286,7 +232,7 @@ class Launcher(tk.Toplevel):
 
     def open_archive_manager(self):
         """Open the Archive Manager form."""
-        self.destroy()  # Close the Launcher
+        self.destroy()
         ArchiveManager(self.master, self.data, self.theme).mainloop()
 
     def placeholder_ttr(self):
@@ -300,16 +246,16 @@ class Launcher(tk.Toplevel):
     def refresh_launcher(self, theme=None):
         """Refresh the launcher after settings are saved."""
         if theme:
-            self.theme = theme  # Update the theme if provided
-        self.theme_config = self.load_theme_config()  # Reload theme configuration
-        self.configure_theme()  # Apply the new theme
-        self.refresh()  # Refresh the UI components
+            self.theme = theme
+        self.theme_config = self.load_theme_config()
+        self.configure_theme()
+        self.refresh()
 
     def refresh(self):
         """Refresh the Launcher."""
         for widget in self.winfo_children():
-            widget.destroy()  # Clear all widgets
-        self.create_widgets()  # Recreate widgets
+            widget.destroy()
+        self.create_widgets()
 
     def on_close(self):
         """Handle Launcher close event."""
@@ -322,4 +268,4 @@ class Launcher(tk.Toplevel):
         """Generate the next unique class ID."""
         existing_ids = [int(cid[3:]) for cid in existing_class_ids if cid.startswith("OLO")]
         next_id = max(existing_ids, default=0) + 1
-        return f"OLO{next_id:03d}"  # Format as OLO001, OLO002, etc.
+        return f"OLO{next_id:03d}"
