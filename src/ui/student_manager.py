@@ -3,6 +3,15 @@ from tkinter import ttk, messagebox
 from src.logic.parser import save_data, generate_next_student_id
 from src.ui.student_form import StudentForm
 
+def validate_student_data(student_data: dict) -> bool:
+    """Validate the student data before adding."""
+    required_fields = ["name", "gender", "active", "attendance"]
+    for field in required_fields:
+        if field not in student_data or not student_data[field]:
+            messagebox.showerror("Invalid Data", f"Field '{field}' is required.", parent=None)
+            return False
+    return True
+
 class StudentManager(tk.Toplevel):
     def __init__(self, parent, students, refresh_callback):
         super().__init__(parent)
@@ -171,7 +180,7 @@ class StudentManager(tk.Toplevel):
         print("[DEBUG] Updated students data after deletion:", self.students)
 
         # Save the updated data to the JSON file
-        save_data(self.students)
+        save_data(self.students, class_id="OLO123")  # Pass the class ID explicitly
 
         # Refresh the table and Mainform
         self.refresh_data()

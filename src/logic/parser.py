@@ -21,18 +21,23 @@ def load_data() -> Dict[str, Any]:
         print("Error decoding JSON. Returning empty data.")
         return {"classes": {}}
 
-def save_data(data: dict, filepath: str = DATA_FILE) -> None:
-    """Save the entire class structure back into the JSON file."""
+def save_data(students: dict, class_id: str = "OLO123", filepath: str = DATA_FILE) -> None:
+    """Save the updated students data for a specific class while preserving the rest of the data."""
     try:
-        # Load the existing data to preserve other classes and metadata
+        # Load the existing data
         with open(filepath, "r", encoding="utf-8") as f:
             existing_data = json.load(f)
 
-        # Update the specific class data (e.g., "OLO123")
-        class_id = "OLO123"  # Replace with the actual class ID being modified
+        # Ensure the "classes" structure exists
         if "classes" not in existing_data:
             existing_data["classes"] = {}
-        existing_data["classes"][class_id]["students"] = data
+
+        # Ensure the specific class exists
+        if class_id not in existing_data["classes"]:
+            existing_data["classes"][class_id] = {"metadata": {}, "students": {}}
+
+        # Update only the students section of the specified class
+        existing_data["classes"][class_id]["students"] = students
 
         # Save the updated data back to the file
         with open(filepath, "w", encoding="utf-8") as f:
