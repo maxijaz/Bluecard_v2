@@ -98,10 +98,7 @@ class MetadataForm(tk.Toplevel):
             if not self.is_edit:
                 # Normalize key to lowercase to match default.json keys
                 default_key = f"def_{key.lower()}"
-                default_value = self.default_values.get(default_key, f"[Missing default for {key}]")
-                if default_key not in self.default_values:
-                    logging.warning(f"Default value for {key} is missing in default.json")
-                logging.debug(f"Default value for {key}: {default_value}")
+                default_value = self.default_values.get(default_key, "")
                 entry.insert(0, default_value)
             else:
                 existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")

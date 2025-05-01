@@ -8,7 +8,7 @@ class ArchiveManager(tk.Toplevel):
         self.parent = parent  # Reference to the parent window
         self.theme = theme
         self.title("Archive Manager")
-        self.geometry("450x400")  # Keep the adjusted window size
+        self.geometry("450x400")  # Adjusted window size
         self.center_window(450, 400)
         self.resizable(False, False)
 

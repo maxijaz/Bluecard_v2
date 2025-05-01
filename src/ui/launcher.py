@@ -7,7 +7,6 @@ from src.ui.archive_manager import ArchiveManager
 from src.ui.metadata_form import MetadataForm
 import os
 import json
-import logging
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):

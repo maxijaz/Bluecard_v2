@@ -365,7 +365,7 @@ class Mainform(tk.Toplevel):
         """Handle Mainform close event."""
         from src.ui.launcher import Launcher  # Lazy import to avoid circular dependency
         self.destroy()  # Close the Mainform
-        Launcher(self.master, self.theme).mainloop()  # Reopen the Launcher
+        Launcher(self.master, self.theme).mainloop()
 
     def open_add_edit_student_form(self, student_data=None):
         """Open a form to add or edit a student."""
