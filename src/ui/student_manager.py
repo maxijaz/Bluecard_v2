@@ -5,11 +5,16 @@ from src.ui.student_form import StudentForm
 
 def validate_student_data(student_data: dict) -> bool:
     """Validate the student data before adding."""
-    required_fields = ["name", "gender", "active", "attendance"]
+    required_fields = ["name", "gender", "active"]
     for field in required_fields:
         if field not in student_data or not student_data[field]:
             messagebox.showerror("Invalid Data", f"Field '{field}' is required.", parent=None)
             return False
+
+    # Ensure the attendance field is initialized if missing
+    if "attendance" not in student_data:
+        student_data["attendance"] = {}
+
     return True
 
 class StudentManager(tk.Toplevel):
