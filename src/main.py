@@ -30,35 +30,28 @@ DEFAULT_THEME = "normal"
 
 # Configure logging
 logging.basicConfig(
-    level=logging.WARNING,  # Set to WARNING to suppress DEBUG messages
+    level=logging.ERROR,  # Set to ERROR to suppress DEBUG and WARNING messages
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
-    logging.debug("Loading theme from settings.json...")
     if not os.path.exists(SETTINGS_PATH):
-        logging.warning("Settings file not found. Using default theme.")
         return DEFAULT_THEME
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             settings = json.load(f)
-            theme = settings.get("theme", DEFAULT_THEME)
-            logging.debug(f"Loaded theme: {theme}")
-            return theme
-    except json.JSONDecodeError as e:
-        logging.error(f"Error decoding settings.json: {e}")
+            return settings.get("theme", DEFAULT_THEME)
+    except json.JSONDecodeError:
         return DEFAULT_THEME
 
 def on_close():
     """Handles cleanup and backup on app close."""
-    logging.debug("Application is closing. Backing up data...")
     parser.backup_data()
     sys.exit(0)
 
 def start_launcher():
     """Start the Launcher form."""
-    logging.debug("Starting launcher...")
     theme = load_theme()
     root = tk.Tk()
     root.withdraw()  # Hide the root window
@@ -74,4 +67,3 @@ if __name__ == "__main__":
         start_launcher()
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
-    # Remove the finally block to prevent premature exit
