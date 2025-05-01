@@ -187,6 +187,10 @@ class StudentManager(tk.Toplevel):
 
     def add_student(self, student_data: dict):
         """Add a new student to the class."""
+        # Ensure the attendance field is initialized as an empty dictionary if not provided
+        student_data.setdefault("attendance", {})
+
+        # Validate the student data
         if not validate_student_data(student_data):
             return  # Do not proceed if validation fails
 
