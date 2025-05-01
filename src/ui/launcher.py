@@ -262,8 +262,47 @@ class Launcher(tk.Toplevel):
         MetadataForm(self, class_id, self.data, self.theme, self.refresh).mainloop()
 
     def add_new_class(self):
-        """Open the MetadataForm to add a new class."""
-        MetadataForm(self, None, self.default_settings, self.theme, self.refresh).mainloop()
+        """Add a new class to the data."""
+        # Generate a unique class ID
+        existing_class_ids = self.data["classes"].keys()
+        next_class_id = self.generate_next_class_id(existing_class_ids)
+
+        # Default metadata for the new class
+        new_class_metadata = {
+            "Company": "New Company",
+            "Consultant": "",
+            "Teacher": "",
+            "TeacherNo": "",
+            "Room": "",
+            "CourseBook": "",
+            "CourseHours": "",
+            "ClassTime": "",
+            "MaxClasses": "",
+            "StartDate": "",
+            "FinishDate": "",
+            "Days": "",
+            "Time": "",
+            "Notes": "",
+            "class_no": next_class_id,
+            "rate": "",
+            "ccp": "",
+            "travel": "",
+            "bonus": "",
+            "archive": "No"
+        }
+
+        # Add the new class to the top-level "classes" dictionary
+        self.data["classes"][next_class_id] = {
+            "metadata": new_class_metadata,
+            "students": {}
+        }
+
+        # Save the updated data
+        save_data(self.data)
+
+        # Refresh the launcher to show the new class
+        self.refresh()
+        messagebox.showinfo("Success", f"Class {next_class_id} added successfully!", parent=self)
 
     def archive_class(self):
         """Archive the selected class."""
@@ -311,3 +350,9 @@ class Launcher(tk.Toplevel):
         if confirm:
             save_data(self.data)
         self.destroy()
+
+    def generate_next_class_id(self, existing_class_ids):
+        """Generate the next unique class ID."""
+        existing_ids = [int(cid[3:]) for cid in existing_class_ids if cid.startswith("OLO")]
+        next_id = max(existing_ids, default=0) + 1
+        return f"OLO{next_id:03d}"  # Format as OLO001, OLO002, etc.

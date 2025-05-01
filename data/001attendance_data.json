@@ -92,6 +92,31 @@
                 }
             },
             "archive": "No"
+        },
+        "OLO124": {
+            "metadata": {
+                "Company": "New Company",
+                "Consultant": "",
+                "Teacher": "",
+                "TeacherNo": "",
+                "Room": "",
+                "CourseBook": "",
+                "CourseHours": "",
+                "ClassTime": "",
+                "MaxClasses": "",
+                "StartDate": "",
+                "FinishDate": "",
+                "Days": "",
+                "Time": "",
+                "Notes": "",
+                "class_no": "OLO124",
+                "rate": "",
+                "ccp": "",
+                "travel": "",
+                "bonus": "",
+                "archive": "No"
+            },
+            "students": {}
         }
     }
 }
