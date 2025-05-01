@@ -137,7 +137,7 @@ class MetadataForm(tk.Toplevel):
         # Collect metadata from the form
         metadata = {}
         for key, entry in self.entries.items():
-            metadata[key] = entry.get().strip() or self.default_values.get(f"def_{key}", "")
+            metadata[key] = entry.get().strip()
 
         # Save the metadata
         if not self.is_edit:

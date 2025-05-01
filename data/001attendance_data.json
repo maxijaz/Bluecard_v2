@@ -167,6 +167,31 @@
             },
             "students": {},
             "archive": "No"
+        },
+        "OLO003": {
+            "metadata": {
+                "class_no": "OLO003",
+                "Company": "Default Company",
+                "Consultant": "Default Consultant",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "Default Room",
+                "CourseBook": "Default CourseBook",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "10",
+                "StartDate": "01/01/2025",
+                "FinishDate": "31/12/2025",
+                "Days": "Monday, Wednesday",
+                "Time": "09:00 - 11:00",
+                "Notes": "Default Notes",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
+            },
+            "students": {},
+            "archive": "No"
         }
     }
 }
