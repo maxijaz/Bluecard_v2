@@ -12,13 +12,7 @@ def load_data() -> Dict[str, Any]:
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-
-        # Ensure class_no is set in the metadata for each class
-        for class_id, class_data in data.get("classes", {}).items():
-            metadata = class_data.get("metadata", {})
-            if "class_no" not in metadata or not metadata["class_no"]:
-                metadata["class_no"] = class_id
-
+        print("[DEBUG] Data loaded from file:", json.dumps(data, indent=4))  # Debug: Log loaded data
         return data
     except FileNotFoundError:
         print("Data file not found. Returning empty data.")
@@ -28,12 +22,25 @@ def load_data() -> Dict[str, Any]:
         return {"classes": {}}
 
 def save_data(data: dict, filepath: str = DATA_FILE) -> None:
-    """Saves the provided dictionary back into the JSON file."""
+    """Save the entire class structure back into the JSON file."""
     try:
+        # Load the existing data to preserve other classes and metadata
+        with open(filepath, "r", encoding="utf-8") as f:
+            existing_data = json.load(f)
+
+        # Update the specific class data (e.g., "OLO123")
+        class_id = "OLO123"  # Replace with the actual class ID being modified
+        if "classes" not in existing_data:
+            existing_data["classes"] = {}
+        existing_data["classes"][class_id]["students"] = data
+
+        # Save the updated data back to the file
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+            json.dump(existing_data, f, indent=4, ensure_ascii=False)
+
+        print("[DEBUG] Data successfully saved.")
     except Exception as e:
-        log_error(f"Failed to save data to {filepath}: {e}")
+        print("[ERROR] Failed to save data:", e)
 
 def log_error(message: str) -> None:
     """Logs errors to a file."""
@@ -103,3 +110,11 @@ def cleanup_old_backups(days: int = 90) -> None:
             except ValueError:
                 # Skip files that don't match the expected timestamp format
                 continue
+
+def generate_next_student_id(students: dict) -> str:
+    """Generate the next unique student ID."""
+    if not students:
+        return "S001"  # Start with S001 if no students exist
+    existing_ids = [int(sid[1:]) for sid in students.keys() if sid.startswith("S")]
+    next_id = max(existing_ids, default=0) + 1
+    return f"S{next_id:03d}"  # Format as S001, S002, etc.

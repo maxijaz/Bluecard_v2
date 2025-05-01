@@ -57,17 +57,6 @@
                         "15/05/2025": "P"
                     }
                 },
-                "S003": {
-                    "name": "ass",
-                    "nickname": "",
-                    "gender": "Female",
-                    "score": "",
-                    "pre_test": "",
-                    "post_test": "",
-                    "note": "",
-                    "active": "Yes",
-                    "attendance": {}
-                },
                 "S004": {
                     "name": "mike",
                     "nickname": "",
