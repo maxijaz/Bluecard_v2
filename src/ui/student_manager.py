@@ -18,9 +18,11 @@ def validate_student_data(student_data: dict) -> bool:
     return True
 
 class StudentManager(tk.Toplevel):
-    def __init__(self, parent, students, refresh_callback):
+    def __init__(self, parent, data, class_id, refresh_callback):
         super().__init__(parent)
-        self.students = students
+        self.data = data  # Pass the entire data structure
+        self.class_id = class_id  # Pass the class ID
+        self.students = self.data["classes"][self.class_id]["students"]
         self.refresh_callback = refresh_callback
 
         self.title("Student Active Manager")
@@ -208,7 +210,8 @@ class StudentManager(tk.Toplevel):
         print(f"[DEBUG] Added new student: {new_student_id} -> {student_data}")
 
         # Save the updated students data
-        save_data(self.students)
+        self.data["classes"][self.class_id]["students"] = self.students
+        save_data(self.data)
 
         # Refresh the table and Mainform
         self.refresh_data()

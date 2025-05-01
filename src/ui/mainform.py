@@ -341,7 +341,7 @@ class Mainform(tk.Toplevel):
 
     def manage_students(self):
         """Open the Student Active Manager."""
-        StudentManager(self, self.students, self.refresh).mainloop()
+        StudentManager(self, self.data, self.class_id, self.refresh).mainloop()
 
     def edit_metadata(self):
         """Open the Edit Metadata form."""

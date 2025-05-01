@@ -89,6 +89,17 @@
                     "note": "",
                     "active": "Yes",
                     "attendance": {}
+                },
+                "S007": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
                 }
             },
             "archive": "No"
