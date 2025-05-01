@@ -18,7 +18,6 @@ import json
 import signal
 import sys
 import tkinter as tk
-import logging
 from logic import parser
 from ui.launcher import Launcher
 
@@ -27,12 +26,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
-
-# Configure logging
-logging.basicConfig(
-    level=logging.ERROR,  # Set to ERROR to suppress DEBUG and WARNING messages
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -65,5 +58,5 @@ if __name__ == "__main__":
         signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
-    except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}")
+    except Exception:
+        parser.log_error("An unexpected error occurred.")

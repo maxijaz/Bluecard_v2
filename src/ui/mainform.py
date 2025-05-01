@@ -106,50 +106,6 @@ class Mainform(tk.Toplevel):
         # Column 5: Blank (Dynamic Width)
         tk.Label(layout_frame, text="", bg=self["bg"]).grid(row=0, column=4, rowspan=8, sticky="nsew")
 
-        # Column 6: Buttons
-        buttons_col_6 = [
-            ("Add Ss", self.add_student),
-            ("Edit Ss", self.edit_student),
-            ("Remove Ss", self.remove_student),
-            ("Manage Ss", self.manage_students),
-        ]
-        for i, (text, command) in enumerate(buttons_col_6):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=5, sticky="e")
-
-        # Column 7: Buttons
-        buttons_col_7 = [
-            ("Add Date", self.placeholder),
-            ("Edit Date", self.placeholder),
-            ("Metadata", self.edit_metadata),
-            ("Unused 1", self.placeholder),
-        ]
-        for i, (text, command) in enumerate(buttons_col_7):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=6, sticky="e")
-
-        # Column 8: Buttons
-        buttons_col_8 = [
-            ("Unused 2", self.placeholder),
-            ("Unused 3", self.placeholder),
-            ("Unused 4", self.placeholder),
-            ("Unused 5", self.placeholder),
-        ]
-        for i, (text, command) in enumerate(buttons_col_8):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=7, sticky="e")
-
-        # Column 9: Buttons
-        buttons_col_9 = [
-            ("Unused 6", self.placeholder),
-            ("Unused 7", self.placeholder),
-            ("Unused 8", self.placeholder),
-            ("Unused 9", self.placeholder),
-        ]
-        for i, (text, command) in enumerate(buttons_col_9):
-            tk.Button(layout_frame, text=text, command=command, width=10).grid(row=i, column=8, padx=(0, 5), sticky="e")
-
-        # Separator above the header label
-        separator = tk.Frame(self, height=2, bg="black", bd=0, relief=tk.SUNKEN)
-        separator.pack(fill=tk.X, padx=10, pady=1)
-
         # Attendance Table Section
         attendance_frame = tk.Frame(self, bg=self["bg"])
         attendance_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=1)
@@ -170,7 +126,6 @@ class Mainform(tk.Toplevel):
         style.configure("Treeview.Heading", font=("Arial", 12, "bold"), anchor="center", background="#e0e0e0")  # Gray background for headings
         style.configure("Treeview", font=("Arial", 12))  # Data: size 12, regular
         self.tree.configure(style="Treeview")  # Explicitly set the style for the Treeview
-        print("[DEBUG] Configured Treeview.Heading style with gray background.")  # Debug: Log style configuration
 
         # Configure row hover and selection styles
         style.map(
@@ -178,11 +133,9 @@ class Mainform(tk.Toplevel):
             background=[("selected", "#1E90FF")],  # Darker blue for selected rows
             foreground=[("selected", "white")],  # White text for selected rows
         )
-        print("[DEBUG] Configured Treeview selection styles.")  # Debug: Log selection style configuration
 
         # Add hover effect using tags
         self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
-        print("[DEBUG] Configured hover effect for Treeview rows.")  # Debug: Log hover effect configuration
 
         for col in columns:
             if col == "#":
@@ -196,23 +149,18 @@ class Mainform(tk.Toplevel):
             else:
                 self.tree.column(col, width=100, anchor="center")  # Default width for other columns
             self.tree.heading(col, text=col)
-            print(f"[DEBUG] Configured heading for column: {col}")  # Debug: Log heading configuration
 
         self.tree.pack(fill=tk.BOTH, expand=True)
-        print("[DEBUG] Packed Treeview into the attendance frame.")  # Debug: Log Treeview packing
 
         # Bind hover events
         self.tree.bind("<Motion>", self.on_row_hover)
         self.tree.bind("<Leave>", self.on_row_leave)
-        print("[DEBUG] Bound hover events to Treeview.")  # Debug: Log hover event binding
 
         # Bind click event to toggle row selection
         self.tree.bind("<Button-1>", self.on_row_click)
-        print("[DEBUG] Bound click event to Treeview.")  # Debug: Log click event binding
 
         # Populate attendance table
         self.populate_attendance_table()
-        print("[DEBUG] Populated attendance table.")  # Debug: Log table population
 
     def get_attendance_dates(self):
         """Get all unique attendance dates from student data."""
@@ -233,7 +181,6 @@ class Mainform(tk.Toplevel):
 
                 # Determine the tag for alternating row colors
                 row_tag = "even" if idx % 2 != 0 else "odd"  # First row is white (even)
-                print(f"[DEBUG] Assigning row {idx} with tag: {row_tag}")  # Debug: Log row tag
 
                 self.tree.insert(
                     "",
@@ -261,48 +208,39 @@ class Mainform(tk.Toplevel):
     def on_row_hover(self, event):
         """Handle row hover event."""
         row_id = self.tree.identify_row(event.y)  # Identify the row under the mouse pointer
-        print(f"[DEBUG] Hovering over row ID: {row_id}")  # Debug: Log hovered row ID
 
         if row_id:
             # Apply hover effect to the current row
             self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
             self.tree.item(row_id, tags=("hover",))  # Apply the hover tag to the row
-            print(f"[DEBUG] Applied hover tag to row ID: {row_id}")  # Debug: Log hover tag application
 
             # Reset the previous row's color
             for row in self.tree.get_children():
                 if row != row_id:
                     row_index = self.tree.index(row)
                     row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
-                    print(f"[DEBUG] Restoring row {row} to tag: {row_tag}")  # Debug: Log tag restoration
                     self.tree.item(row, tags=(row_tag,))
 
     def on_row_leave(self, event):
         """Handle row leave event."""
-        print("[DEBUG] Mouse left the table. Restoring row tags.")  # Debug: Log mouse leave event
         for row_id in self.tree.get_children():
             row_index = self.tree.index(row_id)
             row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
-            print(f"[DEBUG] Restoring row {row_id} to tag: {row_tag}")  # Debug: Log tag restoration
             self.tree.item(row_id, tags=(row_tag,))
 
     def on_row_click(self, event):
         """Handle row click event to toggle selection with a single click."""
         row_id = self.tree.identify_row(event.y)  # Identify the row under the mouse pointer
-        print(f"[DEBUG] Clicked row ID: {row_id}")  # Debug: Log the clicked row ID
 
         if row_id:
             # Check if the row is already selected
             if row_id in self.tree.selection():
-                print(f"[DEBUG] Row {row_id} is already selected. Deselecting...")  # Debug: Log deselection
                 # Unselect the row and restore its original color
                 self.tree.selection_remove(row_id)
                 row_index = self.tree.index(row_id)
                 row_tag = "odd" if (row_index + 1) % 2 != 0 else "even"  # Adjust for header row
-                print(f"[DEBUG] Restoring row {row_id} to tag: {row_tag}")  # Debug: Log tag restoration
                 self.tree.item(row_id, tags=(row_tag,))
             else:
-                print(f"[DEBUG] Row {row_id} is not selected. Selecting...")  # Debug: Log selection
                 # Select the row
                 self.tree.selection_set(row_id)
 
@@ -347,10 +285,6 @@ class Mainform(tk.Toplevel):
         """Open the Edit Metadata form."""
         MetadataForm(self, self.class_id, self.data, self.theme, self.refresh).mainloop()
 
-    def open_settings(self):
-        """Open the Settings form."""
-        messagebox.showinfo("Settings", "Settings functionality is under development.", parent=self)
-
     def placeholder(self):
         """Placeholder for future functionality."""
         messagebox.showinfo("Placeholder", "This feature is under development.", parent=self)
@@ -366,67 +300,3 @@ class Mainform(tk.Toplevel):
         from src.ui.launcher import Launcher  # Lazy import to avoid circular dependency
         self.destroy()  # Close the Mainform
         Launcher(self.master, self.theme).mainloop()
-
-    def open_add_edit_student_form(self, student_data=None):
-        """Open a form to add or edit a student."""
-        form = tk.Toplevel(self)
-        form.title("Add/Edit Student")
-        form.geometry("400x300")
-        form.configure(bg=self["bg"])
-
-        # Name Field
-        tk.Label(form, text="Name:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=0, column=0, sticky="e", padx=10, pady=10)
-        name_var = tk.StringVar(value=student_data.get("Name", "") if student_data else "")
-        name_entry = tk.Entry(form, textvariable=name_var, font=("Arial", 12), width=15)
-        name_entry.grid(row=0, column=1, padx=10, pady=10)
-
-        # Other Fields (Example: Nickname)
-        tk.Label(form, text="Nickname:", font=("Arial", 12, "bold"), bg=self["bg"]).grid(row=1, column=0, sticky="e", padx=10, pady=10)
-        nickname_var = tk.StringVar(value=student_data.get("Nickname", "") if student_data else "")
-        nickname_entry = tk.Entry(form, textvariable=nickname_var, font=("Arial", 12), width=15)
-        nickname_entry.grid(row=1, column=1, padx=10, pady=10)
-
-        # Save Button
-        save_button = tk.Button(
-            form,
-            text="Save",
-            command=lambda: self.save_student(form, name_var, nickname_var),
-            bg="green",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            width=10
-        )
-        save_button.grid(row=2, column=0, padx=10, pady=20)
-
-        # Cancel Button
-        cancel_button = tk.Button(
-            form,
-            text="Cancel",
-            command=form.destroy,
-            bg="red",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            width=10
-        )
-        cancel_button.grid(row=2, column=1, padx=10, pady=20)
-
-    def save_student(self, form, name_var, nickname_var):
-        """Save the student data."""
-        name = name_var.get().title()  # Capitalize each word in the name
-        nickname = nickname_var.get()
-
-        # Save the data (example logic)
-        new_student = {
-            "Name": name,
-            "Nickname": nickname,
-        }
-        # Add logic to save `new_student` to the data source
-        print(f"Saved student: {new_student}")
-
-        form.destroy()  # Close the form
-
-if __name__ == "__main__":
-    # Example usage
-    data = load_data()
-    app = Mainform("OLO123", data, "default")
-    app.mainloop()
