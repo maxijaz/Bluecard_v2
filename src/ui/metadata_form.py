@@ -173,6 +173,52 @@ class MetadataForm(tk.Toplevel):
         cancel_button = tk.Button(button_frame, text="Cancel", font=("Arial", 12, "bold"), bg="red", fg="white", command=self.close_form)
         cancel_button.pack(side="left", padx=10)
 
+        # Add a frame for the table and scrollbars
+        table_frame = tk.Frame(self, bg="white")
+        table_frame.grid(row=20, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")
+
+        # Create a Treeview for the table
+        self.table = ttk.Treeview(table_frame, columns=("Column1", "Column2", "Column3"), show="headings")
+        self.table.heading("Column1", text="Column 1")
+        self.table.heading("Column2", text="Column 2")
+        self.table.heading("Column3", text="Column 3")
+
+        # Add vertical scrollbar
+        v_scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.table.yview)
+        v_scrollbar.pack(side="right", fill="y")
+        self.table.configure(yscrollcommand=v_scrollbar.set)
+
+        # Add horizontal scrollbar
+        h_scrollbar = ttk.Scrollbar(table_frame, orient="horizontal", command=self.table.xview)
+        h_scrollbar.pack(side="bottom", fill="x")
+        self.table.configure(xscrollcommand=h_scrollbar.set)
+
+        # Pack the table
+        self.table.pack(fill="both", expand=True)
+
+        # Populate the table with sample data
+        for i in range(50):  # Example data
+            self.table.insert("", "end", values=(f"Row {i+1} Col 1", f"Row {i+1} Col 2", f"Row {i+1} Col 3"))
+
+        # Bind zoom functionality
+        self.table_font_size = 10  # Default font size
+        self.table.bind("<Control-MouseWheel>", self.zoom_table)
+
+    def zoom_table(self, event):
+        """Zoom in or out on the table using Ctrl+MouseWheel."""
+        if event.delta > 0:  # Zoom in
+            self.table_font_size += 1
+        elif event.delta < 0 and self.table_font_size > 1:  # Zoom out
+            self.table_font_size -= 1
+
+        # Update the font size of the table
+        new_font = ("Arial", self.table_font_size)
+        self.table.tag_configure("font", font=new_font)
+
+        # Apply the new font to all rows
+        for row in self.table.get_children():
+            self.table.item(row, tags=("font",))
+
     def update_max_classes(self, *args):
         """Recalculate MaxClasses based on CourseHours and ClassTime."""
         try:
