@@ -4,7 +4,7 @@ from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
 from .metadata_form import MetadataForm
 from .student_manager import StudentManager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Mainform(tk.Toplevel):
     def __init__(self, master, class_id, data, theme):
@@ -218,38 +218,42 @@ class Mainform(tk.Toplevel):
         self.populate_attendance_table()
 
     def get_attendance_dates(self):
-        """Get all unique attendance dates from student data and add empty columns to match MaxClasses."""
-        dates = set()
-        for student_data in self.students.values():
-            attendance = student_data.get("attendance", {})
-            dates.update(attendance.keys())  # Collect all dates in full-year format
+        """Get all unique attendance dates dynamically based on StartDate, Days, and MaxClasses."""
+        max_classes_str = self.metadata.get("MaxClasses", "10")
+        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "10" from "10 (1 hour remains)")
 
-        # Sort the existing dates
-        sorted_dates = sorted(dates)
+        start_date_str = self.metadata.get("StartDate", "")
+        days_str = self.metadata.get("Days", "")
 
-        # Get MaxClasses from metadata
-        max_classes_str = self.metadata.get("MaxClasses", "20")
-        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "20" from "20 (1 hour remains)")
+        # Parse StartDate
+        try:
+            start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+        except ValueError:
+            start_date = None  # If StartDate is invalid or missing, fallback to placeholders
 
-        # Add empty date columns if needed
-        while len(sorted_dates) < max_classes:
-            next_date = f"Empty-{len(sorted_dates) + 1}"  # Placeholder for empty columns
-            sorted_dates.append(next_date)
+        # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
+        weekdays = []
+        if days_str:
+            day_map = {
+                "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+                "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+            }
+            weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
 
-        # Reformat dates for display
-        reformatted_dates = []
-        for date in sorted_dates:
-            if "Empty" not in date:
-                try:
-                    # Try parsing as full-year format
-                    reformatted_dates.append(datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y"))
-                except ValueError:
-                    # If parsing fails, assume it's already in short-year format
-                    reformatted_dates.append(date)
-            else:
-                reformatted_dates.append(date)  # Keep placeholders as-is
+        # Generate dates dynamically
+        dates = []
+        if start_date and weekdays:
+            current_date = start_date
+            while len(dates) < max_classes:
+                if current_date.weekday() in weekdays:
+                    dates.append(current_date.strftime("%d/%m/%Y"))
+                current_date += timedelta(days=1)  # Move to the next day
 
-        return reformatted_dates
+        # Fallback to placeholders if no valid dates are generated
+        if not dates:
+            dates = [f"Empty-{i + 1}" for i in range(max_classes)]
+
+        return dates
 
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
@@ -294,7 +298,7 @@ class Mainform(tk.Toplevel):
                 # Use reformatted dates for display
                 attendance_values = [
                     attendance.get(
-                        datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y"), "-"
+                        datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y"), "-"
                     ) if "Empty" not in date else "-"  # Skip placeholder columns
                     for date in attendance_dates
                 ]
