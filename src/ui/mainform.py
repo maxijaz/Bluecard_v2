@@ -313,9 +313,9 @@ class Mainform(tk.Toplevel):
                 )
 
         # Configure styles for the tags with increased contrast
-        self.tree.tag_configure("running_total", background="#f0f0f0", font=("Arial", 10))  # Small font for running total row
+        self.tree.tag_configure("running_total", background="#eaeaea", font=("Arial", 10))  # Small font for running total row
         self.tree.tag_configure("odd", background="#ffffff")  # Darker gray for odd rows
-        self.tree.tag_configure("even", background="#e0e0e0")  # White for even rows
+        self.tree.tag_configure("even", background="#eaeaea")  # White for even rows
 
     def on_row_hover(self, event):
         """Handle row hover event."""
