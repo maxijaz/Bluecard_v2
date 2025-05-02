@@ -48,6 +48,7 @@ class TestScrollbar(tk.Tk):
 
         # Configure the scrollbar to control both tables
         def scroll_both(*args):
+            # Synchronize the vertical scrolling of both tables
             frozen_table.yview(*args)
             scrollable_table.yview(*args)
 
