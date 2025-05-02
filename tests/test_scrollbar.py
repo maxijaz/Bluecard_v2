@@ -102,12 +102,20 @@ class TestScrollbar(tk.Tk):
         frozen_table.bind("<<TreeviewSelect>>", sync_selection)
         scrollable_table.bind("<<TreeviewSelect>>", sync_selection)
 
-        # Intermediate function for mouse wheel scrolling
+        # Enhanced mouse wheel scrolling for tight synchronization
         def on_mouse_wheel(event):
-            # Determine the scroll direction
+            # Calculate the scroll delta
             delta = -1 if event.delta > 0 else 1
-            frozen_table.yview_scroll(delta, "units")
-            scrollable_table.yview_scroll(delta, "units")
+
+            # Get the current scroll position of the frozen table
+            current_scroll = frozen_table.yview()
+
+            # Calculate the new scroll position
+            new_scroll = max(0, min(1, current_scroll[0] + delta * 0.1))
+
+            # Apply the new scroll position to both tables
+            frozen_table.yview_moveto(new_scroll)
+            scrollable_table.yview_moveto(new_scroll)
 
         # Bind mouse wheel scrolling to both tables
         frozen_table.bind("<MouseWheel>", on_mouse_wheel)
