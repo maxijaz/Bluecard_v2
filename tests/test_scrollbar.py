@@ -47,10 +47,18 @@ class TestScrollbar(tk.Tk):
         v_scrollbar = ttk.Scrollbar(scrollable_frame, orient="vertical")
         v_scrollbar.pack(side="right", fill="y")
 
+        # Flag to prevent recursive scrolling
+        self.is_scrolling = False
+
         # Configure the scrollbar to control both tables
         def scroll_both(*args):
-            frozen_table.yview(*args)
-            scrollable_table.yview(*args)
+            if not self.is_scrolling:
+                self.is_scrolling = True
+                try:
+                    frozen_table.yview(*args)
+                    scrollable_table.yview(*args)
+                finally:
+                    self.is_scrolling = False
 
         v_scrollbar.configure(command=scroll_both)
         frozen_table.configure(yscrollcommand=v_scrollbar.set)
