@@ -8,7 +8,7 @@ class TestForm(tk.Tk):
         self.geometry("300x200")
         self.configure(bg="white")
 
-        # Apply a specific theme
+        # Apply a specific theme here
         style = ttk.Style(self)
         style.theme_use("clam")  # Try "clam", "alt", or other themes
 
