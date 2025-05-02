@@ -18,15 +18,15 @@ class MetadataForm(tk.Toplevel):
 
         self.title("Add / Edit Class")
         self.geometry("900x500")  # Manually resized dimensions
-        self.resizable(False, False)
+        self.resizable(True, True)
 
         # Make the window topmost
         self.attributes("-topmost", True)
 
-        # Center the window
-        self.center_window()
+        # Create a scrollable canvas
+        self.create_scrollable_canvas()
 
-        # Create widgets
+        # Create widgets inside the scrollable frame
         self.create_widgets()
 
         # Focus cursor on the first field (Class ID)
@@ -52,6 +52,39 @@ class MetadataForm(tk.Toplevel):
         x = (screen_width - self.winfo_width()) // 2
         y = (screen_height - self.winfo_height()) // 2
         self.geometry(f"+{x}+{y}")
+
+    def create_scrollable_canvas(self):
+        """Create a scrollable canvas for the form."""
+        self.canvas = tk.Canvas(self, bg="white")
+        self.scrollable_frame = tk.Frame(self.canvas, bg="white")
+
+        # Add vertical scrollbar
+        v_scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        v_scrollbar.pack(side="right", fill="y")
+        self.canvas.configure(yscrollcommand=v_scrollbar.set)
+
+        # Add horizontal scrollbar
+        h_scrollbar = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        h_scrollbar.pack(side="bottom", fill="x")
+        self.canvas.configure(xscrollcommand=h_scrollbar.set)
+
+        # Pack the canvas
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Create a window inside the canvas
+        self.canvas_frame = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        # Configure scrolling
+        self.scrollable_frame.bind("<Configure>", self.on_frame_configure)
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
+
+    def on_frame_configure(self, event):
+        """Adjust the scroll region to match the size of the scrollable frame."""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def on_canvas_configure(self, event):
+        """Resize the canvas frame to match the width of the canvas."""
+        self.canvas.itemconfig(self.canvas_frame, width=event.width)
 
     def create_widgets(self):
         """Create the layout and fields for editing metadata."""
@@ -89,12 +122,12 @@ class MetadataForm(tk.Toplevel):
             col = 0  # Column 0 for labels, Column 1 for entry fields
 
             # Add label
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
+            tk.Label(self.scrollable_frame, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
 
             # Add entry field
             entry_bg = "yellow" if key in ["class_no", "Company"] else "white"  # Yellow for mandatory fields
             entry_var = tk.StringVar()
-            entry = tk.Entry(self, textvariable=entry_var, width=30, bg=entry_bg, font=("Arial", 12))
+            entry = tk.Entry(self.scrollable_frame, textvariable=entry_var, width=30, bg=entry_bg, font=("Arial", 12))
             entry.grid(row=row, column=col + 1, padx=5, pady=5)
 
             # Add logic for [class_no] and [Company]
@@ -133,11 +166,11 @@ class MetadataForm(tk.Toplevel):
             col = 2  # Column 2 for labels, Column 3 for entry fields
 
             # Add label
-            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
+            tk.Label(self.scrollable_frame, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
 
             # Add entry field
             entry_var = tk.StringVar()
-            entry = tk.Entry(self, textvariable=entry_var, width=30, font=("Arial", 12))
+            entry = tk.Entry(self.scrollable_frame, textvariable=entry_var, width=30, font=("Arial", 12))
             entry.grid(row=row, column=col + 1, padx=5, pady=5)
 
             # Pre-fill with default or existing values
@@ -155,7 +188,7 @@ class MetadataForm(tk.Toplevel):
             # Add [Pick] button for StartDate and FinishDate
             if key in ["StartDate", "FinishDate"]:
                 tk.Button(
-                    self,
+                    self.scrollable_frame,
                     text="Pick",
                     font=("Arial", 10, "bold"),
                     bg="blue",
@@ -164,7 +197,7 @@ class MetadataForm(tk.Toplevel):
                 ).grid(row=row, column=col + 2, padx=5, pady=5)
 
         # Add Save and Cancel buttons
-        button_frame = tk.Frame(self, bg="white")
+        button_frame = tk.Frame(self.scrollable_frame, bg="white")
         button_frame.grid(row=max(len(fields[:7]), len(fields[7:])) + 1, column=0, columnspan=5, pady=10)
 
         save_button = tk.Button(button_frame, text="Save", font=("Arial", 12, "bold"), bg="green", fg="white", command=self.save_metadata)
@@ -174,7 +207,7 @@ class MetadataForm(tk.Toplevel):
         cancel_button.pack(side="left", padx=10)
 
         # Add a frame for the table and scrollbars
-        table_frame = tk.Frame(self, bg="white")
+        table_frame = tk.Frame(self.scrollable_frame, bg="white")
         table_frame.grid(row=20, column=0, columnspan=5, padx=10, pady=10, sticky="nsew")
 
         # Create a Treeview for the table
@@ -203,6 +236,16 @@ class MetadataForm(tk.Toplevel):
         # Bind zoom functionality
         self.table_font_size = 10  # Default font size
         self.table.bind("<Control-MouseWheel>", self.zoom_table)
+
+        # Add example label
+        tk.Label(self.scrollable_frame, text="Example Label").grid(row=0, column=0)
+
+        for i in range(50):  # Add 50 labels to test scrolling
+            tk.Label(self.scrollable_frame, text=f"Label {i+1}").grid(row=i, column=0, padx=10, pady=5)
+
+        print(self.scrollable_frame.winfo_width(), self.scrollable_frame.winfo_height())
+        print(self.canvas.winfo_width(), self.canvas.winfo_height())
+        print(self.canvas.bbox("all"))
 
     def zoom_table(self, event):
         """Zoom in or out on the table using Ctrl+MouseWheel."""
