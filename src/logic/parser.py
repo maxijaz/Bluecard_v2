@@ -11,10 +11,13 @@ def load_data() -> Dict[str, Any]:
     """Load data from 001attendance_data.json."""
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        return data
     except FileNotFoundError:
+        print("Data file not found. Returning empty data.")
         return {"classes": {}}
     except json.JSONDecodeError:
+        print("Error decoding JSON. Returning empty data.")
         return {"classes": {}}
 
 def save_data(data: dict, filepath: str = DATA_FILE) -> None:
@@ -31,7 +34,7 @@ def save_data(data: dict, filepath: str = DATA_FILE) -> None:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(existing_data, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        log_error(f"Failed to save data: {e}")
+        print("[ERROR] Failed to save data:", e)
 
 def log_error(message: str) -> None:
     """Logs errors to a file."""
@@ -77,6 +80,7 @@ def backup_data() -> None:
         backup_filename = f"001attendance_data_{timestamp}.json"
         backup_path = os.path.join(BACKUP_DIR, backup_filename)
         shutil.copy(DATA_FILE, backup_path)
+        print("Auto backing up 001attendance_data.JSON to /data/backup")  # Flash message equivalent
         cleanup_old_backups()
     else:
         log_error(f"Backup failed. Source file not found: {DATA_FILE}")

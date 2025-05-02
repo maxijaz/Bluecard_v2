@@ -10,6 +10,8 @@ List of sections / forms:
 # 5. Archive Manager                 - Simliar to Launcher but with Archived classes (Archive = "Yes") + Option to DELETE class
 # 6. Mainform                        - This form displays bluecard with Student Data PAL and Metadata with control buttons
 # 7. ADD or Edit Metadata            - Form for editing metadata
+# 7.1 Fields and Default Values (default.json) - EXTENDED TTR Version
+#7.2 Fields and Default Values LAYOUT
 # 8. Add or EDIT Student information - Form for adding and editing student data
 # 9. Student Active Manager - Simliar to Archive manager (active = "Yes" or "No") + Option to DELETE class
 # 10. Mapping Settings -> Default values to # 7. ADD or Edit Metadata
@@ -380,6 +382,53 @@ Column 6 (Buttons x 4), Column 7 (Buttons x 4), Column 8 (Buttons x 4), Column 9
 7. 7. ADD or Edit Metadata Button logic
 [ Save ]        → Saves data from from into 001attendance_data, form closes and refresh mainform
 [ Cancel ]      → No changes, close the form
+
+# 7.1 Fields and Default Values (default.json) - EXTENDED TTR Version
+
+Columns 1 & 2:
+("Class No*:", "class_no"),
+("Company*:", "Company"),
+("Room:", "Room"),
+("Consultant:", "Consultant"),
+("Teacher:", "Teacher"),
+("CourseBook:", "CourseBook"),
+("Notes:", "Notes"),
+
+Column 3:
+[pick] -> tkcaldendar for [StartDate]
+
+Columns 4 & 5
+("Course Hours:", "CourseHours"),
+("Class Time:", "ClassTime"),
+("Start Date:", "StartDate"),
+("Finish Date:", "FinishDate"),
+("Days:", "Days"),
+("Time:", "Time"),
+Add. <------ line separator ---------->
+Add. text = "Added variables for TTR data"
+Add. <------ line separator ---------->
+("Max Classes:", "MaxClasses"),
+("Teacher No:", "TeacherNo"),
+("Rate:", "rate"),
+("CCP:", "ccp"),
+("Travel:", "travel"),
+("Bonus:", "bonus")
+
+#7.2 Fields and Default Values LAYOUT
+
+| col 1 (label) | col2 (data)  | col4 (label)    | col4 (label)  | col5 (buttons) | 
+| "Class No*:"  | "class_no"   | "Course Hours:" | "CourseHours" |                | 
+| "Company*:"   | "Company"    | "Class Time:"   | "ClassTime"   |                | 
+| "Room:"       | "Room"       | "Start Date:"   | "StartDate"   | [pick]         | 
+| "Consultant:" | "Consultant" | "Finish Date:"  | "FinishDate"  |                | 
+| "Teacher:"    | "Teacher"    | "Days:"         | "Days"        |                | 
+| "CourseBook:" | "CourseBook" | "Time:"         | "Time"        |                | 
+| "Notes:"      | "Notes"      | "Max Classes:"  | "MaxClasses"  |                | 
+|               |              | "Teacher No:"   | "TeacherNo"   |                | 
+|               |              | "Rate:"         | "rate"        |                | 
+|               |              | "CCP:"          | "ccp"         |                | 
+|               |              | "Travel:"       | "travel"      |                | 
+|               |              | "Bonus:"        | "bonus"       |                | 
 
 ----------------------------------------------------------------
 
