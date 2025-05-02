@@ -4,6 +4,7 @@ from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
 from .metadata_form import MetadataForm
 from .student_manager import StudentManager
+from datetime import datetime
 
 class Mainform(tk.Toplevel):
     def __init__(self, master, class_id, data, theme):
@@ -191,7 +192,7 @@ class Mainform(tk.Toplevel):
             elif col == "Score":
                 self.tree.column(col, width=100, anchor="center")  # Fix width for "Score"
             else:
-                self.tree.column(col, width=100, anchor="center")  # Default width for other columns
+                self.tree.column(col, width=75, anchor="center")  # Default width for other columns
             self.tree.heading(col, text=col)
 
         self.tree.pack(fill=tk.BOTH, expand=True)
@@ -207,18 +208,24 @@ class Mainform(tk.Toplevel):
         self.populate_attendance_table()
 
     def get_attendance_dates(self):
-        """Get all unique attendance dates from student data."""
+        """Get all unique attendance dates from student data and format them as DD/MM/YY for display."""
         dates = set()
         for student_data in self.students.values():
-            dates.update(student_data.get("attendance", {}).keys())
-        return sorted(dates)
+            attendance = student_data.get("attendance", {})
+            dates.update(attendance.keys())  # Collect all dates in full-year format
+        # Reformat dates for display
+        return [datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y") for date in sorted(dates)]
 
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
         for idx, (student_id, student_data) in enumerate(self.students.items(), start=1):
             if student_data.get("active", "Yes") == "Yes":  # Only show active students
                 attendance = student_data.get("attendance", {})
-                attendance_values = [attendance.get(date, "-") for date in self.get_attendance_dates()]
+                # Use reformatted dates for display
+                attendance_values = [
+                    attendance.get(datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y"), "-")
+                    for date in self.get_attendance_dates()
+                ]
                 present_count = sum(1 for v in attendance.values() if v == "P")
                 absent_count = sum(1 for v in attendance.values() if v == "A")
                 late_count = sum(1 for v in attendance.values() if v == "L")
