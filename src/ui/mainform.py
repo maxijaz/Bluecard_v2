@@ -453,10 +453,13 @@ class Mainform(tk.Toplevel):
         messagebox.showinfo("Placeholder", "This feature is under development.", parent=self)
 
     def refresh(self):
-        """Refresh the Mainform."""
-        for widget in self.winfo_children():
-            widget.destroy()  # Clear all widgets
-        self.create_widgets()  # Recreate widgets
+        """Refresh the attendance table without recreating the entire UI."""
+        # Clear the existing rows in the Treeview
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        # Repopulate the attendance table
+        self.populate_attendance_table()
 
     def on_close(self):
         """Handle Mainform close event."""
@@ -558,21 +561,29 @@ class Mainform(tk.Toplevel):
 
         form = tk.Toplevel(self)
         form.title(f"Actions for {date}")
-        form.geometry("300x200")
+        form.geometry("700x100")  # Adjust width to fit all buttons in a row
         form.configure(bg="white")
         form.attributes("-topmost", True)  # Make the form topmost
 
         # Add buttons for actions
-        actions = [("P", "P"), ("L", "L"), ("A", "A"), ("CIA", "CIA"), ("COD", "COD"), ("Cancel", None)]
+        actions = [
+            ("P", "P"),
+            ("L", "L"),
+            ("A", "A"),
+            ("CIA", "CIA"),
+            ("COD", "COD"),
+            ("Clear All", "-"),
+            ("Cancel", None),
+        ]
         for i, (label, action) in enumerate(actions):
             tk.Button(
                 form,
                 text=label,
                 command=lambda a=action: self.handle_date_action(form, student_id, date, a),
                 width=10,
-                bg="green" if action else "red" if label == "Cancel" else "blue",
+                bg="green" if action in ["P", "L", "A"] else "blue" if action in ["CIA", "COD"] else "orange" if action == "-" else "red",
                 fg="white",
-            ).grid(row=i, column=0, padx=10, pady=5)
+            ).grid(row=0, column=i, padx=5, pady=10)  # Place all buttons in a single row
 
         form.mainloop()
 
@@ -594,6 +605,10 @@ class Mainform(tk.Toplevel):
         elif action in ["CIA", "COD"]:  # Update attendance for all students
             for sid, sdata in self.students.items():
                 self.students[sid]["attendance"][full_date] = action
+        elif action == "-":  # Clear attendance for all students on the selected date
+            for sid, sdata in self.students.items():
+                if full_date in self.students[sid]["attendance"]:
+                    self.students[sid]["attendance"][full_date] = "-"
 
         # Save the updated data and refresh the table
         save_data(self.data)
