@@ -215,13 +215,29 @@ class Mainform(tk.Toplevel):
         self.populate_attendance_table()
 
     def get_attendance_dates(self):
-        """Get all unique attendance dates from student data and format them as DD/MM/YY for display."""
+        """Get all unique attendance dates from student data and add empty columns to match MaxClasses."""
         dates = set()
         for student_data in self.students.values():
             attendance = student_data.get("attendance", {})
             dates.update(attendance.keys())  # Collect all dates in full-year format
+
+        # Sort the existing dates
+        sorted_dates = sorted(dates)
+
+        # Get MaxClasses from metadata
+        max_classes_str = self.metadata.get("MaxClasses", "20")
+        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "20" from "20 (1 hour remains)")
+
+        # Add empty date columns if needed
+        while len(sorted_dates) < max_classes:
+            next_date = f"Empty-{len(sorted_dates) + 1}"  # Placeholder for empty columns
+            sorted_dates.append(next_date)
+
         # Reformat dates for display
-        return [datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y") for date in sorted(dates)]
+        return [
+            datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y") if "Empty" not in date else date
+            for date in sorted_dates
+        ]
 
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
@@ -230,7 +246,9 @@ class Mainform(tk.Toplevel):
                 attendance = student_data.get("attendance", {})
                 # Use reformatted dates for display
                 attendance_values = [
-                    attendance.get(datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y"), "-")
+                    attendance.get(
+                        datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y"), "-"
+                    ) if "Empty" not in date else "-"  # Skip placeholder columns
                     for date in self.get_attendance_dates()
                 ]
                 present_count = sum(1 for v in attendance.values() if v == "P")
