@@ -211,6 +211,9 @@ class Mainform(tk.Toplevel):
         # Bind click event to toggle row selection
         self.tree.bind("<Button-1>", self.on_row_click)
 
+        # Bind double-click event
+        self.tree.bind("<Double-1>", self.on_table_double_click)
+
         # Populate attendance table
         self.populate_attendance_table()
 
@@ -234,10 +237,19 @@ class Mainform(tk.Toplevel):
             sorted_dates.append(next_date)
 
         # Reformat dates for display
-        return [
-            datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y") if "Empty" not in date else date
-            for date in sorted_dates
-        ]
+        reformatted_dates = []
+        for date in sorted_dates:
+            if "Empty" not in date:
+                try:
+                    # Try parsing as full-year format
+                    reformatted_dates.append(datetime.strptime(date, "%d/%m/%Y").strftime("%d/%m/%y"))
+                except ValueError:
+                    # If parsing fails, assume it's already in short-year format
+                    reformatted_dates.append(date)
+            else:
+                reformatted_dates.append(date)  # Keep placeholders as-is
+
+        return reformatted_dates
 
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
@@ -376,6 +388,24 @@ class Mainform(tk.Toplevel):
         # Prevent the default Treeview behavior
         return "break"
 
+    def on_table_double_click(self, event):
+        """Handle double-click events on the table."""
+        column = self.tree.identify_column(event.x)  # Get the clicked column
+        row_id = self.tree.identify_row(event.y)  # Get the clicked row
+
+        if not row_id:
+            return  # Do nothing if no row is clicked
+
+        # Get the column index and row data
+        col_index = int(column.replace("#", "")) - 1  # Convert column to zero-based index
+        row_data = self.tree.item(row_id, "values")
+
+        if col_index in [0, 1, 2, 3]:  # Columns: #, Name, Nickname, Score
+            self.open_edit_student_form(row_data)
+        elif col_index >= 4:  # Date columns
+            date = self.tree.heading(column, "text")  # Get the column header (date)
+            self.open_date_action_form(row_data, date)
+
     def add_student(self):
         """Open the Add Student form."""
         StudentForm(self, None, self.students, self.refresh).mainloop()
@@ -512,6 +542,63 @@ class Mainform(tk.Toplevel):
                 self.entries["MaxClasses"]["var"].set("20")  # Default value
         except ValueError:
             self.entries["MaxClasses"]["var"].set("20")  # Default value if input is invalid
+
+    def open_edit_student_form(self, row_data):
+        """Open the Edit Student Form for the selected student."""
+        student_name = row_data[1]  # Get the student's name from the row data
+        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
+
+        if student_id:
+            StudentForm(self, student_id, self.students, self.refresh).mainloop()
+
+    def open_date_action_form(self, row_data, date):
+        """Open the Date Action Form for the selected date."""
+        student_name = row_data[1]  # Get the student's name from the row data
+        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
+
+        form = tk.Toplevel(self)
+        form.title(f"Actions for {date}")
+        form.geometry("300x200")
+        form.configure(bg="white")
+        form.attributes("-topmost", True)  # Make the form topmost
+
+        # Add buttons for actions
+        actions = [("P", "P"), ("L", "L"), ("A", "A"), ("CIA", "CIA"), ("COD", "COD"), ("Cancel", None)]
+        for i, (label, action) in enumerate(actions):
+            tk.Button(
+                form,
+                text=label,
+                command=lambda a=action: self.handle_date_action(form, student_id, date, a),
+                width=10,
+                bg="green" if action else "red" if label == "Cancel" else "blue",
+                fg="white",
+            ).grid(row=i, column=0, padx=10, pady=5)
+
+        form.mainloop()
+
+    def handle_date_action(self, form, student_id, date, action):
+        """Handle actions for the selected date."""
+        if action == "Cancel":
+            form.destroy()
+            return
+
+        # Convert the date to full format (%d/%m/%Y) before saving
+        try:
+            full_date = datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y")
+        except ValueError:
+            full_date = date  # If already in full format, keep it as is
+
+        if action in ["P", "L", "A"]:  # Update attendance for the selected student
+            if student_id:
+                self.students[student_id]["attendance"][full_date] = action
+        elif action in ["CIA", "COD"]:  # Update attendance for all students
+            for sid, sdata in self.students.items():
+                self.students[sid]["attendance"][full_date] = action
+
+        # Save the updated data and refresh the table
+        save_data(self.data)
+        self.refresh()
+        form.destroy()
 
 if __name__ == "__main__":
     # Example usage
