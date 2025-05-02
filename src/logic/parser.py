@@ -12,7 +12,6 @@ def load_data() -> Dict[str, Any]:
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-        print("[DEBUG] Data loaded from file:", json.dumps(data, indent=4))  # Debug: Log loaded data
         return data
     except FileNotFoundError:
         print("Data file not found. Returning empty data.")
@@ -34,8 +33,6 @@ def save_data(data: dict, filepath: str = DATA_FILE) -> None:
         # Save the updated data back to the file
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(existing_data, f, indent=4, ensure_ascii=False)
-
-        print("[DEBUG] Data successfully saved.")
     except Exception as e:
         print("[ERROR] Failed to save data:", e)
 
