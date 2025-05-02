@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from src.logic.parser import save_data
 import logging
 import json
+from tkcalendar import Calendar
 
 class MetadataForm(tk.Toplevel):
     def __init__(self, parent, class_id, default_values, theme, on_metadata_save):
@@ -77,7 +78,7 @@ class MetadataForm(tk.Toplevel):
 
         self.entries = {}
 
-        # Create fields in 4-column layout
+        # Create fields in a 4-column layout
         for i, field in enumerate(fields):
             label_text = field[0]
             key = field[1]
@@ -93,7 +94,7 @@ class MetadataForm(tk.Toplevel):
             entry_bg = "yellow" if key in ["class_no", "Company"] else "white"  # Yellow for mandatory fields
             entry_var = tk.StringVar()
             entry = tk.Entry(self, textvariable=entry_var, width=30, bg=entry_bg, font=("Arial", 12))
-            entry.grid(row=row, column=col + 1, padx=10, pady=5)
+            entry.grid(row=row, column=col + 1, padx=5, pady=5)
 
             # Pre-fill with default value if in Add Class mode
             if not self.is_edit:
@@ -108,9 +109,16 @@ class MetadataForm(tk.Toplevel):
             # Store both the StringVar and the Entry widget
             self.entries[key] = {"var": entry_var, "widget": entry}
 
-            # Bind changes for dynamic calculation of MaxClasses
-            if key in ["CourseHours", "ClassTime"]:
-                entry_var.trace_add("write", self.update_max_classes)
+            # Add [Pick] button for StartDate
+            if key == "StartDate":
+                tk.Button(
+                    self,
+                    text="Pick",
+                    font=("Arial", 10, "bold"),
+                    bg="blue",
+                    fg="white",
+                    command=lambda: self.open_date_picker("StartDate"),
+                ).grid(row=row, column=col + 2, pady=5)
 
         # Add Save and Cancel buttons
         button_frame = tk.Frame(self, bg="white")
@@ -200,3 +208,24 @@ class MetadataForm(tk.Toplevel):
             self.on_metadata_save()  # Refresh Launcher
 
         self.destroy()  # Close the form
+
+    def open_date_picker(self, key):
+        """Open a calendar popup to select a date."""
+        def set_date():
+            selected_date = cal.get_date()  # Get the selected date
+            self.entries[key]["var"].set(selected_date)  # Save the selected date
+            popup.destroy()
+
+        # Create a popup window
+        popup = tk.Toplevel(self)
+        popup.title("Select Date")
+        popup.geometry("300x300")
+        popup.configure(bg="white")
+        popup.attributes("-topmost", True)  # Make the popup topmost
+
+        # Add a calendar widget
+        cal = Calendar(popup, selectmode="day", date_pattern="dd/mm/yyyy")  # Use dd/mm/yyyy for tkcalendar
+        cal.pack(pady=20)
+
+        # Add a button to confirm the selection
+        tk.Button(popup, text="OK", command=set_date, bg="green", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
