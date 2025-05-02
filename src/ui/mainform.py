@@ -82,15 +82,22 @@ class Mainform(tk.Toplevel):
 
         # Column 3 and Column 4: Additional Metadata (Labels and Data)
         additional_metadata_fields = [
-            ("CourseHours:", f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
+            (
+                "ClassHours:",
+                f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / "
+                f"{self.metadata.get('MaxClasses', '')}"
+            ),
             ("StartDate:", self.metadata.get("StartDate", "")),
             ("FinishDate:", self.metadata.get("FinishDate", "")),
             ("Days:", self.metadata.get("Days", "")),
             ("Time:", self.metadata.get("Time", "")),
             ("Notes:", self.metadata.get("Notes", "")),
         ]
+
         for i, (label_text, value) in enumerate(additional_metadata_fields):
-            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=12).grid(row=i, column=2, sticky="e", padx=(5,1))
+            tk.Label(layout_frame, text=label_text, font=("Arial", 10, "bold"), bg=self["bg"], anchor="w", width=12).grid(
+                row=i, column=2, sticky="e", padx=(5, 1)
+            )
             data_box = tk.Text(layout_frame, font=("Arial", 10), bg="white", height=1, width=25, wrap="none", state="disabled")
             data_box.grid(row=i, column=3, sticky="w", padx=1)
             data_box.configure(state="normal")  # Temporarily enable editing to insert text
@@ -413,6 +420,27 @@ class Mainform(tk.Toplevel):
         print(f"Saved student: {new_student}")
 
         form.destroy()  # Close the form
+
+    def update_max_classes(self, *args):
+        """Recalculate MaxClasses based on CourseHours and ClassTime."""
+        try:
+            course_hours = float(self.entries["CourseHours"]["var"].get() or 0)
+            class_time = float(self.entries["ClassTime"]["var"].get() or 0)
+
+            if course_hours > 0 and class_time > 0:
+                full_classes = int(course_hours // class_time)  # Full classes
+                remaining_hours = course_hours % class_time  # Remaining hours
+
+                if remaining_hours > 0:
+                    max_classes_display = f"{full_classes} ({remaining_hours} hour(s) remaining)"
+                else:
+                    max_classes_display = str(full_classes)
+
+                self.entries["MaxClasses"]["var"].set(max_classes_display)
+            else:
+                self.entries["MaxClasses"]["var"].set("20")  # Default value
+        except ValueError:
+            self.entries["MaxClasses"]["var"].set("20")  # Default value if input is invalid
 
 if __name__ == "__main__":
     # Example usage

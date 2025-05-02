@@ -127,13 +127,21 @@ class MetadataForm(tk.Toplevel):
         try:
             course_hours = float(self.entries["CourseHours"]["var"].get() or 0)
             class_time = float(self.entries["ClassTime"]["var"].get() or 0)
+
             if course_hours > 0 and class_time > 0:
-                max_classes = int(course_hours / class_time)
-                self.entries["MaxClasses"]["var"].set(str(max_classes))
+                full_classes = int(course_hours // class_time)  # Full classes
+                remaining_hours = course_hours % class_time  # Remaining hours
+
+                if remaining_hours > 0:
+                    max_classes_display = f"{full_classes} ({remaining_hours} hour(s) remaining)"
+                else:
+                    max_classes_display = str(full_classes)
+
+                self.entries["MaxClasses"]["var"].set(max_classes_display)
             else:
-                self.entries["MaxClasses"]["var"].set("")  # Clear if invalid
+                self.entries["MaxClasses"]["var"].set("20")  # Default value
         except ValueError:
-            self.entries["MaxClasses"]["var"].set("")  # Clear if invalid input
+            self.entries["MaxClasses"]["var"].set("20")  # Default value if input is invalid
 
     def save_metadata(self):
         """Save metadata for the class."""
