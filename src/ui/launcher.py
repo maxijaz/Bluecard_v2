@@ -8,6 +8,7 @@ from src.ui.metadata_form import MetadataForm
 import os
 import json
 import logging
+import subprocess
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -155,7 +156,7 @@ class Launcher(tk.Toplevel):
         btn_add = tk.Button(buttons_inner_frame, text="Add Class", command=self.add_new_class, width=10)
         btn_archive = tk.Button(buttons_inner_frame, text="Archive", command=self.archive_class, width=10)
         btn_archive_manager = tk.Button(buttons_inner_frame, text="Arch Mger", command=self.open_archive_manager, width=10)
-        btn_ttr = tk.Button(buttons_inner_frame, text="TTR", command=self.placeholder_ttr, width=10)
+        btn_ttr = tk.Button(buttons_inner_frame, text="TTR", command=self.open_ttr_window, width=10)
         btn_settings = tk.Button(buttons_inner_frame, text="Settings", command=self.open_settings, width=10)
 
         btn_open.grid(row=0, column=0, padx=5, pady=5)
@@ -236,9 +237,10 @@ class Launcher(tk.Toplevel):
         self.destroy()
         ArchiveManager(self.master, self.data, self.theme).mainloop()
 
-    def placeholder_ttr(self):
-        """Placeholder for TTR functionality."""
-        messagebox.showinfo("TTR", "This feature is under development.", parent=self)
+    def open_ttr_window(self):
+        """Open the TTR window by running test_scrollbar.py."""
+        script_path = os.path.join("tests", "test_scrollbar.py")  # Adjust path to the script
+        subprocess.Popen(["python", script_path])  # Launch the new script
 
     def open_settings(self):
         """Open the settings window."""
