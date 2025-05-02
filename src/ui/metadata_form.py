@@ -235,14 +235,26 @@ class MetadataForm(tk.Toplevel):
 
         # Save the updated data to the file
         save_data(self.data)
+        logging.debug("Data saved successfully.")
 
-        # Refresh the appropriate parent form
+        # Handle context-specific behavior
+        logging.debug(f"Context: {self.context}")
         if self.context == "launcher":
-            self.on_metadata_save()  # Refresh Launcher
+            logging.debug("Closing Launcher and opening Mainform...")
+            try:
+                # Open Mainform without relying on the destroyed Launcher
+                from src.ui.mainform import Mainform  # Import Mainform
+                self.master.destroy()  # Close the Launcher
+                Mainform(None, class_no, self.data, self.theme).mainloop()  # Pass None as the parent
+                logging.debug("Mainform opened successfully.")
+            except Exception as e:
+                logging.error(f"Failed to open Mainform: {e}")
         elif self.context == "mainform":
-            self.master.refresh()  # Refresh Mainform
+            logging.debug("Refreshing Mainform...")
+            self.master.refresh()
 
-        # Close the form
+        # Close the MetadataForm
+        logging.debug("Closing MetadataForm...")
         self.destroy()
 
     def close_form(self):
@@ -295,3 +307,16 @@ class MetadataForm(tk.Toplevel):
             on_metadata_save=self.refresh,
             context="mainform"
         ).mainloop()
+
+    def add_new_class(self):
+        """Open the MetadataForm to add a new class."""
+        logging.debug("Opening MetadataForm to add a new class...")
+        MetadataForm(
+            parent=self,
+            class_id=None,
+            default_values={},
+            theme=self.theme,
+            on_metadata_save=self.refresh,
+            context="launcher"  # Pass context as "launcher"
+        ).mainloop()
+        logging.debug("MetadataForm closed.")

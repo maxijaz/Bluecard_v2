@@ -7,6 +7,7 @@ from src.ui.archive_manager import ArchiveManager
 from src.ui.metadata_form import MetadataForm
 import os
 import json
+import logging
 
 class Launcher(tk.Toplevel):
     def __init__(self, root, theme):
@@ -214,7 +215,7 @@ class Launcher(tk.Toplevel):
             default_values={},
             theme=self.theme,
             on_metadata_save=self.refresh,
-            context="launcher"
+            context="launcher"  # Pass context as "launcher"
         ).mainloop()
 
     def archive_class(self):
@@ -269,3 +270,58 @@ class Launcher(tk.Toplevel):
         existing_ids = [int(cid[3:]) for cid in existing_class_ids if cid.startswith("OLO")]
         next_id = max(existing_ids, default=0) + 1
         return f"OLO{next_id:03d}"
+
+    def save_metadata(self):
+        """Save metadata for the class."""
+        logging.debug("Saving metadata...")
+        class_no = self.entries["class_no"]["var"].get().strip().upper()  # Ensure class_no is uppercase
+
+        # Validate that the class_no is unique
+        if class_no in self.data.get("classes", {}) and not self.is_edit:
+            messagebox.showerror(
+                "Duplicate Class ID",
+                f"Class ID '{class_no}' already exists. Please use a unique Class ID.",
+                parent=self
+            )
+            logging.warning(f"Attempted to save duplicate Class ID: {class_no}")
+            return
+
+        # Collect metadata from the form
+        metadata = {}
+        for key, entry in self.entries.items():
+            value = entry["var"].get().strip()
+
+            # Apply formatting for specific fields
+            if key == "class_no":
+                value = value.upper()  # Ensure class_no is uppercase
+            elif key == "Company":
+                # Capitalize the first letter of each word while preserving existing uppercase letters
+                value = " ".join(word if word.isupper() else word.capitalize() for word in value.split())
+
+            metadata[key] = value
+
+        # Save the metadata
+        if not self.is_edit:
+            # Add a new class
+            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+            logging.debug(f"New class added: {class_no}")
+        else:
+            # Update an existing class
+            self.data["classes"][self.class_id]["metadata"] = metadata
+            logging.debug(f"Class {self.class_id} updated.")
+
+        # Save the updated data to the file
+        save_data(self.data)
+
+        # Handle context-specific behavior
+        if self.context == "launcher":
+            # Close the Launcher and open the Mainform with the new class
+            self.master.destroy()  # Close the Launcher
+            from src.ui.mainform import Mainform  # Import Mainform
+            Mainform(self.master, class_no, self.data, self.theme).mainloop()
+        elif self.context == "mainform":
+            # Refresh the Mainform
+            self.master.refresh()
+
+        # Close the MetadataForm
+        self.destroy()
