@@ -312,23 +312,34 @@ class Mainform(tk.Toplevel):
                     tags=(row_tag,)  # Assign the tag
                 )
 
-        # Configure styles for the tags with increased contrast
+        # Configure styles for the tags
         self.tree.tag_configure("running_total", background="#eaeaea", font=("Arial", 10))  # Small font for running total row
-        self.tree.tag_configure("odd", background="#ffffff")  # Darker gray for odd rows
-        self.tree.tag_configure("even", background="#eaeaea")  # White for even rows
+        self.tree.tag_configure("odd", background="#ffffff", font=("Arial", 12))  # Original font size for odd rows
+        self.tree.tag_configure("even", background="#eaeaea", font=("Arial", 12))  # Original font size for even rows
+        self.tree.tag_configure("hover", background="#d0e7ff", font=("Arial", 12))  # Original font size for hover
 
     def on_row_hover(self, event):
         """Handle row hover event."""
         row_id = self.tree.identify_row(event.y)  # Identify the row under the mouse pointer
 
         if row_id:
-            # Apply hover effect to the current row
-            self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
-            self.tree.item(row_id, tags=("hover",))  # Apply the hover tag to the row
+            # Check if the row is the running total row
+            if "Running Total" in self.tree.item(row_id, "values"):
+                # Reapply the running_total tag to preserve its font size
+                self.tree.item(row_id, tags=("running_total",))
+            else:
+                # Apply hover effect to the current row
+                self.tree.item(row_id, tags=("hover",))  # Apply the hover tag to the row
 
-            # Reset the previous row's color
-            for row in self.tree.get_children():
-                if row != row_id:
+        # Reset the previous row's color
+        for row in self.tree.get_children():
+            if row != row_id:
+                # Check if the row is the running total row
+                if "Running Total" in self.tree.item(row, "values"):
+                    # Reapply the running_total tag to preserve its font size
+                    self.tree.item(row, tags=("running_total",))
+                else:
+                    # Reset the row's color based on its index
                     row_index = self.tree.index(row)
                     row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
                     self.tree.item(row, tags=(row_tag,))
@@ -336,9 +347,15 @@ class Mainform(tk.Toplevel):
     def on_row_leave(self, event):
         """Handle row leave event."""
         for row_id in self.tree.get_children():
-            row_index = self.tree.index(row_id)
-            row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
-            self.tree.item(row_id, tags=(row_tag,))
+            # Check if the row is the running total row
+            if "Running Total" in self.tree.item(row_id, "values"):
+                # Reapply the running_total tag to preserve its font size
+                self.tree.item(row_id, tags=("running_total",))
+            else:
+                # Reset the row's color based on its index
+                row_index = self.tree.index(row_id)
+                row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
+                self.tree.item(row_id, tags=(row_tag,))
 
     def on_row_click(self, event):
         """Handle row click event to toggle selection with a single click."""
