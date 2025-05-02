@@ -170,7 +170,6 @@ class Mainform(tk.Toplevel):
         style.configure("Treeview.Heading", font=("Arial", 12, "bold"), anchor="center", background="#e0e0e0")  # Gray background for headings
         style.configure("Treeview", font=("Arial", 12))  # Data: size 12, regular
         self.tree.configure(style="Treeview")  # Explicitly set the style for the Treeview
-        print("[DEBUG] Configured Treeview.Heading style with gray background.")  # Debug: Log style configuration
 
         # Configure row hover and selection styles
         style.map(
@@ -178,11 +177,9 @@ class Mainform(tk.Toplevel):
             background=[("selected", "#1E90FF")],  # Darker blue for selected rows
             foreground=[("selected", "white")],  # White text for selected rows
         )
-        print("[DEBUG] Configured Treeview selection styles.")  # Debug: Log selection style configuration
 
         # Add hover effect using tags
         self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
-        print("[DEBUG] Configured hover effect for Treeview rows.")  # Debug: Log hover effect configuration
 
         for col in columns:
             if col == "#":
@@ -196,23 +193,18 @@ class Mainform(tk.Toplevel):
             else:
                 self.tree.column(col, width=100, anchor="center")  # Default width for other columns
             self.tree.heading(col, text=col)
-            print(f"[DEBUG] Configured heading for column: {col}")  # Debug: Log heading configuration
 
         self.tree.pack(fill=tk.BOTH, expand=True)
-        print("[DEBUG] Packed Treeview into the attendance frame.")  # Debug: Log Treeview packing
 
         # Bind hover events
         self.tree.bind("<Motion>", self.on_row_hover)
         self.tree.bind("<Leave>", self.on_row_leave)
-        print("[DEBUG] Bound hover events to Treeview.")  # Debug: Log hover event binding
 
         # Bind click event to toggle row selection
         self.tree.bind("<Button-1>", self.on_row_click)
-        print("[DEBUG] Bound click event to Treeview.")  # Debug: Log click event binding
 
         # Populate attendance table
         self.populate_attendance_table()
-        print("[DEBUG] Populated attendance table.")  # Debug: Log table population
 
     def get_attendance_dates(self):
         """Get all unique attendance dates from student data."""
@@ -233,7 +225,6 @@ class Mainform(tk.Toplevel):
 
                 # Determine the tag for alternating row colors
                 row_tag = "even" if idx % 2 != 0 else "odd"  # First row is white (even)
-                print(f"[DEBUG] Assigning row {idx} with tag: {row_tag}")  # Debug: Log row tag
 
                 self.tree.insert(
                     "",
@@ -261,48 +252,39 @@ class Mainform(tk.Toplevel):
     def on_row_hover(self, event):
         """Handle row hover event."""
         row_id = self.tree.identify_row(event.y)  # Identify the row under the mouse pointer
-        print(f"[DEBUG] Hovering over row ID: {row_id}")  # Debug: Log hovered row ID
 
         if row_id:
             # Apply hover effect to the current row
             self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
             self.tree.item(row_id, tags=("hover",))  # Apply the hover tag to the row
-            print(f"[DEBUG] Applied hover tag to row ID: {row_id}")  # Debug: Log hover tag application
 
             # Reset the previous row's color
             for row in self.tree.get_children():
                 if row != row_id:
                     row_index = self.tree.index(row)
                     row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
-                    print(f"[DEBUG] Restoring row {row} to tag: {row_tag}")  # Debug: Log tag restoration
                     self.tree.item(row, tags=(row_tag,))
 
     def on_row_leave(self, event):
         """Handle row leave event."""
-        print("[DEBUG] Mouse left the table. Restoring row tags.")  # Debug: Log mouse leave event
         for row_id in self.tree.get_children():
             row_index = self.tree.index(row_id)
             row_tag = "even" if row_index % 2 == 0 else "odd"  # Alternate colors
-            print(f"[DEBUG] Restoring row {row_id} to tag: {row_tag}")  # Debug: Log tag restoration
             self.tree.item(row_id, tags=(row_tag,))
 
     def on_row_click(self, event):
         """Handle row click event to toggle selection with a single click."""
         row_id = self.tree.identify_row(event.y)  # Identify the row under the mouse pointer
-        print(f"[DEBUG] Clicked row ID: {row_id}")  # Debug: Log the clicked row ID
 
         if row_id:
             # Check if the row is already selected
             if row_id in self.tree.selection():
-                print(f"[DEBUG] Row {row_id} is already selected. Deselecting...")  # Debug: Log deselection
                 # Unselect the row and restore its original color
                 self.tree.selection_remove(row_id)
                 row_index = self.tree.index(row_id)
                 row_tag = "odd" if (row_index + 1) % 2 != 0 else "even"  # Adjust for header row
-                print(f"[DEBUG] Restoring row {row_id} to tag: {row_tag}")  # Debug: Log tag restoration
                 self.tree.item(row_id, tags=(row_tag,))
             else:
-                print(f"[DEBUG] Row {row_id} is not selected. Selecting...")  # Debug: Log selection
                 # Select the row
                 self.tree.selection_set(row_id)
 
