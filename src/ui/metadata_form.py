@@ -28,7 +28,7 @@ class MetadataForm(tk.Toplevel):
         self.create_widgets()
 
         # Focus cursor on the first field (Class ID)
-        self.entries["class_no"].focus_set()
+        self.entries["class_no"]["widget"].focus_set()
 
     def load_default_values(self):
         """Load default values from default.json."""
@@ -91,7 +91,8 @@ class MetadataForm(tk.Toplevel):
 
             # Add entry field
             entry_bg = "yellow" if key in ["class_no", "Company"] else "white"  # Yellow for mandatory fields
-            entry = tk.Entry(self, width=30, bg=entry_bg, font=("Arial", 12))
+            entry_var = tk.StringVar()
+            entry = tk.Entry(self, textvariable=entry_var, width=30, bg=entry_bg, font=("Arial", 12))
             entry.grid(row=row, column=col + 1, padx=10, pady=5)
 
             # Pre-fill with default value if in Add Class mode
@@ -99,12 +100,17 @@ class MetadataForm(tk.Toplevel):
                 # Normalize key to lowercase to match default.json keys
                 default_key = f"def_{key.lower()}"
                 default_value = self.default_values.get(default_key, "")
-                entry.insert(0, default_value)
+                entry_var.set(default_value)
             else:
                 existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
-                entry.insert(0, existing_value)
+                entry_var.set(existing_value)
 
-            self.entries[key] = entry
+            # Store both the StringVar and the Entry widget
+            self.entries[key] = {"var": entry_var, "widget": entry}
+
+            # Bind changes for dynamic calculation of MaxClasses
+            if key in ["CourseHours", "ClassTime"]:
+                entry_var.trace_add("write", self.update_max_classes)
 
         # Add Save and Cancel buttons
         button_frame = tk.Frame(self, bg="white")
@@ -116,10 +122,23 @@ class MetadataForm(tk.Toplevel):
         cancel_button = tk.Button(button_frame, text="Cancel", font=("Arial", 12, "bold"), bg="red", fg="white", command=self.close_form)
         cancel_button.pack(side="left", padx=10)
 
+    def update_max_classes(self, *args):
+        """Recalculate MaxClasses based on CourseHours and ClassTime."""
+        try:
+            course_hours = float(self.entries["CourseHours"]["var"].get() or 0)
+            class_time = float(self.entries["ClassTime"]["var"].get() or 0)
+            if course_hours > 0 and class_time > 0:
+                max_classes = int(course_hours / class_time)
+                self.entries["MaxClasses"]["var"].set(str(max_classes))
+            else:
+                self.entries["MaxClasses"]["var"].set("")  # Clear if invalid
+        except ValueError:
+            self.entries["MaxClasses"]["var"].set("")  # Clear if invalid input
+
     def save_metadata(self):
         """Save metadata for the class."""
         logging.debug("Saving metadata...")
-        class_no = self.entries["class_no"].get().strip()
+        class_no = self.entries["class_no"]["var"].get().strip()
 
         # Validate that the class_no is unique
         if class_no in self.data.get("classes", {}) and not self.is_edit:
@@ -134,7 +153,7 @@ class MetadataForm(tk.Toplevel):
         # Collect metadata from the form
         metadata = {}
         for key, entry in self.entries.items():
-            metadata[key] = entry.get().strip()
+            metadata[key] = entry["var"].get().strip()
 
         # Save the metadata
         if not self.is_edit:
@@ -163,7 +182,7 @@ class MetadataForm(tk.Toplevel):
                 self.data["classes"] = {}
 
             # Collect metadata with default values
-            metadata = {key: entry.get().strip() for key, entry in self.entries.items()}
+            metadata = {key: entry["var"].get().strip() for key, entry in self.entries.items()}
 
             # Add the new class to the data
             class_no = metadata.get("class_no", f"OLO{len(self.data['classes']) + 1:03}")
