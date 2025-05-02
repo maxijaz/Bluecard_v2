@@ -57,19 +57,19 @@ class MetadataForm(tk.Toplevel):
         fields = [
             ("Class No*:", "class_no"),
             ("Company*:", "Company"),
+            ("Room:", "Room"),
             ("Consultant:", "Consultant"),
             ("Teacher:", "Teacher"),
-            ("Teacher No:", "TeacherNo"),
-            ("Room:", "Room"),
             ("CourseBook:", "CourseBook"),
+            ("Notes:", "Notes"),
             ("Course Hours:", "CourseHours"),
             ("Class Time:", "ClassTime"),
-            ("Max Classes:", "MaxClasses"),
             ("Start Date:", "StartDate"),
             ("Finish Date:", "FinishDate"),
             ("Days:", "Days"),
             ("Time:", "Time"),
-            ("Notes:", "Notes"),
+            ("Max Classes:", "MaxClasses"),
+            ("Teacher No:", "TeacherNo"),
             ("Rate:", "rate"),
             ("CCP:", "ccp"),
             ("Travel:", "travel"),
@@ -78,14 +78,14 @@ class MetadataForm(tk.Toplevel):
 
         self.entries = {}
 
-        # Create fields in a 5-column layout (extra column for [Pick] button)
-        for i, field in enumerate(fields):
+        # Add fields for Columns 1 & 2
+        for i, field in enumerate(fields[:7]):  # First 7 fields go to Columns 1 & 2
             label_text = field[0]
             key = field[1]
 
             # Determine row and column positions
-            row = i // 2  # Two fields per row
-            col = (i % 2) * 3  # Column 0 or 3 for labels, 1 or 4 for metadata, 2 or 5 for [Pick] button
+            row = i
+            col = 0  # Column 0 for labels, Column 1 for entry fields
 
             # Add label
             tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
@@ -96,9 +96,22 @@ class MetadataForm(tk.Toplevel):
             entry = tk.Entry(self, textvariable=entry_var, width=30, bg=entry_bg, font=("Arial", 12))
             entry.grid(row=row, column=col + 1, padx=5, pady=5)
 
-            # Pre-fill with default value if in Add Class mode
+            # Add logic for [class_no] and [Company]
+            if key == "class_no":
+                def validate_class_no(*args):
+                    value = entry_var.get().upper()  # Convert to uppercase
+                    entry_var.set(value)
+                entry_var.trace_add("write", validate_class_no)  # Trigger on value change
+
+            if key == "Company":
+                def validate_company(*args):
+                    value = entry_var.get()
+                    if value and not value[0].isupper():  # Ensure the first letter is uppercase
+                        entry_var.set(value.capitalize())
+                entry_var.trace_add("write", validate_company)  # Trigger on value change
+
+            # Pre-fill with default or existing values
             if not self.is_edit:
-                # Normalize key to lowercase to match default.json keys
                 default_key = f"def_{key.lower()}"
                 default_value = self.default_values.get(default_key, "")
                 entry_var.set(default_value)
@@ -106,7 +119,36 @@ class MetadataForm(tk.Toplevel):
                 existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
                 entry_var.set(existing_value)
 
-            # Store both the StringVar and the Entry widget
+            # Store the entry
+            self.entries[key] = {"var": entry_var, "widget": entry}
+
+        # Add fields for Columns 4 & 5
+        for i, field in enumerate(fields[7:]):  # Remaining fields go to Columns 4 & 5
+            label_text = field[0]
+            key = field[1]
+
+            # Determine row and column positions
+            row = i
+            col = 2  # Column 2 for labels, Column 3 for entry fields
+
+            # Add label
+            tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
+
+            # Add entry field
+            entry_var = tk.StringVar()
+            entry = tk.Entry(self, textvariable=entry_var, width=30, font=("Arial", 12))
+            entry.grid(row=row, column=col + 1, padx=5, pady=5)
+
+            # Pre-fill with default or existing values
+            if not self.is_edit:
+                default_key = f"def_{key.lower()}"
+                default_value = self.default_values.get(default_key, "")
+                entry_var.set(default_value)
+            else:
+                existing_value = self.data.get("classes", {}).get(self.class_id, {}).get("metadata", {}).get(key, "")
+                entry_var.set(existing_value)
+
+            # Store the entry
             self.entries[key] = {"var": entry_var, "widget": entry}
 
             # Add [Pick] button for StartDate
@@ -118,11 +160,11 @@ class MetadataForm(tk.Toplevel):
                     bg="blue",
                     fg="white",
                     command=lambda: self.open_date_picker("StartDate"),
-                ).grid(row=row, column=col + 2, padx=5, pady=5)  # Place in the new column
+                ).grid(row=row, column=col + 2, padx=5, pady=5)
 
         # Add Save and Cancel buttons
         button_frame = tk.Frame(self, bg="white")
-        button_frame.grid(row=len(fields) // 2 + 1, column=0, columnspan=6, pady=10)  # Adjust columnspan for the new column
+        button_frame.grid(row=max(len(fields[:7]), len(fields[7:])) + 1, column=0, columnspan=5, pady=10)
 
         save_button = tk.Button(button_frame, text="Save", font=("Arial", 12, "bold"), bg="green", fg="white", command=self.save_metadata)
         save_button.pack(side="left", padx=10)

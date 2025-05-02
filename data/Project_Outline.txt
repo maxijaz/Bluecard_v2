@@ -11,6 +11,7 @@ List of sections / forms:
 # 6. Mainform                        - This form displays bluecard with Student Data PAL and Metadata with control buttons
 # 7. ADD or Edit Metadata            - Form for editing metadata
 # 7.1 Fields and Default Values (default.json) - EXTENDED TTR Version
+#7.2 Fields and Default Values LAYOUT
 # 8. Add or EDIT Student information - Form for adding and editing student data
 # 9. Student Active Manager - Simliar to Archive manager (active = "Yes" or "No") + Option to DELETE class
 # 10. Mapping Settings -> Default values to # 7. ADD or Edit Metadata
@@ -412,6 +413,22 @@ Add. <------ line separator ---------->
 ("CCP:", "ccp"),
 ("Travel:", "travel"),
 ("Bonus:", "bonus")
+
+#7.2 Fields and Default Values LAYOUT
+
+| col 1 (label) | col2 (data)  | col4 (label)    | col4 (label)  | col5 (buttons) | 
+| "Class No*:"  | "class_no"   | "Course Hours:" | "CourseHours" |                | 
+| "Company*:"   | "Company"    | "Class Time:"   | "ClassTime"   |                | 
+| "Room:"       | "Room"       | "Start Date:"   | "StartDate"   | [pick]         | 
+| "Consultant:" | "Consultant" | "Finish Date:"  | "FinishDate"  |                | 
+| "Teacher:"    | "Teacher"    | "Days:"         | "Days"        |                | 
+| "CourseBook:" | "CourseBook" | "Time:"         | "Time"        |                | 
+| "Notes:"      | "Notes"      | "Max Classes:"  | "MaxClasses"  |                | 
+|               |              | "Teacher No:"   | "TeacherNo"   |                | 
+|               |              | "Rate:"         | "rate"        |                | 
+|               |              | "CCP:"          | "ccp"         |                | 
+|               |              | "Travel:"       | "travel"      |                | 
+|               |              | "Bonus:"        | "bonus"       |                | 
 
 ----------------------------------------------------------------
 
