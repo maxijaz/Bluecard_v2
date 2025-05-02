@@ -75,19 +75,27 @@ class TestScrollbar(tk.Tk):
         # Synchronize row selection between the two tables
         def sync_selection(event):
             try:
-                # Check if a row is selected in the frozen table
-                selected_item = frozen_table.selection()
-                if selected_item:
-                    index = frozen_table.index(selected_item[0])
-                    if index < len(scrollable_table.get_children()):
-                        scrollable_table.selection_set(scrollable_table.get_children()[index])
-                else:
-                    # Check if a row is selected in the scrollable table
+                # Determine which table triggered the event
+                widget = event.widget
+
+                if widget == frozen_table:
+                    # A row was selected in the frozen table
+                    selected_item = frozen_table.selection()
+                    if selected_item:
+                        index = frozen_table.index(selected_item[0])
+                        if index < len(scrollable_table.get_children()):
+                            # Highlight the corresponding row in the scrollable table
+                            scrollable_table.selection_set(scrollable_table.get_children()[index])
+                            scrollable_table.see(scrollable_table.get_children()[index])
+                elif widget == scrollable_table:
+                    # A row was selected in the scrollable table
                     selected_item = scrollable_table.selection()
                     if selected_item:
                         index = scrollable_table.index(selected_item[0])
                         if index < len(frozen_table.get_children()):
+                            # Highlight the corresponding row in the frozen table
                             frozen_table.selection_set(frozen_table.get_children()[index])
+                            frozen_table.see(frozen_table.get_children()[index])
             except Exception as e:
                 print(f"Error in sync_selection: {e}")  # Debugging output
 
