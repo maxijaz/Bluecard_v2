@@ -432,7 +432,7 @@ class Mainform(tk.Toplevel):
                 remaining_hours = course_hours % class_time  # Remaining hours
 
                 if remaining_hours > 0:
-                    max_classes_display = f"{full_classes} ({remaining_hours} hour(s) remaining)"
+                    max_classes_display = f"{full_classes} ({remaining_hours} hour remains)"
                 else:
                     max_classes_display = str(full_classes)
 
