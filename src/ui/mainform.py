@@ -241,6 +241,41 @@ class Mainform(tk.Toplevel):
 
     def populate_attendance_table(self):
         """Populate the attendance table with student data."""
+        # Get ClassTime from metadata
+        class_time = float(self.metadata.get("ClassTime", "2") or "2")  # Default to 2 if missing
+        running_total = 0  # Initialize running total
+
+        # Add the first row for the running total
+        attendance_dates = self.get_attendance_dates()
+        running_total_values = []
+        for date in attendance_dates:
+            # Increment the running total for every column, including placeholders
+            running_total += class_time
+            # Format the running total: remove ".0" for whole numbers
+            formatted_total = int(running_total) if running_total.is_integer() else running_total
+            running_total_values.append(str(formatted_total))
+
+        # Insert the running total row
+        self.tree.insert(
+            "",
+            tk.END,
+            values=(
+                "",  # Empty for the first column
+                "Running Total",  # Label for the row
+                "",  # Empty for nickname
+                "",  # Empty for score
+                *running_total_values,  # Running total for date columns
+                "",  # Empty for P
+                "",  # Empty for A
+                "",  # Empty for L
+                "",  # Empty for Attendance
+                "",  # Empty for Pre-test
+                "",  # Empty for Post-test
+            ),
+            tags=("running_total",),  # Assign a tag for styling
+        )
+
+        # Add the remaining rows for student data
         for idx, (student_id, student_data) in enumerate(self.students.items(), start=1):
             if student_data.get("active", "Yes") == "Yes":  # Only show active students
                 attendance = student_data.get("attendance", {})
@@ -249,7 +284,7 @@ class Mainform(tk.Toplevel):
                     attendance.get(
                         datetime.strptime(date, "%d/%m/%y").strftime("%d/%m/%Y"), "-"
                     ) if "Empty" not in date else "-"  # Skip placeholder columns
-                    for date in self.get_attendance_dates()
+                    for date in attendance_dates
                 ]
                 present_count = sum(1 for v in attendance.values() if v == "P")
                 absent_count = sum(1 for v in attendance.values() if v == "A")
@@ -278,8 +313,9 @@ class Mainform(tk.Toplevel):
                 )
 
         # Configure styles for the tags with increased contrast
-        self.tree.tag_configure("odd", background="#e0e0e0")  # Darker gray for odd rows
-        self.tree.tag_configure("even", background="#ffffff")  # White for even rows
+        self.tree.tag_configure("running_total", background="#f0f0f0", font=("Arial", 10))  # Small font for running total row
+        self.tree.tag_configure("odd", background="#ffffff")  # Darker gray for odd rows
+        self.tree.tag_configure("even", background="#e0e0e0")  # White for even rows
 
     def on_row_hover(self, event):
         """Handle row hover event."""
