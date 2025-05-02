@@ -196,7 +196,7 @@ class MetadataForm(tk.Toplevel):
     def save_metadata(self):
         """Save metadata for the class."""
         logging.debug("Saving metadata...")
-        class_no = self.entries["class_no"]["var"].get().strip()
+        class_no = self.entries["class_no"]["var"].get().strip().upper()  # Ensure class_no is uppercase
 
         # Validate that the class_no is unique
         if class_no in self.data.get("classes", {}) and not self.is_edit:
@@ -211,7 +211,16 @@ class MetadataForm(tk.Toplevel):
         # Collect metadata from the form
         metadata = {}
         for key, entry in self.entries.items():
-            metadata[key] = entry["var"].get().strip()
+            value = entry["var"].get().strip()
+
+            # Apply formatting for specific fields
+            if key == "class_no":
+                value = value.upper()  # Ensure class_no is uppercase
+            elif key == "Company":
+                # Capitalize the first letter of each word while preserving existing uppercase letters
+                value = " ".join(word if word.isupper() else word.capitalize() for word in value.split())
+
+            metadata[key] = value
 
         # Save the metadata
         if not self.is_edit:
