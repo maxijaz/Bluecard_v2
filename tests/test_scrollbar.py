@@ -102,6 +102,17 @@ class TestScrollbar(tk.Tk):
         frozen_table.bind("<<TreeviewSelect>>", sync_selection)
         scrollable_table.bind("<<TreeviewSelect>>", sync_selection)
 
+        # Intermediate function for mouse wheel scrolling
+        def on_mouse_wheel(event):
+            # Determine the scroll direction
+            delta = -1 if event.delta > 0 else 1
+            frozen_table.yview_scroll(delta, "units")
+            scrollable_table.yview_scroll(delta, "units")
+
+        # Bind mouse wheel scrolling to both tables
+        frozen_table.bind("<MouseWheel>", on_mouse_wheel)
+        scrollable_table.bind("<MouseWheel>", on_mouse_wheel)
+
 
 if __name__ == "__main__":
     app = TestScrollbar()
