@@ -78,14 +78,14 @@ class MetadataForm(tk.Toplevel):
 
         self.entries = {}
 
-        # Create fields in a 4-column layout
+        # Create fields in a 5-column layout (extra column for [Pick] button)
         for i, field in enumerate(fields):
             label_text = field[0]
             key = field[1]
 
             # Determine row and column positions
             row = i // 2  # Two fields per row
-            col = (i % 2) * 2  # Column 0 or 2 for labels, 1 or 3 for metadata
+            col = (i % 2) * 3  # Column 0 or 3 for labels, 1 or 4 for metadata, 2 or 5 for [Pick] button
 
             # Add label
             tk.Label(self, text=label_text, font=("Arial", 12, "bold"), bg="white").grid(row=row, column=col, sticky="e", padx=10, pady=5)
@@ -118,11 +118,11 @@ class MetadataForm(tk.Toplevel):
                     bg="blue",
                     fg="white",
                     command=lambda: self.open_date_picker("StartDate"),
-                ).grid(row=row, column=col + 2, pady=5)
+                ).grid(row=row, column=col + 2, padx=5, pady=5)  # Place in the new column
 
         # Add Save and Cancel buttons
         button_frame = tk.Frame(self, bg="white")
-        button_frame.grid(row=len(fields) // 2 + 1, column=0, columnspan=4, pady=10)
+        button_frame.grid(row=len(fields) // 2 + 1, column=0, columnspan=6, pady=10)  # Adjust columnspan for the new column
 
         save_button = tk.Button(button_frame, text="Save", font=("Arial", 12, "bold"), bg="green", fg="white", command=self.save_metadata)
         save_button.pack(side="left", padx=10)
