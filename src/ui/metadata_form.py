@@ -17,7 +17,7 @@ class MetadataForm(tk.Toplevel):
         self.context = context  # Context: "launcher" or "mainform"
 
         self.title("Add / Edit Class")
-        self.geometry("900x450")  # Manually resized dimensions
+        self.geometry("900x500")  # Manually resized dimensions
         self.resizable(False, False)
 
         # Make the window topmost
