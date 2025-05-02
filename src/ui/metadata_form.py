@@ -17,7 +17,7 @@ class MetadataForm(tk.Toplevel):
         self.context = context  # Context: "launcher" or "mainform"
 
         self.title("Add / Edit Class")
-        self.geometry("900x450")  # Manually resized dimensions
+        self.geometry("900x500")  # Manually resized dimensions
         self.resizable(False, False)
 
         # Make the window topmost
@@ -66,7 +66,7 @@ class MetadataForm(tk.Toplevel):
             ("Course Hours:", "CourseHours"),
             ("Class Time:", "ClassTime"),
             ("Start Date:", "StartDate"),
-            ("Finish Date:", "FinishDate"),
+            ("Finish Date:", "FinishDate"),  # Add FinishDate field
             ("Days:", "Days"),
             ("Time:", "Time"),
             ("Max Classes:", "MaxClasses"),
@@ -152,15 +152,15 @@ class MetadataForm(tk.Toplevel):
             # Store the entry
             self.entries[key] = {"var": entry_var, "widget": entry}
 
-            # Add [Pick] button for StartDate
-            if key == "StartDate":
+            # Add [Pick] button for StartDate and FinishDate
+            if key in ["StartDate", "FinishDate"]:
                 tk.Button(
                     self,
                     text="Pick",
                     font=("Arial", 10, "bold"),
                     bg="blue",
                     fg="white",
-                    command=lambda: self.open_date_picker("StartDate"),
+                    command=lambda k=key: self.open_date_picker(k),  # Pass the key to the date picker
                 ).grid(row=row, column=col + 2, padx=5, pady=5)
 
         # Add Save and Cancel buttons
@@ -279,8 +279,13 @@ class MetadataForm(tk.Toplevel):
     def open_date_picker(self, key):
         """Open a calendar popup to select a date."""
         def set_date():
+            """Set the selected date and close the popup."""
             selected_date = cal.get_date()  # Get the selected date
             self.entries[key]["var"].set(selected_date)  # Save the selected date
+            popup.destroy()
+
+        def cancel_date():
+            """Close the popup without making changes."""
             popup.destroy()
 
         # Create a popup window
@@ -290,12 +295,25 @@ class MetadataForm(tk.Toplevel):
         popup.configure(bg="white")
         popup.attributes("-topmost", True)  # Make the popup topmost
 
+        # Center the popup on the screen
+        self.update_idletasks()
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - 300) // 2  # Center horizontally (300 is the popup width)
+        y = (screen_height - 300) // 2  # Center vertically (300 is the popup height)
+        popup.geometry(f"300x300+{x}+{y}")
+
         # Add a calendar widget
         cal = Calendar(popup, selectmode="day", date_pattern="dd/mm/yyyy")  # Use dd/mm/yyyy for tkcalendar
         cal.pack(pady=20)
 
-        # Add a button to confirm the selection
-        tk.Button(popup, text="OK", command=set_date, bg="green", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
+        # Add a frame for buttons
+        button_frame = tk.Frame(popup, bg="white")
+        button_frame.pack(pady=10)
+
+        # Add OK and Cancel buttons
+        tk.Button(button_frame, text="OK", command=set_date, bg="green", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+        tk.Button(button_frame, text="Cancel", command=cancel_date, bg="red", fg="white", font=("Arial", 10, "bold")).pack(side="left", padx=5)
 
     def edit_metadata(self):
         """Open the Edit Metadata form."""
