@@ -6,14 +6,15 @@ import json
 from tkcalendar import Calendar
 
 class MetadataForm(tk.Toplevel):
-    def __init__(self, parent, class_id, default_values, theme, on_metadata_save):
+    def __init__(self, parent, class_id, default_values, theme, on_metadata_save, context="launcher"):
         super().__init__(parent)
         self.class_id = class_id  # Class ID (e.g., OLO123)
         self.default_values = self.load_default_values() if not default_values else default_values  # Default values from default.json
         self.theme = theme  # UI theme
-        self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher
+        self.on_metadata_save = on_metadata_save  # Callback to refresh Launcher or Mainform
         self.data = parent.data  # Reference to the main data dictionary
         self.is_edit = class_id is not None  # Determine if this is an edit or add operation
+        self.context = context  # Context: "launcher" or "mainform"
 
         self.title("Add / Edit Class")
         self.geometry("900x450")  # Manually resized dimensions
@@ -235,8 +236,11 @@ class MetadataForm(tk.Toplevel):
         # Save the updated data to the file
         save_data(self.data)
 
-        # Refresh the launcher
-        self.on_metadata_save()
+        # Refresh the appropriate parent form
+        if self.context == "launcher":
+            self.on_metadata_save()  # Refresh Launcher
+        elif self.context == "mainform":
+            self.master.refresh()  # Refresh Mainform
 
         # Close the form
         self.destroy()
@@ -280,3 +284,14 @@ class MetadataForm(tk.Toplevel):
 
         # Add a button to confirm the selection
         tk.Button(popup, text="OK", command=set_date, bg="green", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
+
+    def edit_metadata(self):
+        """Open the Edit Metadata form."""
+        MetadataForm(
+            parent=self,
+            class_id=self.class_id,
+            default_values={},
+            theme=self.theme,
+            on_metadata_save=self.refresh,
+            context="mainform"
+        ).mainloop()

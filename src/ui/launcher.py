@@ -213,7 +213,8 @@ class Launcher(tk.Toplevel):
             class_id=None,
             default_values={},
             theme=self.theme,
-            on_metadata_save=self.refresh
+            on_metadata_save=self.refresh,
+            context="launcher"
         ).mainloop()
 
     def archive_class(self):
