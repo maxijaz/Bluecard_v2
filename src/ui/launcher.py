@@ -5,7 +5,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from logic.parser import load_data, save_data
 from ui.mainform import Mainform
+from ui.metadata_form import MetadataForm
 import sys
+import json
+import os
 
 
 class Launcher(QMainWindow):
@@ -45,6 +48,7 @@ class Launcher(QMainWindow):
 
         # Buttons
         button_layout = QHBoxLayout()
+
         open_button = QPushButton("Open")
         open_button.clicked.connect(self.open_class)
         button_layout.addWidget(open_button)
@@ -53,13 +57,25 @@ class Launcher(QMainWindow):
         edit_button.clicked.connect(self.edit_class)
         button_layout.addWidget(edit_button)
 
-        add_button = QPushButton("Add Class")
+        add_button = QPushButton("Add New Class")
         add_button.clicked.connect(self.add_new_class)
         button_layout.addWidget(add_button)
 
         archive_button = QPushButton("Archive")
         archive_button.clicked.connect(self.archive_class)
         button_layout.addWidget(archive_button)
+
+        archive_manager_button = QPushButton("Archive Manager")
+        archive_manager_button.clicked.connect(self.open_archive_manager)
+        button_layout.addWidget(archive_manager_button)
+
+        ttr_button = QPushButton("TTR")
+        ttr_button.clicked.connect(self.open_ttr)
+        button_layout.addWidget(ttr_button)
+
+        settings_button = QPushButton("Settings")
+        settings_button.clicked.connect(self.open_settings)
+        button_layout.addWidget(settings_button)
 
         self.layout.addLayout(button_layout)
 
@@ -97,14 +113,26 @@ class Launcher(QMainWindow):
         if selected_row == -1:
             QMessageBox.warning(self, "No Selection", "Please select a class to edit.")
             return
+
         class_id = self.table.item(selected_row, 0).text()
         print(f"Editing class ID: {class_id}")
-        # Logic to open the MetadataForm for editing goes here
+
+        # Open the MetadataForm for editing
+        metadata_form = MetadataForm(self, class_id, self.data, self.theme, self.refresh_table)
+        metadata_form.exec_()  # Open the form as a modal dialog
 
     def add_new_class(self):
-        """Add a new class."""
+        """Add a new class with default values."""
         print("Adding a new class...")
-        # Logic to open the MetadataForm for adding a new class goes here
+
+        # Load default values
+        defaults = self.load_defaults()
+        if not defaults:
+            return  # Exit if defaults could not be loaded
+
+        # Open the MetadataForm with default values
+        metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults)
+        metadata_form.exec_()  # Open the form as a modal dialog
 
     def archive_class(self):
         """Archive the selected class."""
@@ -121,6 +149,38 @@ class Launcher(QMainWindow):
             self.classes[class_id]["metadata"]["archive"] = "Yes"
             save_data(self.data)
             self.populate_table()
+
+    def open_archive_manager(self):
+        """Open the Archive Manager."""
+        print("Opening Archive Manager...")
+        # Logic to open the Archive Manager goes here
+
+    def open_ttr(self):
+        """Open the TTR."""
+        print("Opening TTR...")
+        # Logic to open the TTR goes here
+
+    def open_settings(self):
+        """Open the Settings."""
+        print("Opening Settings...")
+        # Logic to open the Settings goes here
+
+    def refresh_table(self):
+        """Refresh the table with updated class data."""
+        self.populate_table()
+
+    def load_defaults(self):
+        """Load default values from default.json."""
+        defaults_path = "data/default.json"
+        if not os.path.exists(defaults_path):
+            QMessageBox.warning(self, "Error", "Default settings file (default.json) not found.")
+            return {}
+        try:
+            with open(defaults_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "Error", "Failed to parse default.json.")
+            return {}
 
 
 if __name__ == "__main__":
