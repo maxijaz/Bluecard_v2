@@ -1,127 +1,146 @@
-import tkinter as tk
-from tkinter import ttk
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel, QHBoxLayout
+)
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt5.QtGui import QColor, QFont
 
-class TestScrollbar(tk.Tk):
+
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.data)
+
+    def columnCount(self, parent=QModelIndex()):
+        return len(self.data[0]) if self.data else 0
+
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            return self.data[index.row()][index.column()]
+        elif role == Qt.BackgroundRole:
+            # Alternate row coloring for better readability
+            if index.row() % 2 == 0:
+                return QColor("#f0f0f0")
+        return None
+
+
+class TestScrollbar(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title("TTR")
-        self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")  # Fullscreen
-        self.attributes("-topmost", True)
+        self.setWindowTitle("PyQt5 Split Table Example with Zoom")
+        self.setGeometry(100, 100, 1200, 600)
 
-        # Add a close button
-        close_button = tk.Button(self, text="Close", font=("Arial", 12), bg="red", fg="white", command=self.destroy)
-        close_button.pack(pady=10)
+        # Sample data
+        data = [[f"Row {row} Col {col}" for col in range(1, 21)] for row in range(1, 31)]
 
-        # Create a frame for the frozen and scrollable tables
-        main_frame = tk.Frame(self)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Create the main layout
+        main_layout = QVBoxLayout()
 
-        # Create a frame for the frozen columns
-        frozen_frame = tk.Frame(main_frame)
-        frozen_frame.pack(side="left", fill="y")
+        # Add a label for displaying scroll information
+        self.output_label = QLabel("Scroll Value: 0.0")
+        self.output_label.setStyleSheet("background-color: lightgray; padding: 5px;")
+        main_layout.addWidget(self.output_label)
 
-        # Create a frame for the scrollable columns
-        scrollable_frame = tk.Frame(main_frame)
-        scrollable_frame.pack(side="left", fill="both", expand=True)
+        # Create a horizontal layout for the tables
+        table_layout = QHBoxLayout()
+        table_layout.setSpacing(0)  # Remove spacing between tables
 
-        # Create a style for the Treeview to adjust row height
-        style = ttk.Style()
-        style.configure("Treeview", rowheight=25)  # Set row height to 25 pixels
+        # Create the frozen table
+        self.frozen_table = QTableView()
+        self.frozen_table.setModel(TableModel([row[:4] for row in data]))
+        self.frozen_table.verticalHeader().hide()
+        self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # Hide vertical scrollbar
+        self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)  # Add horizontal scrollbar
 
-        # Create the frozen table (Treeview)
-        frozen_table = ttk.Treeview(frozen_frame, columns=[f"Col {i}" for i in range(1, 5)], show="headings", height=20)
-        for i in range(1, 5):
-            frozen_table.heading(f"Col {i}", text=f"Column {i}")
-            frozen_table.column(f"Col {i}", width=100, anchor="center")
+        # Create the scrollable table
+        self.scrollable_table = QTableView()
+        self.scrollable_table.setModel(TableModel([row[4:] for row in data]))
+        self.scrollable_table.verticalHeader().hide()
+        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
-        # Pack the frozen table
-        frozen_table.pack(fill="y")
+        # Synchronize scrolling
+        self.frozen_table.verticalScrollBar().valueChanged.connect(
+            self.scrollable_table.verticalScrollBar().setValue
+        )
+        self.scrollable_table.verticalScrollBar().valueChanged.connect(
+            self.frozen_table.verticalScrollBar().setValue
+        )
 
-        # Create the scrollable table (Treeview)
-        scrollable_table = ttk.Treeview(scrollable_frame, columns=[f"Col {i}" for i in range(5, 21)], show="headings", height=20)
-        for i in range(5, 21):
-            scrollable_table.heading(f"Col {i}", text=f"Column {i}")
-            scrollable_table.column(f"Col {i}", width=100, anchor="center")
+        # Synchronize row selection
+        self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection)
+        self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection)
 
-        # Add vertical scrollbar for both tables
-        v_scrollbar = ttk.Scrollbar(scrollable_frame, orient="vertical")
+        # Add tables to the layout
+        table_layout.addWidget(self.frozen_table)
+        table_layout.addWidget(self.scrollable_table)
 
-        # Configure the scrollbar to control both tables
-        def scroll_both(*args):
-            # Synchronize the vertical scrolling of both tables
-            frozen_table.yview(*args)
-            scrollable_table.yview(*args)
+        # Add the table layout to the main layout
+        main_layout.addLayout(table_layout)
 
-        v_scrollbar.configure(command=scroll_both)
-        v_scrollbar.pack(side="right", fill="y")
+        # Set the central widget
+        container = QWidget()
+        container.setLayout(main_layout)
+        self.setCentralWidget(container)
 
-        # Link the scrollbar to both tables
-        frozen_table.configure(yscrollcommand=lambda *args: v_scrollbar.set(*args))
-        scrollable_table.configure(yscrollcommand=lambda *args: v_scrollbar.set(*args))
+        # Initialize zoom level
+        self.zoom_level = 1.0
 
-        # Add horizontal scrollbar for the scrollable table
-        h_scrollbar = ttk.Scrollbar(scrollable_frame, orient="horizontal", command=scrollable_table.xview)
-        h_scrollbar.pack(side="bottom", fill="x")
-        scrollable_table.configure(xscrollcommand=h_scrollbar.set)
+    def keyPressEvent(self, event):
+        """Handle zoom in/out with keyboard shortcuts."""
+        if event.modifiers() == Qt.ControlModifier:
+            if event.key() == Qt.Key_Plus:  # Ctrl + Zoom In
+                self.zoom(1.1)
+            elif event.key() == Qt.Key_Minus:  # Ctrl - Zoom Out
+                self.zoom(0.9)
 
-        # Pack the scrollable table
-        scrollable_table.pack(fill="both", expand=True)
+    def zoom(self, factor):
+        """Adjust the zoom level by changing font size and row height."""
+        self.zoom_level *= factor
 
-        # Populate both tables with sample data
-        for row in range(1, 31):  # Add 30 rows to trigger vertical scrolling
-            frozen_table.insert("", "end", values=[f"Row {row} Col {col}" for col in range(1, 5)])
-            scrollable_table.insert("", "end", values=[f"Row {row} Col {col}" for col in range(5, 21)])
+        # Adjust font size
+        font = QFont()
+        font.setPointSizeF(10 * self.zoom_level)  # Base font size is 10
+        self.frozen_table.setFont(font)
+        self.scrollable_table.setFont(font)
 
+        # Adjust row height
+        for table in [self.frozen_table, self.scrollable_table]:
+            for row in range(table.model().rowCount()):
+                table.setRowHeight(row, int(25 * self.zoom_level))  # Base row height is 25
+
+        # Adjust column width
+        for table in [self.frozen_table, self.scrollable_table]:
+            for col in range(table.model().columnCount()):
+                table.setColumnWidth(col, int(100 * self.zoom_level))  # Base column width is 100
+
+    def sync_selection(self, selected, deselected):
         # Synchronize row selection between the two tables
-        def sync_selection(event):
-            try:
-                # Determine which table triggered the event
-                widget = event.widget
+        sender = self.sender()
+        if sender == self.frozen_table.selectionModel():
+            target_table = self.scrollable_table
+        else:
+            target_table = self.frozen_table
 
-                if widget == frozen_table:
-                    # A row was selected in the frozen table
-                    selected_item = frozen_table.selection()
-                    if selected_item:
-                        index = frozen_table.index(selected_item[0])
-                        if index < len(scrollable_table.get_children()):
-                            # Highlight the corresponding row in the scrollable table
-                            scrollable_table.selection_set(scrollable_table.get_children()[index])
-                            scrollable_table.see(scrollable_table.get_children()[index])
-                elif widget == scrollable_table:
-                    # A row was selected in the scrollable table
-                    selected_item = scrollable_table.selection()
-                    if selected_item:
-                        index = scrollable_table.index(selected_item[0])
-                        if index < len(frozen_table.get_children()):
-                            # Highlight the corresponding row in the frozen table
-                            frozen_table.selection_set(frozen_table.get_children()[index])
-                            frozen_table.see(frozen_table.get_children()[index])
-            except Exception as e:
-                print(f"Error in sync_selection: {e}")  # Debugging output
+        selected_rows = sender.selectedRows()
+        target_selection_model = target_table.selectionModel()
+        target_selection_model.clearSelection()
 
-        frozen_table.bind("<<TreeviewSelect>>", sync_selection)
-        scrollable_table.bind("<<TreeviewSelect>>", sync_selection)
-
-        # Enhanced mouse wheel scrolling for tight synchronization
-        def on_mouse_wheel(event):
-            # Calculate the scroll delta
-            delta = -1 if event.delta > 0 else 1
-
-            # Get the current scroll position of the frozen table
-            current_scroll = frozen_table.yview()
-
-            # Calculate the new scroll position
-            new_scroll = max(0, min(1, current_scroll[0] + delta * 0.1))
-
-            # Apply the new scroll position to both tables
-            frozen_table.yview_moveto(new_scroll)
-            scrollable_table.yview_moveto(new_scroll)
-
-        # Bind mouse wheel scrolling to both tables
-        frozen_table.bind("<MouseWheel>", on_mouse_wheel)
-        scrollable_table.bind("<MouseWheel>", on_mouse_wheel)
+        for index in selected_rows:
+            target_selection_model.select(
+                target_table.model().index(index.row(), 0),
+                target_selection_model.Select | target_selection_model.Rows,
+            )
 
 
 if __name__ == "__main__":
-    app = TestScrollbar()
-    app.mainloop()
+    app = QApplication([])
+    window = TestScrollbar()
+    window.show()
+    app.exec_()
