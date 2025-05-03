@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 from logic.parser import load_data, save_data
 from ui.mainform import Mainform
 from ui.metadata_form import MetadataForm
+from ui.archive_manager import ArchiveManager
 import sys
 import json
 import os
@@ -81,17 +82,19 @@ class Launcher(QMainWindow):
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
+        self.table.setRowCount(0)  # Clear the table before repopulating
         sorted_classes = sorted(
             self.classes.items(),
             key=lambda item: item[1].get("metadata", {}).get("Company", "Unknown")
         )
-        self.table.setRowCount(len(sorted_classes))
-        for row, (class_id, class_data) in enumerate(sorted_classes):
+        for class_id, class_data in sorted_classes:
             metadata = class_data.get("metadata", {})
             if metadata.get("archive", "No") == "No":
-                self.table.setItem(row, 0, QTableWidgetItem(class_id))
-                self.table.setItem(row, 1, QTableWidgetItem(metadata.get("Company", "Unknown")))
-                self.table.setItem(row, 2, QTableWidgetItem(metadata.get("archive", "No")))
+                row_position = self.table.rowCount()
+                self.table.insertRow(row_position)
+                self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
+                self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("Company", "Unknown")))
+                self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "No")))
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -140,20 +143,27 @@ class Launcher(QMainWindow):
         if selected_row == -1:
             QMessageBox.warning(self, "No Selection", "Please select a class to archive.")
             return
+
         class_id = self.table.item(selected_row, 0).text()
         confirm = QMessageBox.question(
-            self, "Archive Class", f"Are you sure you want to archive class {class_id}?",
+            self,
+            "Archive Class",
+            f"Are you sure you want to archive class {class_id}?",
             QMessageBox.Yes | QMessageBox.No
         )
+
         if confirm == QMessageBox.Yes:
+            # Set the archive field to "Yes"
             self.classes[class_id]["metadata"]["archive"] = "Yes"
-            save_data(self.data)
-            self.populate_table()
+            save_data(self.data)  # Save changes to 001attendance_data.json
+            self.populate_table()  # Refresh the table to show only non-archived classes
+            QMessageBox.information(self, "Archived", f"Class {class_id} has been archived.")
 
     def open_archive_manager(self):
         """Open the Archive Manager."""
         print("Opening Archive Manager...")
-        # Logic to open the Archive Manager goes here
+        archive_manager = ArchiveManager(self, self.data, self.theme, self.populate_table)
+        archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):
         """Open the TTR."""
