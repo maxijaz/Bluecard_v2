@@ -188,6 +188,10 @@ class Mainform(QMainWindow):
         self.table_layout.addWidget(self.scrollable_table)
         self.layout.addLayout(self.table_layout)
 
+        # Connect selection models for synchronization
+        self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
+        self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
+
         # Set the main layout
         self.setCentralWidget(container)
 
@@ -267,10 +271,55 @@ class Mainform(QMainWindow):
 
         return dates
 
+    def sync_selection_to_scrollable(self, selected, deselected):
+        """Synchronize selection from the frozen table to the scrollable table."""
+        if not self.scrollable_table.selectionModel().blockSignals(True):  # Block signals temporarily
+            selected_rows = {index.row() for index in selected.indexes()}
+            self.scrollable_table.selectionModel().clearSelection()
+            for row in selected_rows:
+                self.scrollable_table.selectRow(row)
+            self.scrollable_table.selectionModel().blockSignals(False)  # Unblock signals
+
+    def sync_selection_to_frozen(self, selected, deselected):
+        """Synchronize selection from the scrollable table to the frozen table."""
+        if not self.frozen_table.selectionModel().blockSignals(True):  # Block signals temporarily
+            selected_rows = {index.row() for index in selected.indexes()}
+            self.frozen_table.selectionModel().clearSelection()
+            for row in selected_rows:
+                self.frozen_table.selectRow(row)
+            self.frozen_table.selectionModel().blockSignals(False)  # Unblock signals
+
     def closeEvent(self, event):
         """Handle the close event to reopen the Launcher."""
         self.closed.emit()  # Emit the closed signal
         event.accept()  # Accept the close event
+
+    def refresh_student_table(self):
+        """Refresh the student table with updated data."""
+        # Rebuild the frozen table data
+        frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
+        frozen_data = [
+            [
+                idx + 1,
+                student.get("name", ""),
+                student.get("nickname", ""),
+                student.get("score", ""),
+                student.get("pre_test", ""),
+                student.get("post_test", ""),
+                len(student.get("attendance", {})),  # Attendance count
+            ]
+            for idx, student in enumerate(self.students.values())
+        ]
+        self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+
+        # Rebuild the scrollable table data
+        attendance_dates = self.get_attendance_dates()
+        scrollable_headers = ["P", "A", "L"] + attendance_dates
+        scrollable_data = [
+            ["-", "-", "-"] + [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
+            for student in self.students.values()
+        ]
+        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
 
 
 if __name__ == "__main__":
