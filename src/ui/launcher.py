@@ -187,8 +187,14 @@ class Launcher(tk.Toplevel):
         if not QApplication.instance():
             self.qt_app = QApplication(sys.argv)  # Store QApplication as an attribute
 
-        # Open the Mainform window
-        self.mainform = Mainform(class_id, self.data, self.theme)  # Store Mainform as an attribute
+        # Load the class data
+        class_data = self.data["classes"].get(class_id, {})
+        if not class_data:
+            messagebox.showerror("Error", f"No data found for class ID: {class_id}", parent=self)
+            return
+
+        # Open the Mainform window with the correct data
+        self.mainform = Mainform(class_id, self.data, self.theme)  # Pass the full data to Mainform
         self.mainform.show()
 
     def populate_table(self):

@@ -54,6 +54,7 @@ class Mainform(QMainWindow):
         self.data = data
         self.theme = theme
         self.metadata = self.data["classes"][self.class_id]["metadata"]
+        self.students = self.data["classes"][self.class_id]["students"]
 
         # Initialize frozen_table_width
         self.frozen_table_width = 0  # Ensure it is always defined
@@ -101,28 +102,41 @@ class Mainform(QMainWindow):
 
         self.layout.addLayout(metadata_layout)
 
-        # Buttons Section (unchanged)
+        # Buttons Section
         buttons_layout = QHBoxLayout()
-        buttons = [
-            QPushButton("Add Student"),
-            QPushButton("Edit Student"),
-            QPushButton("Remove Student"),
-            QPushButton("Manage Students"),
-        ]
+        add_student_btn = QPushButton("Add Student")
+        edit_student_btn = QPushButton("Edit Student")
+        remove_student_btn = QPushButton("Remove Student")
+        metadata_form_btn = QPushButton("Manage Metadata")
+
+        # Connect buttons to their respective methods
+        add_student_btn.clicked.connect(self.add_student)
+        edit_student_btn.clicked.connect(self.edit_student)
+        remove_student_btn.clicked.connect(self.remove_student)
+        metadata_form_btn.clicked.connect(self.open_metadata_form)
+
+        buttons = [add_student_btn, edit_student_btn, remove_student_btn, metadata_form_btn]
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
 
-        # Table Section
+        # Table Section (unchanged)
         self.table_layout = QHBoxLayout()
         self.table_layout.setSpacing(0)  # Remove gap between tables
 
-        # Frozen Table
+        # Frozen Table (unchanged)
         frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
         frozen_data = [
-            ["1", "Alice Kim", "Ali", "82% - A", "70%", "90%", "3"],
-            ["2", "Ben Lee", "Nok", "55% - B", "50%", "75%", "3"],
-            ["3", "Charlie Park", "Char", "65% - C", "60%", "70%", "2"],
+            [
+                idx + 1,
+                student.get("name", ""),
+                student.get("nickname", ""),
+                student.get("score", ""),
+                student.get("pre_test", ""),
+                student.get("post_test", ""),
+                len(student.get("attendance", {})),  # Attendance count
+            ]
+            for idx, student in enumerate(self.students.values())
         ]
 
         self.frozen_table = QTableView()
@@ -149,7 +163,7 @@ class Mainform(QMainWindow):
 
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
-        # Scrollable Table
+        # Scrollable Table (unchanged)
         scrollable_headers = ["P", "A", "L", "01/05/25", "06/05/25", "08/05/25", "13/05/25", "15/05/25"]
         scrollable_data = [
             ["3", "1", "1", "P", "A", "P", "L", "P"],
@@ -173,6 +187,27 @@ class Mainform(QMainWindow):
 
         # Set the main layout
         self.setCentralWidget(container)
+
+    # Button Methods
+    def add_student(self):
+        """Open the Add Student form."""
+        print("Add Student button clicked")
+        # Logic to open the Add Student form goes here
+
+    def edit_student(self):
+        """Open the Edit Student form."""
+        print("Edit Student button clicked")
+        # Logic to open the Edit Student form goes here
+
+    def remove_student(self):
+        """Remove the selected student."""
+        print("Remove Student button clicked")
+        # Logic to remove the selected student goes here
+
+    def open_metadata_form(self):
+        """Open the Metadata Form."""
+        print("Manage Metadata button clicked")
+        # Logic to open the Metadata Form goes here
 
     def resizeEvent(self, event):
         """Adjust the width of the scrollable table dynamically."""
