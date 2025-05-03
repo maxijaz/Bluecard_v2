@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox
 )
 from PyQt5.QtCore import Qt
+from logic.parser import save_data
 
 
 class StudentForm(QDialog):
@@ -110,6 +111,9 @@ class StudentForm(QDialog):
             "active": active,
             "attendance": {},  # Initialize with empty attendance
         }
+
+        # Save the updated data to the file
+        save_data(self.data)
 
         # Trigger the refresh callback
         self.refresh_callback()
