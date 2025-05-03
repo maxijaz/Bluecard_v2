@@ -69,7 +69,8 @@ class Mainform(QMainWindow):
         metadata_layout.setVerticalSpacing(5)
 
         metadata_fields = [
-            ("Company:", self.metadata.get("Company", ""), "Course Hours:", self.metadata.get("CourseHours", "")),
+            ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
+             f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
             ("Room:", self.metadata.get("Room", ""), "Start Date:", self.metadata.get("StartDate", "")),
             ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
             ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
@@ -120,11 +121,11 @@ class Mainform(QMainWindow):
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
 
-        # Table Section (unchanged)
+        # Table Section
         self.table_layout = QHBoxLayout()
         self.table_layout.setSpacing(0)  # Remove gap between tables
 
-        # Frozen Table (unchanged)
+        # Frozen Table
         frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
         frozen_data = [
             [
@@ -149,26 +150,26 @@ class Mainform(QMainWindow):
         self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         # Set column widths
-        self.frozen_table.setColumnWidth(0, 35)  # #
+        self.frozen_table.setColumnWidth(0, 10)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
         self.frozen_table.setColumnWidth(2, 100)  # Nickname
-        self.frozen_table.setColumnWidth(3, 75)  # Score
-        self.frozen_table.setColumnWidth(4, 75)  # PreTest
-        self.frozen_table.setColumnWidth(5, 75)  # PostTest
+        self.frozen_table.setColumnWidth(3, 60)  # Score
+        self.frozen_table.setColumnWidth(4, 60)  # PreTest
+        self.frozen_table.setColumnWidth(5, 60)  # PostTest
         self.frozen_table.setColumnWidth(6, 25)  # Attn
 
         # Calculate total width of frozen table
-        self.frozen_table_width = 35 + 150 + 100 + 75 + 75 + 75 + 25
+        self.frozen_table_width = 10 + 150 + 100 + 60 + 60 + 60 + 90
         self.frozen_table.setFixedWidth(self.frozen_table_width)
 
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
-        # Scrollable Table (unchanged)
-        scrollable_headers = ["P", "A", "L", "01/05/25", "06/05/25", "08/05/25", "13/05/25", "15/05/25"]
+        # Scrollable Table
+        attendance_dates = self.get_attendance_dates()
+        scrollable_headers = ["P", "A", "L"] + attendance_dates
         scrollable_data = [
-            ["3", "1", "1", "P", "A", "P", "L", "P"],
-            ["3", "1", "1", "L", "P", "P", "A", "P"],
-            ["2", "2", "0", "P", "P", "A", "P", "L"],
+            ["-", "-", "-"] + [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
+            for student in self.students.values()
         ]
 
         self.scrollable_table = QTableView()
@@ -192,7 +193,15 @@ class Mainform(QMainWindow):
     def add_student(self):
         """Open the Add Student form."""
         print("Add Student button clicked")
-        # Logic to open the Add Student form goes here
+
+        # Define a callback to refresh the student table after adding a student
+        def refresh_callback():
+            print("Refreshing student table...")
+            self.refresh_student_table()
+
+        # Pass the refresh_callback to the StudentForm
+        student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
+        student_form.exec_()  # Open the form as a modal dialog
 
     def edit_student(self):
         """Open the Edit Student form."""
@@ -207,7 +216,8 @@ class Mainform(QMainWindow):
     def open_metadata_form(self):
         """Open the Metadata Form."""
         print("Manage Metadata button clicked")
-        # Logic to open the Metadata Form goes here
+        metadata_form = MetadataForm(self, self.class_id, self.data)
+        metadata_form.exec_()  # Open the form as a modal dialog
 
     def resizeEvent(self, event):
         """Adjust the width of the scrollable table dynamically."""
@@ -216,6 +226,44 @@ class Mainform(QMainWindow):
             if available_width > 0:
                 self.scrollable_table.setFixedWidth(available_width)
         super().resizeEvent(event)
+
+    def get_attendance_dates(self):
+        """Get all unique attendance dates dynamically based on StartDate, Days, and MaxClasses."""
+        max_classes_str = self.metadata.get("MaxClasses", "10")
+        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "10" from "10 (1 hour remains)")
+
+        start_date_str = self.metadata.get("StartDate", "")
+        days_str = self.metadata.get("Days", "")
+
+        # Parse StartDate
+        try:
+            start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+        except ValueError:
+            start_date = None  # If StartDate is invalid or missing, fallback to placeholders
+
+        # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
+        weekdays = []
+        if days_str:
+            day_map = {
+                "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+                "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+            }
+            weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
+
+        # Generate dates dynamically
+        dates = []
+        if start_date and weekdays:
+            current_date = start_date
+            while len(dates) < max_classes:
+                if current_date.weekday() in weekdays:
+                    dates.append(current_date.strftime("%d/%m/%Y"))
+                current_date += timedelta(days=1)  # Move to the next day
+
+        # Fallback to placeholders if no valid dates are generated
+        if not dates:
+            dates = [f"Empty-{i + 1}" for i in range(max_classes)]
+
+        return dates
 
 
 if __name__ == "__main__":

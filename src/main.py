@@ -17,7 +17,7 @@ import os
 import json
 import signal
 import sys
-import tkinter as tk
+from PyQt5.QtWidgets import QApplication
 from logic import parser
 from ui.launcher import Launcher
 
@@ -46,10 +46,10 @@ def on_close():
 def start_launcher():
     """Start the Launcher form."""
     theme = load_theme()
-    root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    launcher = Launcher(root, theme)
-    launcher.mainloop()
+    app = QApplication(sys.argv)
+    launcher = Launcher(theme)
+    launcher.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     try:
@@ -58,5 +58,5 @@ if __name__ == "__main__":
         signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
-    except Exception:
-        parser.log_error("An unexpected error occurred.")
+    except Exception as e:
+        parser.log_error(f"An unexpected error occurred: {e}")
