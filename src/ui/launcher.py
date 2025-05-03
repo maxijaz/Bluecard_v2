@@ -168,13 +168,28 @@ class Launcher(tk.Toplevel):
         btn_settings.grid(row=1, column=3, padx=5, pady=5)
 
     def on_double_click(self, event):
-        """Handle double-click on a table row to highlight and open the Mainform."""
+        # Get the selected class ID
         selected_item = self.tree.selection()
         if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a class to open.", parent=self)
             return
+
+        # Retrieve the class_id from the "values" field
+        selected_item = selected_item[0]
         class_id = self.tree.item(selected_item, "values")[0]
-        self.destroy()
-        Mainform(self.master, class_id, self.data, self.theme).mainloop()
+
+        print(f"Selected class ID: {class_id}")
+        print("Opening Mainform...")
+
+        # Ensure QApplication exists
+        import sys
+        from PyQt5.QtWidgets import QApplication
+        if not QApplication.instance():
+            self.qt_app = QApplication(sys.argv)  # Store QApplication as an attribute
+
+        # Open the Mainform window
+        self.mainform = Mainform(class_id, self.data, self.theme)  # Store Mainform as an attribute
+        self.mainform.show()
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
@@ -197,7 +212,7 @@ class Launcher(tk.Toplevel):
             return
         class_id = self.tree.item(selected_item, "values")[0]
         self.destroy()
-        Mainform(self.master, class_id, self.data, self.theme).mainloop()
+        Mainform(class_id, self.data, self.theme).show()
 
     def edit_class(self):
         """Open the MetadataForm to edit an existing class."""

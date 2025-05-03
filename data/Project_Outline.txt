@@ -292,6 +292,16 @@ Column 9:
 [ Unused 8 ]
 [ Unused 9 ]
 
++---------------+-----------------+-----------------+-----------------+
+| col 1 (label) | col2 (metadata) | col4 (label)    | col4 (metadata) | 
+| "Company*:"   | "Company"       | "Course Hours:" | "CourseHours"   |                | 
+| "Room:"       | "Room"          | "StartDate"     | "StartDate"     |                | 
+| "Consultant:" | "Consultant"    | "Finish Date:"  |  "FinishDate"   | 
+| "Teacher:"    | "Teacher"       | "Days:"         | "Days"          |                | 
+| "CourseBook:" | "CourseBook"    | "Time:"         | "Time"          |                | 
++---------------+-----------------+-----------------+-----------------+
+| "Notes:"      | "Notes"                                             |                | 
++---------------+-----------------------------------------------------+
 
 Column 1: Labels
 
