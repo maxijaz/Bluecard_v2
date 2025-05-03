@@ -14,15 +14,16 @@ import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
 
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data):
+    def __init__(self, data, headers):
         super().__init__()
         self.data = data
+        self.headers = headers
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.data)
 
     def columnCount(self, parent=QModelIndex()):
-        return len(self.data[0]) if self.data else 0
+        return len(self.headers)
 
     def data(self, index, role=Qt.DisplayRole):
         if role == Qt.DisplayRole:
@@ -33,31 +34,39 @@ class TableModel(QAbstractTableModel):
                 return QColor("#f0f0f0")
         return None
 
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self.headers[section]
+        return None
+
 
 class Mainform(QMainWindow):
     def __init__(self, class_id, data, theme):
         super().__init__()
         self.setWindowTitle(f"Class Information - {class_id}")
 
-        # Open maximized and set topmost
-        self.showMaximized()
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        # Set default size and constraints
+        self.resize(1280, 720)  # Default size
+        self.setMinimumSize(800, 600)  # Minimum size
+        self.setMaximumSize(1920, 1080)  # Maximum size
 
         self.class_id = class_id
         self.data = data
         self.theme = theme
         self.metadata = self.data["classes"][self.class_id]["metadata"]
 
+        # Initialize frozen_table_width
+        self.frozen_table_width = 0  # Ensure it is always defined
+
         # Main container widget
         container = QWidget()
-        layout = QVBoxLayout(container)
+        self.layout = QVBoxLayout(container)
 
-        # Metadata Section
+        # Metadata Section (unchanged)
         metadata_layout = QGridLayout()
-        metadata_layout.setHorizontalSpacing(5)  # Reduced horizontal spacing for tighter alignment
-        metadata_layout.setVerticalSpacing(5)  # Reduced vertical spacing for tighter alignment
+        metadata_layout.setHorizontalSpacing(5)
+        metadata_layout.setVerticalSpacing(5)
 
-        # Metadata fields
         metadata_fields = [
             ("Company:", self.metadata.get("Company", ""), "Course Hours:", self.metadata.get("CourseHours", "")),
             ("Room:", self.metadata.get("Room", ""), "Start Date:", self.metadata.get("StartDate", "")),
@@ -67,37 +76,32 @@ class Mainform(QMainWindow):
             ("Notes:", self.metadata.get("Notes", ""), "", ""),
         ]
 
-        # Add metadata to the grid layout
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
-            # Column 1: Label
             label1_widget = QLabel(label1)
             label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px groove black;")
             label1_widget.setFixedWidth(150)
             metadata_layout.addWidget(label1_widget, row, 0)
 
-            # Column 2: Metadata
             value1_widget = QLabel(value1)
             value1_widget.setStyleSheet("text-align: center; border: 1px groove black;")
             value1_widget.setFixedWidth(150)
             metadata_layout.addWidget(value1_widget, row, 1)
 
-            # Column 3: Label
-            if label2:  # Only add if label2 is not empty
+            if label2:
                 label2_widget = QLabel(label2)
                 label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px groove black;")
                 label2_widget.setFixedWidth(150)
                 metadata_layout.addWidget(label2_widget, row, 2)
 
-            # Column 4: Metadata
-            if value2:  # Only add if value2 is not empty
+            if value2:
                 value2_widget = QLabel(value2)
                 value2_widget.setStyleSheet("text-align: center; border: 1px groove black;")
                 value2_widget.setFixedWidth(150)
                 metadata_layout.addWidget(value2_widget, row, 3)
 
-        layout.addLayout(metadata_layout)
+        self.layout.addLayout(metadata_layout)
 
-        # Buttons Section
+        # Buttons Section (unchanged)
         buttons_layout = QHBoxLayout()
         buttons = [
             QPushButton("Add Student"),
@@ -107,47 +111,76 @@ class Mainform(QMainWindow):
         ]
         for button in buttons:
             buttons_layout.addWidget(button)
-        layout.addLayout(buttons_layout)
+        self.layout.addLayout(buttons_layout)
 
         # Table Section
-        table_layout = QHBoxLayout()
-
-        # Sample data
-        data = [[f"Row {row} Col {col}" for col in range(1, 21)] for row in range(1, 31)]
+        self.table_layout = QHBoxLayout()
+        self.table_layout.setSpacing(0)  # Remove gap between tables
 
         # Frozen Table
-        frozen_table = QTableView()
-        frozen_table.setModel(TableModel([row[:4] for row in data]))
-        frozen_table.verticalHeader().hide()
-        frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)  # Add horizontal scrollbar
-        frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
+        frozen_data = [
+            ["1", "Alice Kim", "Ali", "82% - A", "70%", "90%", "3"],
+            ["2", "Ben Lee", "Nok", "55% - B", "50%", "75%", "3"],
+            ["3", "Charlie Park", "Char", "65% - C", "60%", "70%", "2"],
+        ]
+
+        self.frozen_table = QTableView()
+        self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+        self.frozen_table.verticalHeader().hide()
+        self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Set column widths
+        self.frozen_table.setColumnWidth(0, 35)  # #
+        self.frozen_table.setColumnWidth(1, 150)  # Name
+        self.frozen_table.setColumnWidth(2, 100)  # Nickname
+        self.frozen_table.setColumnWidth(3, 75)  # Score
+        self.frozen_table.setColumnWidth(4, 75)  # PreTest
+        self.frozen_table.setColumnWidth(5, 75)  # PostTest
+        self.frozen_table.setColumnWidth(6, 25)  # Attn
+
+        # Calculate total width of frozen table
+        self.frozen_table_width = 35 + 150 + 100 + 75 + 75 + 75 + 25
+        self.frozen_table.setFixedWidth(self.frozen_table_width)
+
+        self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
         # Scrollable Table
-        scrollable_table = QTableView()
-        scrollable_table.setModel(TableModel([row[4:] for row in data]))
-        scrollable_table.verticalHeader().hide()
-        scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        scrollable_headers = ["P", "A", "L", "01/05/25", "06/05/25", "08/05/25", "13/05/25", "15/05/25"]
+        scrollable_data = [
+            ["3", "1", "1", "P", "A", "P", "L", "P"],
+            ["3", "1", "1", "L", "P", "P", "A", "P"],
+            ["2", "2", "0", "P", "P", "A", "P", "L"],
+        ]
 
-        # Synchronize scrolling
-        frozen_table.verticalScrollBar().valueChanged.connect(
-            scrollable_table.verticalScrollBar().setValue
-        )
-        scrollable_table.verticalScrollBar().valueChanged.connect(
-            frozen_table.verticalScrollBar().setValue
-        )
+        self.scrollable_table = QTableView()
+        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+        self.scrollable_table.verticalHeader().hide()
+        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+
+        self.scrollable_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
         # Add tables to the layout
-        table_layout.addWidget(frozen_table)
-        table_layout.addWidget(scrollable_table)
-        layout.addLayout(table_layout)
+        self.table_layout.addWidget(self.frozen_table)
+        self.table_layout.addWidget(self.scrollable_table)
+        self.layout.addLayout(self.table_layout)
 
         # Set the main layout
         self.setCentralWidget(container)
+
+    def resizeEvent(self, event):
+        """Adjust the width of the scrollable table dynamically."""
+        if hasattr(self, "frozen_table_width") and self.frozen_table_width > 0:
+            available_width = self.width() - self.frozen_table_width
+            if available_width > 0:
+                self.scrollable_table.setFixedWidth(available_width)
+        super().resizeEvent(event)
 
 
 if __name__ == "__main__":
