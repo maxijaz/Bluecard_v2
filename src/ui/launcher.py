@@ -18,7 +18,7 @@ class Launcher(QMainWindow):
         self.theme = theme
         self.setWindowTitle("Bluecard Launcher")
         self.setGeometry(100, 100, 450, 450)
-        self.setFixedSize(450, 450)
+        self.setFixedSize(600, 450)
 
         # Load class data
         self.data = load_data()
