@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel, QHBoxLayout, QFrame, QGridLayout, QPushButton
 )
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
 from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
@@ -41,6 +41,8 @@ class TableModel(QAbstractTableModel):
 
 
 class Mainform(QMainWindow):
+    closed = pyqtSignal()  # Signal to notify when the Mainform is closed
+
     def __init__(self, class_id, data, theme):
         super().__init__()
         self.setWindowTitle(f"Class Information - {class_id}")
@@ -48,7 +50,7 @@ class Mainform(QMainWindow):
         # Set default size and constraints
         self.resize(1280, 720)  # Default size
         self.setMinimumSize(800, 600)  # Minimum size
-        self.setMaximumSize(1920, 1080)  # Maximum size
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         self.class_id = class_id
         self.data = data
@@ -264,6 +266,11 @@ class Mainform(QMainWindow):
             dates = [f"Empty-{i + 1}" for i in range(max_classes)]
 
         return dates
+
+    def closeEvent(self, event):
+        """Handle the close event to reopen the Launcher."""
+        self.closed.emit()  # Emit the closed signal
+        event.accept()  # Accept the close event
 
 
 if __name__ == "__main__":

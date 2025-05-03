@@ -32,6 +32,9 @@ class Launcher(QMainWindow):
         # Create UI components
         self.create_widgets()
 
+        # Center the window on startup
+        self.center_window()
+
     def create_widgets(self):
         """Create the table and buttons."""
         # Table for class data
@@ -102,13 +105,21 @@ class Launcher(QMainWindow):
         if selected_row == -1:
             QMessageBox.warning(self, "No Selection", "Please select a class to open.")
             return
+
         class_id = self.table.item(selected_row, 0).text()
         print(f"Selected class ID: {class_id}")
         print("Opening Mainform...")
 
         # Open the Mainform window with the correct data
         self.mainform = Mainform(class_id, self.data, self.theme)
-        self.mainform.show()
+        self.mainform.showMaximized()  # Open the Mainform maximized
+        self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
+        self.close()  # Close the Launcher
+
+    def show_launcher(self):
+        """Reopen the Launcher and center it on the screen."""
+        self.show()
+        self.center_window()
 
     def edit_class(self):
         """Edit the selected class."""
@@ -191,6 +202,14 @@ class Launcher(QMainWindow):
         except json.JSONDecodeError:
             QMessageBox.warning(self, "Error", "Failed to parse default.json.")
             return {}
+
+    def center_window(self):
+        """Center the window on the screen."""
+        screen_geometry = QApplication.desktop().screenGeometry()
+        window_geometry = self.frameGeometry()
+        x = (screen_geometry.width() - window_geometry.width()) // 2
+        y = (screen_geometry.height() - window_geometry.height()) // 2
+        self.move(x, y)
 
 
 if __name__ == "__main__":
