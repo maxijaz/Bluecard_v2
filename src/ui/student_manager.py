@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Toplevel
 from src.logic.parser import save_data, generate_next_student_id
 from src.ui.student_form import StudentForm
 
@@ -17,25 +17,28 @@ def validate_student_data(student_data: dict) -> bool:
 
     return True
 
-class StudentManager(tk.Toplevel):
+class StudentManager(Toplevel):
     def __init__(self, parent, data, class_id, refresh_callback):
         super().__init__(parent)
-        self.data = data  # Pass the entire data structure
-        self.class_id = class_id  # Pass the class ID
-        self.students = self.data["classes"][self.class_id]["students"]
+        self.data = data
+        self.class_id = class_id
         self.refresh_callback = refresh_callback
 
-        self.title("Student Active Manager")
-        self.geometry("675x500")
-        self.center_window(675, 500)
-        self.resizable(False, False)
-        self.attributes("-topmost", True)
+        self.title("Student Manager")
+        self.geometry("400x300")
 
-        # Create UI components
-        self.create_widgets()
+        # Add your StudentManager UI components here
+        label = ttk.Label(self, text="Student Manager")
+        label.pack(pady=20)
 
-        # Handle close event
-        self.protocol("WM_DELETE_WINDOW", self.close_form)
+        # Example: Close button
+        close_button = ttk.Button(self, text="Close", command=self.close_manager)
+        close_button.pack(pady=10)
+
+    def close_manager(self):
+        """Close the StudentManager and trigger the refresh callback."""
+        self.refresh_callback()
+        self.destroy()
 
     def center_window(self, width, height):
         """Center the window on the screen."""

@@ -281,9 +281,43 @@ class Mainform(QMainWindow):
             student_form.exec_()
 
     def remove_student(self):
-        """Remove the selected student."""
-        print("Remove Student button clicked")
-        # Logic to remove the selected student goes here
+        """Handle removing or managing students."""
+        selected_row = self.frozen_table.currentIndex().row()
+
+        if selected_row == -1:
+            # No row selected, open the StudentManager
+            print("No student selected. Opening Student Manager...")
+            from tkinter import Tk
+            root = Tk()
+            root.withdraw()  # Hide the root window
+            student_manager = StudentManager(root, self.data, self.class_id, self.refresh_student_table)
+            student_manager.mainloop()  # Open the StudentManager as a modal dialog
+        else:
+            # A row is selected, archive the student
+            adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
+            if adjusted_row < 0:
+                QMessageBox.warning(self, "Invalid Selection", "Cannot archive the 'Running Total' row.")
+                return
+
+            # Get the student ID and data for the selected row
+            student_id = list(self.students.keys())[adjusted_row]
+            student_data = self.students[student_id]
+
+            # Confirm archiving the student
+            confirm = QMessageBox.question(
+                self,
+                "Archive Student",
+                f"Are you sure you want to archive the student '{student_data['name']}'?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if confirm == QMessageBox.Yes:
+                # Archive the student
+                self.students[student_id]["active"] = "No"  # Set active to "No" instead of "Yes"
+                save_data(self.data)  # Save the updated data
+                print(f"Student '{student_data['name']}' archived successfully.")
+
+                # Refresh the Mainform
+                self.refresh_student_table()
 
     def open_metadata_form(self):
         """Open the Metadata Form."""
@@ -364,6 +398,9 @@ class Mainform(QMainWindow):
         """Refresh the student table with updated data."""
         print("refresh_student_table called")  # Debugging: Method entry
 
+        # Filter students where "Archive" = "No"
+        active_students = {key: student for key, student in self.students.items() if student.get("active", "Yes") == "Yes"}
+
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
         frozen_data = [
@@ -376,7 +413,7 @@ class Mainform(QMainWindow):
                 student.get("post_test", ""),
                 len(student.get("attendance", {})),  # Attendance count
             ]
-            for idx, student in enumerate(self.students.values())
+            for idx, student in enumerate(active_students.values())
         ]
 
         # Add "Running Total" row to the frozen table
@@ -389,7 +426,7 @@ class Mainform(QMainWindow):
         scrollable_headers = ["P", "A", "L"] + attendance_dates
         scrollable_data = []
 
-        for student in self.students.values():
+        for student in active_students.values():
             attendance = student.get("attendance", {})
             total_p = sum(1 for date in attendance_dates if attendance.get(date) == "P")
             total_a = sum(1 for date in attendance_dates if attendance.get(date) == "A")
