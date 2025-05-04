@@ -1,3 +1,5 @@
+import json
+import os
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox
 )
@@ -14,6 +16,16 @@ class MetadataForm(QDialog):
         self.on_metadata_save = on_metadata_save
         self.is_edit = class_id is not None
 
+        # Load defaults from default.json
+        if not self.is_edit:
+            defaults_path = "data/default.json"
+            if os.path.exists(defaults_path):
+                with open(defaults_path, "r") as f:
+                    defaults = json.load(f)
+            else:
+                defaults = {}
+        self.defaults = defaults or {}
+
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
         self.setFixedSize(600, 700)  # Adjusted size for additional fields
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
@@ -29,7 +41,7 @@ class MetadataForm(QDialog):
 
         # Fields
         self.fields = {}
-        metadata = self.data["classes"][self.class_id]["metadata"] if self.is_edit else (defaults or {})
+        metadata = self.data["classes"][self.class_id]["metadata"] if self.is_edit else {}
         for label, key in [
             ("Class No*", "class_no"),
             ("Company*", "Company"),
@@ -53,7 +65,14 @@ class MetadataForm(QDialog):
         ]:
             field_label = QLabel(label)
             field_input = QLineEdit()
-            field_input.setText(metadata.get(key, ""))  # Use default or existing value
+
+            # Use default value if adding a new class, otherwise use existing metadata
+            if not self.is_edit:
+                default_key = f"def_{key.lower()}"
+                field_input.setText(self.defaults.get(default_key, ""))
+            else:
+                field_input.setText(metadata.get(key, ""))
+
             self.fields[key] = field_input
             scroll_layout.addRow(field_label, field_input)
 
