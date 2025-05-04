@@ -98,14 +98,14 @@ class Mainform(QMainWindow):
             if label2:
                 # Label 2
                 label2_widget = QLabel(label2)
-                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px solid gray; border-style: solid;;")
+                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px solid gray; border-style: solid;")
                 label2_widget.setFixedWidth(100)  # Set fixed width for labels
                 metadata_layout.addWidget(label2_widget, row, 2)
 
             if value2:
                 # Value 2
                 value2_widget = QLabel(value2)
-                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border: 1px solid gray; border-style: solid;;")
+                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border: 1px solid gray; border-style: solid;")
                 value2_widget.setFixedWidth(150)  # Set fixed width for fields
                 metadata_layout.addWidget(value2_widget, row, 3)
 
