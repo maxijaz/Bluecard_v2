@@ -218,6 +218,9 @@ class Mainform(QMainWindow):
 
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold;")
 
+        # Connect double-click signal to edit_student method
+        self.frozen_table.doubleClicked.connect(self.edit_student)
+
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
         scrollable_headers = ["P", "A", "L"] + attendance_dates
@@ -430,12 +433,15 @@ class Mainform(QMainWindow):
         """Open the StudentForm in Edit mode for the selected student."""
         selected_row = index.row()
 
-        if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select a valid student to edit.")
+        # Adjust for the "Running Total" row
+        if selected_row == 0:
+            QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
             return
 
-        # Get the student ID and data for the selected row
-        student_id = list(self.students.keys())[selected_row]
+        adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
+
+        # Get the student ID and data for the adjusted row
+        student_id = list(self.students.keys())[adjusted_row]
         student_data = self.students[student_id]
 
         # Define a callback to refresh the student table after editing
