@@ -7,23 +7,23 @@ from logic.parser import save_data
 
 
 class ArchiveManager(QDialog):
-    def __init__(self, parent, data, theme, refresh_callback=None):
+    def __init__(self, parent, data, class_id, refresh_callback=None):
         super().__init__(parent)
         self.data = data
-        self.classes = self.data.get("classes", {})
-        self.theme = theme
+        self.class_id = class_id
+        self.students = self.data["classes"][self.class_id].get("students", {})
         self.refresh_callback = refresh_callback  # Store the callback
 
-        self.setWindowTitle("Archive Manager")
+        self.setWindowTitle("Archived Students")
         self.setFixedSize(600, 400)
 
         # Main layout
         layout = QVBoxLayout(self)
 
-        # Table for archived classes
+        # Table for archived students
         self.table = QTableWidget()
         self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
+        self.table.setHorizontalHeaderLabels(["Student ID", "Name", "Archived"])
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -36,11 +36,11 @@ class ArchiveManager(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         restore_button = QPushButton("Restore")
-        restore_button.clicked.connect(self.restore_class)
+        restore_button.clicked.connect(self.restore_student)
         button_layout.addWidget(restore_button)
 
         delete_button = QPushButton("Delete")
-        delete_button.clicked.connect(self.delete_class)
+        delete_button.clicked.connect(self.delete_student)
         button_layout.addWidget(delete_button)
 
         cancel_button = QPushButton("Cancel")
@@ -50,49 +50,48 @@ class ArchiveManager(QDialog):
         layout.addLayout(button_layout)
 
     def populate_table(self):
-        """Populate the table with archived class data."""
+        """Populate the table with archived student data."""
         self.table.setRowCount(0)  # Clear existing rows
-        for class_id, class_data in self.classes.items():
-            metadata = class_data.get("metadata", {})
-            if metadata.get("archive", "No") == "Yes":
+        for student_id, student_data in self.students.items():
+            if student_data.get("active", "Yes") == "No":  # Filter archived students
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
-                self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
-                self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("Company", "Unknown")))
-                self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "Yes")))
+                self.table.setItem(row_position, 0, QTableWidgetItem(student_id))
+                self.table.setItem(row_position, 1, QTableWidgetItem(student_data.get("name", "Unknown")))
+                self.table.setItem(row_position, 2, QTableWidgetItem(student_data.get("active", "No")))
 
-    def restore_class(self):
-        """Restore the selected archived class."""
+    def restore_student(self):
+        """Restore the selected archived student."""
         selected_row = self.table.currentRow()
         if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select a class to restore.")
+            QMessageBox.warning(self, "No Selection", "Please select a student to restore.")
             return
 
-        class_id = self.table.item(selected_row, 0).text()
+        student_id = self.table.item(selected_row, 0).text()
         confirm = QMessageBox.question(
-            self, "Restore Class", f"Are you sure you want to restore class {class_id}?",
+            self, "Restore Student", f"Are you sure you want to restore student {student_id}?",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
-            self.classes[class_id]["metadata"]["archive"] = "No"
+            self.students[student_id]["active"] = "Yes"  # Restore the student
             save_data(self.data)  # Save changes to file
             self.populate_table()  # Refresh the table
 
-    def delete_class(self):
-        """Delete the selected archived class."""
+    def delete_student(self):
+        """Delete the selected archived student."""
         selected_row = self.table.currentRow()
         if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select a class to delete.")
+            QMessageBox.warning(self, "No Selection", "Please select a student to delete.")
             return
 
-        class_id = self.table.item(selected_row, 0).text()
+        student_id = self.table.item(selected_row, 0).text()
         confirm = QMessageBox.warning(
-            self, "Delete Class",
-            f"Are you sure you want to delete class {class_id}? This action cannot be undone.",
+            self, "Delete Student",
+            f"Are you sure you want to delete student {student_id}? This action cannot be undone.",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
-            del self.classes[class_id]  # Delete the class
+            del self.students[student_id]  # Delete the student
             save_data(self.data)  # Save changes to file
             self.populate_table()  # Refresh the table
 
