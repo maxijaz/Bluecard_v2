@@ -12,6 +12,7 @@ from .metadata_form import MetadataForm
 from .student_manager import StudentManager
 from datetime import datetime, timedelta
 import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
+from .archive_manager import ArchiveManager
 
 
 class TableModel(QAbstractTableModel):
@@ -285,13 +286,10 @@ class Mainform(QMainWindow):
         selected_row = self.frozen_table.currentIndex().row()
 
         if selected_row == -1:
-            # No row selected, open the StudentManager
-            print("No student selected. Opening Student Manager...")
-            from tkinter import Tk
-            root = Tk()
-            root.withdraw()  # Hide the root window
-            student_manager = StudentManager(root, self.data, self.class_id, self.refresh_student_table)
-            student_manager.mainloop()  # Open the StudentManager as a modal dialog
+            # No row selected, open the ArchiveManager
+            print("No student selected. Opening Archive Manager...")
+            archive_manager = ArchiveManager(self, self.data, self.class_id, self.refresh_student_table)
+            archive_manager.exec_()  # Open the ArchiveManager as a modal dialog
         else:
             # A row is selected, archive the student
             adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
@@ -312,7 +310,7 @@ class Mainform(QMainWindow):
             )
             if confirm == QMessageBox.Yes:
                 # Archive the student
-                self.students[student_id]["active"] = "No"  # Set active to "No" instead of "Yes"
+                self.students[student_id]["active"] = "No"  # Set active to "No"
                 save_data(self.data)  # Save the updated data
                 print(f"Student '{student_data['name']}' archived successfully.")
 
