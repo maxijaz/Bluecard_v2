@@ -298,21 +298,21 @@ class Mainform(QMainWindow):
 
     def sync_selection_to_scrollable(self, selected, deselected):
         """Synchronize selection from the frozen table to the scrollable table."""
-        if not self.scrollable_table.selectionModel().blockSignals(True):  # Block signals temporarily
-            selected_rows = {index.row() for index in selected.indexes()}
-            self.scrollable_table.selectionModel().clearSelection()
-            for row in selected_rows:
-                self.scrollable_table.selectRow(row)
-            self.scrollable_table.selectionModel().blockSignals(False)  # Unblock signals
+        selected_rows = {index.row() for index in selected.indexes()}
+        self.scrollable_table.selectionModel().blockSignals(True)  # Block signals temporarily
+        self.scrollable_table.selectionModel().clearSelection()
+        for row in selected_rows:
+            self.scrollable_table.selectRow(row)
+        self.scrollable_table.selectionModel().blockSignals(False)  # Unblock signals
 
     def sync_selection_to_frozen(self, selected, deselected):
         """Synchronize selection from the scrollable table to the frozen table."""
-        if not self.frozen_table.selectionModel().blockSignals(True):  # Block signals temporarily
-            selected_rows = {index.row() for index in selected.indexes()}
-            self.frozen_table.selectionModel().clearSelection()
-            for row in selected_rows:
-                self.frozen_table.selectRow(row)
-            self.frozen_table.selectionModel().blockSignals(False)  # Unblock signals
+        selected_rows = {index.row() for index in selected.indexes()}
+        self.frozen_table.selectionModel().blockSignals(True)  # Block signals temporarily
+        self.frozen_table.selectionModel().clearSelection()
+        for row in selected_rows:
+            self.frozen_table.selectRow(row)
+        self.frozen_table.selectionModel().blockSignals(False)  # Unblock signals
 
     def closeEvent(self, event):
         """Handle the close event to reopen the Launcher."""
@@ -365,13 +365,15 @@ class Mainform(QMainWindow):
 
         # Open the StudentForm in Edit mode
         student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
-        student_form.setWindowModality(Qt.ApplicationModal)  # Make the form modal
-        student_form.setWindowFlags(student_form.windowFlags() | Qt.WindowStaysOnTopHint)  # Set as topmost
-        student_form.show()
+
+        # Center the form relative to the Mainform
         student_form.move(
             self.geometry().center().x() - student_form.width() // 2,
             self.geometry().center().y() - student_form.height() // 2
         )
+
+        # Open the form as a modal dialog
+        student_form.exec_()
 
 
 if __name__ == "__main__":
