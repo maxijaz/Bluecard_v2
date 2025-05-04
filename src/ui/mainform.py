@@ -72,6 +72,9 @@ class Mainform(QMainWindow):
         metadata_layout.setHorizontalSpacing(2)  # Reduce horizontal spacing
         metadata_layout.setVerticalSpacing(2)  # Reduce vertical spacing
 
+        # Set the fixed width for the metadata widget
+        metadata_widget.setFixedWidth(600)  # Total width: 100 + 150 + 100 + 150 + spacing
+
         metadata_fields = [
             ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
              f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
@@ -85,28 +88,28 @@ class Mainform(QMainWindow):
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
             # Label 1
             label1_widget = QLabel(label1)
-            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px solid gray; border-style: solid;")
+            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
             label1_widget.setFixedWidth(100)  # Set fixed width for labels
             metadata_layout.addWidget(label1_widget, row, 0)
 
             # Value 1
             value1_widget = QLabel(value1)
-            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: solid;")
-            value1_widget.setFixedWidth(150)  # Set fixed width for fields
+            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
+            value1_widget.setFixedWidth(200)  # Set fixed width for fields
             metadata_layout.addWidget(value1_widget, row, 1)
 
             if label2:
                 # Label 2
                 label2_widget = QLabel(label2)
-                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: 1px solid gray; border-style: solid;")
+                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
                 label2_widget.setFixedWidth(100)  # Set fixed width for labels
                 metadata_layout.addWidget(label2_widget, row, 2)
 
             if value2:
                 # Value 2
                 value2_widget = QLabel(value2)
-                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border: 1px solid gray; border-style: solid;")
-                value2_widget.setFixedWidth(150)  # Set fixed width for fields
+                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
+                value2_widget.setFixedWidth(200)  # Set fixed width for fields
                 metadata_layout.addWidget(value2_widget, row, 3)
 
         # Add the metadata widget to the main layout
