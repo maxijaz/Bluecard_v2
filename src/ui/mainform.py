@@ -59,6 +59,16 @@ class CenterAlignDelegate(QStyledItemDelegate):
         option.displayAlignment = Qt.AlignCenter  # Center-align the content
 
 
+class FrozenTableDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        # Center-align all columns except the "Name" column (column index 1)
+        if index.column() == 1:  # "Name" column
+            option.displayAlignment = Qt.AlignLeft | Qt.AlignVCenter
+        else:
+            option.displayAlignment = Qt.AlignCenter
+
+
 class Mainform(QMainWindow):
     closed = pyqtSignal()  # Signal to notify when the Mainform is closed
 
@@ -192,10 +202,17 @@ class Mainform(QMainWindow):
         self.frozen_table_width = 10 + 150 + 100 + 60 + 60 + 60 + 90
         self.frozen_table.setFixedWidth(self.frozen_table_width)
 
-        self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
+        # Set the FrozenTableDelegate for the frozen table
+        self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
 
-        # Connect double-click event on the frozen table to the edit_student method
-        self.frozen_table.doubleClicked.connect(self.edit_student)
+        # Center-align all headers except the "Name" column
+        for col in range(self.frozen_table.model().columnCount()):
+            if col == 1:  # "Name" column
+                self.frozen_table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+            else:
+                self.frozen_table.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
+
+        self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold;")
 
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
