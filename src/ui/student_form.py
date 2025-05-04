@@ -6,13 +6,15 @@ from logic.parser import save_data
 
 
 class StudentForm(QDialog):
-    def __init__(self, parent, class_id, data, refresh_callback):
+    def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None):
         super().__init__(parent)
         self.class_id = class_id
         self.data = data
         self.refresh_callback = refresh_callback
+        self.student_id = student_id
+        self.student_data = student_data
 
-        self.setWindowTitle("Add Student")
+        self.setWindowTitle("Edit Student" if student_id else "Add Student")
         self.setFixedSize(400, 500)
 
         layout = QVBoxLayout()
@@ -20,11 +22,13 @@ class StudentForm(QDialog):
         # Name
         layout.addWidget(QLabel("Name:"))
         self.name_entry = QLineEdit()
+        self.name_entry.setText(student_data.get("name", "") if student_data else "")
         layout.addWidget(self.name_entry)
 
         # Nickname
         layout.addWidget(QLabel("Nickname:"))
         self.nickname_entry = QLineEdit()
+        self.nickname_entry.setText(student_data.get("nickname", "") if student_data else "")
         layout.addWidget(self.nickname_entry)
 
         # Gender
@@ -32,7 +36,13 @@ class StudentForm(QDialog):
         gender_layout = QHBoxLayout()
         self.male_radio = QRadioButton("Male")
         self.female_radio = QRadioButton("Female")
-        self.female_radio.setChecked(True)  # Default to Female
+        if student_data:
+            if student_data.get("gender", "Female") == "Male":
+                self.male_radio.setChecked(True)
+            else:
+                self.female_radio.setChecked(True)
+        else:
+            self.female_radio.setChecked(True)  # Default to Female
         gender_layout.addWidget(self.male_radio)
         gender_layout.addWidget(self.female_radio)
         layout.addLayout(gender_layout)
@@ -40,21 +50,25 @@ class StudentForm(QDialog):
         # Score
         layout.addWidget(QLabel("Score:"))
         self.score_entry = QLineEdit()
+        self.score_entry.setText(student_data.get("score", "") if student_data else "")
         layout.addWidget(self.score_entry)
 
         # Pre-Test
         layout.addWidget(QLabel("Pre-Test:"))
         self.pre_test_entry = QLineEdit()
+        self.pre_test_entry.setText(student_data.get("pre_test", "") if student_data else "")
         layout.addWidget(self.pre_test_entry)
 
         # Post-Test
         layout.addWidget(QLabel("Post-Test:"))
         self.post_test_entry = QLineEdit()
+        self.post_test_entry.setText(student_data.get("post_test", "") if student_data else "")
         layout.addWidget(self.post_test_entry)
 
         # Note
         layout.addWidget(QLabel("Note:"))
         self.note_entry = QLineEdit()
+        self.note_entry.setText(student_data.get("note", "") if student_data else "")
         layout.addWidget(self.note_entry)
 
         # Active
@@ -62,16 +76,22 @@ class StudentForm(QDialog):
         active_layout = QHBoxLayout()
         self.active_yes = QRadioButton("Yes")
         self.active_no = QRadioButton("No")
-        self.active_yes.setChecked(True)  # Default to Yes
+        if student_data:
+            if student_data.get("active", "Yes") == "Yes":
+                self.active_yes.setChecked(True)
+            else:
+                self.active_no.setChecked(True)
+        else:
+            self.active_yes.setChecked(True)  # Default to Yes
         active_layout.addWidget(self.active_yes)
         active_layout.addWidget(self.active_no)
         layout.addLayout(active_layout)
 
         # Buttons
         button_layout = QHBoxLayout()
-        add_button = QPushButton("Add")
-        add_button.clicked.connect(self.add_student)
-        button_layout.addWidget(add_button)
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.save_student)
+        button_layout.addWidget(save_button)
 
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
@@ -80,8 +100,8 @@ class StudentForm(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def add_student(self):
-        """Add a new student to the class."""
+    def save_student(self):
+        """Save the student data."""
         name = self.name_entry.text().strip()
         nickname = self.nickname_entry.text().strip()
         gender = "Male" if self.male_radio.isChecked() else "Female"
@@ -92,31 +112,39 @@ class StudentForm(QDialog):
         active = "Yes" if self.active_yes.isChecked() else "No"
 
         if not name:
-            # Ensure required fields are filled
             QMessageBox.warning(self, "Validation Error", "Name is required.")
             return
 
-        # Generate a unique Student ID
-        student_id = self.generate_unique_student_id()
+        if self.student_id:
+            # Edit existing student
+            self.data["classes"][self.class_id]["students"][self.student_id] = {
+                "name": name,
+                "nickname": nickname,
+                "gender": gender,
+                "score": score,
+                "pre_test": pre_test,
+                "post_test": post_test,
+                "note": note,
+                "active": active,
+                "attendance": self.student_data.get("attendance", {}),
+            }
+        else:
+            # Add new student
+            student_id = self.generate_unique_student_id()
+            self.data["classes"][self.class_id]["students"][student_id] = {
+                "name": name,
+                "nickname": nickname,
+                "gender": gender,
+                "score": score,
+                "pre_test": pre_test,
+                "post_test": post_test,
+                "note": note,
+                "active": active,
+                "attendance": {},
+            }
 
-        # Add the student to the data
-        self.data["classes"][self.class_id]["students"][student_id] = {
-            "name": name,
-            "nickname": nickname,
-            "gender": gender,
-            "score": score,
-            "pre_test": pre_test,
-            "post_test": post_test,
-            "note": note,
-            "active": active,
-            "attendance": {},  # Initialize with empty attendance
-        }
-
-        # Save the updated data to the file
-        save_data(self.data)
-
-        # Trigger the refresh callback
-        self.refresh_callback()
+        save_data(self.data)  # Save changes to the file
+        self.refresh_callback()  # Refresh the table
         self.accept()  # Close the dialog
 
     def generate_unique_student_id(self):

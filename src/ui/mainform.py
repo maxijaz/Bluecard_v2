@@ -117,18 +117,16 @@ class Mainform(QMainWindow):
 
         # Buttons Section
         buttons_layout = QHBoxLayout()
-        add_student_btn = QPushButton("Add Student")
-        edit_student_btn = QPushButton("Edit Student")
+        add_edit_student_btn = QPushButton("Add/Edit Student")
         remove_student_btn = QPushButton("Remove Student")
         metadata_form_btn = QPushButton("Manage Metadata")
 
         # Connect buttons to their respective methods
-        add_student_btn.clicked.connect(self.add_student)
-        edit_student_btn.clicked.connect(self.edit_student)
+        add_edit_student_btn.clicked.connect(self.add_edit_student)
         remove_student_btn.clicked.connect(self.remove_student)
         metadata_form_btn.clicked.connect(self.open_metadata_form)
 
-        buttons = [add_student_btn, edit_student_btn, remove_student_btn, metadata_form_btn]
+        buttons = [add_edit_student_btn, remove_student_btn, metadata_form_btn]
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
@@ -206,23 +204,36 @@ class Mainform(QMainWindow):
         self.setCentralWidget(container)
 
     # Button Methods
-    def add_student(self):
-        """Open the Add Student form."""
-        print("Add Student button clicked")
+    def add_edit_student(self):
+        """Handle adding or editing a student."""
+        selected_row = self.frozen_table.currentIndex().row()
 
-        # Define a callback to refresh the student table after adding a student
-        def refresh_callback():
-            print("Refreshing student table...")
-            self.refresh_student_table()
+        if selected_row == -1:
+            # No row selected, open the form in "Add" mode
+            print("Add Student button clicked")
 
-        # Pass the refresh_callback to the StudentForm
-        student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
-        student_form.exec_()  # Open the form as a modal dialog
+            # Define a callback to refresh the student table after adding a student
+            def refresh_callback():
+                print("Refreshing student table...")
+                self.refresh_student_table()
 
-    def edit_student(self):
-        """Open the Edit Student form."""
-        print("Edit Student button clicked")
-        # Logic to open the Edit Student form goes here
+            # Pass the refresh_callback to the StudentForm
+            student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
+            student_form.exec_()  # Open the form as a modal dialog
+        else:
+            # Row selected, open the form in "Edit" mode
+            print("Edit Student button clicked")
+            student_id = list(self.students.keys())[selected_row]
+            student_data = self.students[student_id]
+
+            # Define a callback to refresh the student table after editing a student
+            def refresh_callback():
+                print("Refreshing student table...")
+                self.refresh_student_table()
+
+            # Pass the student data and refresh_callback to the StudentForm
+            student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
+            student_form.exec_()  # Open the form as a modal dialog
 
     def remove_student(self):
         """Remove the selected student."""
