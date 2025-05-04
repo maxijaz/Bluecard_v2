@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QLabel, QHeaderView, QWidget, QMessageBox, QApplication
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import load_data, save_data
 from ui.mainform import Mainform
 from ui.metadata_form import MetadataForm
@@ -149,6 +149,7 @@ class Launcher(QMainWindow):
 
         # Open the MetadataForm with default values
         metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults)
+        metadata_form.class_saved.connect(self.open_mainform_after_save)  # Connect the signal
         metadata_form.exec_()  # Open the form as a modal dialog
 
     def archive_class(self):
@@ -212,6 +213,45 @@ class Launcher(QMainWindow):
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
+
+    def save_metadata(self):
+        """Save metadata for the class."""
+        class_no = self.fields["class_no"].text().strip().upper()
+        if not class_no:
+            QMessageBox.warning(self, "Validation Error", "Class No is required.")
+            return
+
+        if class_no in self.data["classes"] and not self.is_edit:
+            QMessageBox.warning(self, "Duplicate Class ID", f"Class ID '{class_no}' already exists.")
+            return
+
+        metadata = {key: field.text().strip() for key, field in self.fields.items()}
+        metadata["CourseHours"] = self.class_hours_input.text()
+        metadata["ClassTime"] = self.class_time_input.text()
+        metadata["MaxClasses"] = self.max_classes_input.text()
+
+        if not self.is_edit:
+            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+        else:
+            self.data["classes"][self.class_id]["metadata"] = metadata
+
+        save_data(self.data)
+        self.on_metadata_save()
+
+        # Emit the signal with the new class ID
+        self.class_saved.emit(class_no)
+
+        self.accept()  # Close the dialog
+
+    def open_mainform_after_save(self, class_id):
+        """Open the Mainform after saving a new class."""
+        print(f"Opening Mainform for new class ID: {class_id}")
+
+        # Open the Mainform window with the correct data
+        self.mainform = Mainform(class_id, self.data, self.theme)
+        self.mainform.showMaximized()  # Open the Mainform maximized
+        self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
+        self.close()  # Close the Launcher
 
 
 if __name__ == "__main__":
