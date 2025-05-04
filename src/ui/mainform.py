@@ -153,7 +153,7 @@ class Mainform(QMainWindow):
         # Buttons Section
         buttons_layout = QHBoxLayout()
         add_edit_student_btn = QPushButton("Add/Edit Student")
-        remove_student_btn = QPushButton("Manage/Remove Students")  # Updated text
+        remove_student_btn = QPushButton("Manage/Remove Students")  # Correct button
         metadata_form_btn = QPushButton("Manage Metadata")
 
         # Connect buttons to their respective methods
@@ -165,11 +165,6 @@ class Mainform(QMainWindow):
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
-
-        # Create the "Manage/Remove Students" button
-        remove_students_button = QPushButton("Manage/Remove Students")
-        remove_students_button.clicked.connect(self.remove_student)
-        self.layout.addWidget(remove_students_button)
 
         # Table Section
         self.table_layout = QHBoxLayout()
