@@ -47,6 +47,9 @@ class Launcher(QMainWindow):
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.layout.addWidget(self.table)
 
+        # Connect double-click event to open_class
+        self.table.doubleClicked.connect(self.open_class)
+
         # Populate the table
         self.populate_table()
 
