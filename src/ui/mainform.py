@@ -37,7 +37,11 @@ class TableModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.headers[section]
+            header = self.headers[section]
+            # Check if the header is a date in the format "DD/MM/YYYY"
+            if len(header) == 10 and header[2] == "/" and header[5] == "/":
+                return header[:5]  # Return only "DD/MM"
+            return header
         return None
 
 
@@ -393,9 +397,13 @@ class Mainform(QMainWindow):
 
         # Style the first three columns (P, A, L)
         for col in range(3):
-            self.scrollable_table.setColumnWidth(col, 35)  # Fixed width
+            self.scrollable_table.setColumnWidth(col, 35)  # Fixed width for P, A, L
             self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
-            print(f"Column {col} width: {self.scrollable_table.columnWidth(col)}")  # Debugging: Check column widths
+
+        # Set fixed width for date columns
+        for col in range(3, len(scrollable_headers)):  # Date columns start at index 3
+            self.scrollable_table.setColumnWidth(col, 50)  # Fixed width for date columns
+            self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
 
         # Center the headers for P, A, L
         self.scrollable_table.horizontalHeader().setStyleSheet(
