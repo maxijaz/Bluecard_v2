@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
-    QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox  # Added QMessageBox
+    QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate  # Added QMessageBox
 )
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
@@ -41,11 +41,30 @@ class TableModel(QAbstractTableModel):
         return None
 
 
+class AttendanceDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        value = index.data()
+        if value == "P":
+            option.backgroundBrush = QColor("#c8e6c9")  # Light green for Present
+        elif value == "A":
+            option.backgroundBrush = QColor("#ffcdd2")  # Light red for Absent
+        elif value == "L":
+            option.backgroundBrush = QColor("#fff9c4")  # Light yellow for Late
+
+
+class CenterAlignDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        option.displayAlignment = Qt.AlignCenter  # Center-align the content
+
+
 class Mainform(QMainWindow):
     closed = pyqtSignal()  # Signal to notify when the Mainform is closed
 
     def __init__(self, class_id, data, theme):
         super().__init__()
+        print("Initializing Mainform...")  # Debugging: Initialization
         self.setWindowTitle(f"Class Information - {class_id}")
 
         # Set default size and constraints
@@ -193,6 +212,12 @@ class Mainform(QMainWindow):
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
+        # Set the AttendanceDelegate for the scrollable table
+        self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
+
+        # Set the CenterAlignDelegate for the scrollable table
+        self.scrollable_table.setItemDelegate(CenterAlignDelegate(self.scrollable_table))
+
         self.scrollable_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
         # Add tables to the layout
@@ -207,37 +232,29 @@ class Mainform(QMainWindow):
         # Set the main layout
         self.setCentralWidget(container)
 
+        self.refresh_student_table()  # Populate the tables during initialization
+
     # Button Methods
     def add_edit_student(self):
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
 
         if selected_row == -1:
-            # No row selected, open the form in "Add" mode
             print("Add Student button clicked")
-
-            # Define a callback to refresh the student table after adding a student
             def refresh_callback():
-                print("Refreshing student table...")
+                print("Refreshing student table after adding a student...")
                 self.refresh_student_table()
-
-            # Pass the refresh_callback to the StudentForm
             student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
-            student_form.exec_()  # Open the form as a modal dialog
+            student_form.exec_()
         else:
-            # Row selected, open the form in "Edit" mode
             print("Edit Student button clicked")
             student_id = list(self.students.keys())[selected_row]
             student_data = self.students[student_id]
-
-            # Define a callback to refresh the student table after editing a student
             def refresh_callback():
-                print("Refreshing student table...")
+                print("Refreshing student table after editing a student...")
                 self.refresh_student_table()
-
-            # Pass the student data and refresh_callback to the StudentForm
             student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
-            student_form.exec_()  # Open the form as a modal dialog
+            student_form.exec_()
 
     def remove_student(self):
         """Remove the selected student."""
@@ -321,6 +338,8 @@ class Mainform(QMainWindow):
 
     def refresh_student_table(self):
         """Refresh the student table with updated data."""
+        print("refresh_student_table called")  # Debugging: Method entry
+
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
         frozen_data = [
@@ -340,11 +359,36 @@ class Mainform(QMainWindow):
         # Rebuild the scrollable table data
         attendance_dates = self.get_attendance_dates()
         scrollable_headers = ["P", "A", "L"] + attendance_dates
-        scrollable_data = [
-            ["-", "-", "-"] + [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
-            for student in self.students.values()
-        ]
+        scrollable_data = []
+
+        for student in self.students.values():
+            attendance = student.get("attendance", {})
+            print(f"Attendance data for student: {attendance}")  # Debugging: Check attendance data
+            total_p = sum(1 for date in attendance_dates if attendance.get(date) == "P")
+            total_a = sum(1 for date in attendance_dates if attendance.get(date) == "A")
+            total_l = sum(1 for date in attendance_dates if attendance.get(date) == "L")
+            row_data = [total_p, total_a, total_l] + [attendance.get(date, "-") for date in attendance_dates]
+            scrollable_data.append(row_data)
+
+        print(f"Scrollable data: {scrollable_data}")  # Debugging: Check scrollable table data
+
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+
+        # Style the first three columns (P, A, L)
+        for col in range(3):
+            self.scrollable_table.setColumnWidth(col, 35)  # Fixed width
+            self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
+            print(f"Column {col} width: {self.scrollable_table.columnWidth(col)}")  # Debugging: Check column widths
+
+        # Center the headers for P, A, L
+        self.scrollable_table.horizontalHeader().setStyleSheet(
+            """
+            QHeaderView::section {
+                font-weight: normal;
+                text-align: center;
+            }
+            """
+        )
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -360,7 +404,7 @@ class Mainform(QMainWindow):
 
         # Define a callback to refresh the student table after editing
         def refresh_callback():
-            print("Refreshing student table...")
+            print("Callback triggered: Refreshing student table...")
             self.refresh_student_table()
 
         # Open the StudentForm in Edit mode
@@ -374,6 +418,8 @@ class Mainform(QMainWindow):
 
         # Open the form as a modal dialog
         student_form.exec_()
+        print("Calling refresh_student_table from edit_student")
+        self.refresh_student_table()
 
 
 if __name__ == "__main__":

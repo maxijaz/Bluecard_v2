@@ -11,13 +11,11 @@ Features:
 - Theme loading from settings.json
 - Launcher entry point
 - Auto-backup of data to /data/backup/ on close
-- Clean test run environment (optional)
 """
 
 import os
 import json
 import signal
-import shutil
 import sys
 from PyQt5.QtWidgets import QApplication
 from logic import parser
@@ -28,7 +26,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
-TEST_MODE = os.getenv("BLUECARD_TEST_MODE") == "1"  # optional environment toggle
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -41,29 +38,10 @@ def load_theme():
     except json.JSONDecodeError:
         return DEFAULT_THEME
 
-def clean_environment():
-    """Clean temp/test files and folders before a run."""
-    temp_paths = ["data/temp", "data/.cache", "__pycache__", "data/test_output"]
-    for path in temp_paths:
-        if os.path.exists(path):
-            try:
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                else:
-                    os.remove(path)
-                print(f"✅ Cleaned: {path}")
-            except Exception as e:
-                parser.log_error(f"Failed to clean {path}: {e}")
-
 def on_close():
     """Handles cleanup and backup on app close."""
-    try:
-        parser.backup_data()
-        print("✅ Backup completed.")
-    except Exception as e:
-        parser.log_error(f"Backup failed: {e}")
-    finally:
-        sys.exit(0)
+    parser.backup_data()
+    sys.exit(0)
 
 def start_launcher():
     """Start the Launcher form."""
@@ -75,16 +53,10 @@ def start_launcher():
 
 if __name__ == "__main__":
     try:
-        # Optional: clean up environment for testing
-        if TEST_MODE:
-            print("🔄 Running in TEST MODE: Cleaning environment...")
-            clean_environment()
-
-        # Register shutdown signals
+        # Handle Ctrl+C or forced exit
         signal.signal(signal.SIGINT, lambda sig, frame: on_close())
         signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
     except Exception as e:
         parser.log_error(f"An unexpected error occurred: {e}")
-        sys.exit(1)
