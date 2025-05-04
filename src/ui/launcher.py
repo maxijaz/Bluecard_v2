@@ -207,11 +207,10 @@ class Launcher(QMainWindow):
             return {}
 
     def center_window(self):
-        """Center the window on the screen."""
+        """Center the Launcher window on the screen."""
         screen_geometry = QApplication.desktop().screenGeometry()
-        window_geometry = self.frameGeometry()
-        x = (screen_geometry.width() - window_geometry.width()) // 2
-        y = (screen_geometry.height() - window_geometry.height()) // 2
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
 
 
