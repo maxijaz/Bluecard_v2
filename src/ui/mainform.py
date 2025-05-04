@@ -375,6 +375,10 @@ class Mainform(QMainWindow):
             ]
             for idx, student in enumerate(self.students.values())
         ]
+
+        # Add "Running Total" row to the frozen table
+        frozen_data.insert(0, ["", "Running Total", "", "", "", "", ""])
+
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
         # Rebuild the scrollable table data
@@ -384,12 +388,19 @@ class Mainform(QMainWindow):
 
         for student in self.students.values():
             attendance = student.get("attendance", {})
-            print(f"Attendance data for student: {attendance}")  # Debugging: Check attendance data
             total_p = sum(1 for date in attendance_dates if attendance.get(date) == "P")
             total_a = sum(1 for date in attendance_dates if attendance.get(date) == "A")
             total_l = sum(1 for date in attendance_dates if attendance.get(date) == "L")
             row_data = [total_p, total_a, total_l] + [attendance.get(date, "-") for date in attendance_dates]
             scrollable_data.append(row_data)
+
+        # Calculate the running total for the first row
+        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+        running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
+        running_total_row = ["", "", ""] + running_total
+
+        # Add "Running Total" row to the scrollable table
+        scrollable_data.insert(0, running_total_row)
 
         print(f"Scrollable data: {scrollable_data}")  # Debugging: Check scrollable table data
 
