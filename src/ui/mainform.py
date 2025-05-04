@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel, QHBoxLayout, QFrame, QGridLayout, QPushButton
+    QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
+    QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox  # Added QMessageBox
 )
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
@@ -174,6 +175,9 @@ class Mainform(QMainWindow):
 
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
+        # Connect double-click event on the frozen table to the edit_student method
+        self.frozen_table.doubleClicked.connect(self.edit_student)
+
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
         scrollable_headers = ["P", "A", "L"] + attendance_dates
@@ -341,6 +345,33 @@ class Mainform(QMainWindow):
             for student in self.students.values()
         ]
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+
+    def edit_student(self, index):
+        """Open the StudentForm in Edit mode for the selected student."""
+        selected_row = index.row()
+
+        if selected_row == -1:
+            QMessageBox.warning(self, "No Selection", "Please select a valid student to edit.")
+            return
+
+        # Get the student ID and data for the selected row
+        student_id = list(self.students.keys())[selected_row]
+        student_data = self.students[student_id]
+
+        # Define a callback to refresh the student table after editing
+        def refresh_callback():
+            print("Refreshing student table...")
+            self.refresh_student_table()
+
+        # Open the StudentForm in Edit mode
+        student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
+        student_form.setWindowModality(Qt.ApplicationModal)  # Make the form modal
+        student_form.setWindowFlags(student_form.windowFlags() | Qt.WindowStaysOnTopHint)  # Set as topmost
+        student_form.show()
+        student_form.move(
+            self.geometry().center().x() - student_form.width() // 2,
+            self.geometry().center().y() - student_form.height() // 2
+        )
 
 
 if __name__ == "__main__":
