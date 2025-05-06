@@ -283,39 +283,40 @@ class Mainform(QMainWindow):
 
     def remove_student(self):
         """Handle removing or managing students."""
-        selected_row = self.frozen_table.currentIndex().row()
-
-        if selected_row == -1:
+        # Check if a row is selected
+        if not self.frozen_table.selectionModel().hasSelection():
             # No row selected, open the ArchiveManager
             print("No student selected. Opening Archive Manager...")
             archive_manager = ArchiveManager(self, self.data, self.class_id, self.refresh_student_table)
             archive_manager.exec_()  # Open the ArchiveManager as a modal dialog
-        else:
-            # A row is selected, archive the student
-            adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
-            if adjusted_row < 0:
-                QMessageBox.warning(self, "Invalid Selection", "Cannot archive the 'Running Total' row.")
-                return
+            return
 
-            # Get the student ID and data for the selected row
-            student_id = list(self.students.keys())[adjusted_row]
-            student_data = self.students[student_id]
+        # A row is selected, archive the student
+        selected_row = self.frozen_table.currentIndex().row()
+        adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
+        if adjusted_row < 0:
+            QMessageBox.warning(self, "Invalid Selection", "Cannot archive the 'Running Total' row.")
+            return
 
-            # Confirm archiving the student
-            confirm = QMessageBox.question(
-                self,
-                "Archive Student",
-                f"Are you sure you want to archive the student '{student_data['name']}'?",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            if confirm == QMessageBox.Yes:
-                # Archive the student
-                self.students[student_id]["active"] = "No"  # Set active to "No"
-                save_data(self.data)  # Save the updated data
-                print(f"Student '{student_data['name']}' archived successfully.")
+        # Get the student ID and data for the selected row
+        student_id = list(self.students.keys())[adjusted_row]
+        student_data = self.students[student_id]
 
-                # Refresh the Mainform
-                self.refresh_student_table()
+        # Confirm archiving the student
+        confirm = QMessageBox.question(
+            self,
+            "Archive Student",
+            f"Are you sure you want to archive the student '{student_data['name']}'?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if confirm == QMessageBox.Yes:
+            # Archive the student
+            self.students[student_id]["active"] = "No"  # Set active to "No"
+            save_data(self.data)  # Save the updated data
+            print(f"Student '{student_data['name']}' archived successfully.")
+
+            # Refresh the Mainform
+            self.refresh_student_table()
 
     def open_metadata_form(self):
         """Open the Metadata Form."""
