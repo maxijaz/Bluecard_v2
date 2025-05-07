@@ -327,10 +327,16 @@ class Mainform(QMainWindow):
     def resizeEvent(self, event):
         """Adjust the width of the scrollable table dynamically."""
         if hasattr(self, "frozen_table_width") and self.frozen_table_width > 0:
+            # Calculate the available width for the scrollable table
             available_width = self.width() - self.frozen_table_width
+
+            # Ensure the scrollable table takes up the remaining space
             if available_width > 0:
                 self.scrollable_table.setFixedWidth(available_width)
-        super().resizeEvent(event)
+            else:
+                self.scrollable_table.setFixedWidth(0)  # Fallback to 0 if no space is available
+
+        super().resizeEvent(event)  # Call the base class implementation
 
     def get_attendance_dates(self):
         """Get all unique attendance dates dynamically based on StartDate, Days, and MaxClasses."""
