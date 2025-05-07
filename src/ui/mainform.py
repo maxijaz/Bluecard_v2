@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
     QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate  # Added QMessageBox
 )
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QFont
 from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
@@ -99,6 +99,8 @@ class Mainform(QMainWindow):
         # Main container widget
         container = QWidget()
         self.layout = QVBoxLayout(container)
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         # Metadata Section (updated)
         metadata_widget = QWidget()  # Create a widget to contain the metadata layout
@@ -168,7 +170,8 @@ class Mainform(QMainWindow):
 
         # Table Section
         self.table_layout = QHBoxLayout()
-        self.table_layout.setSpacing(0)  # Remove gap between tables
+        self.table_layout.setSpacing(0)
+        self.table_layout.setContentsMargins(0, 0, 0, 0)
 
         # Frozen Table
         frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
@@ -225,6 +228,8 @@ class Mainform(QMainWindow):
         # Connect double-click signal to edit_student method
         self.frozen_table.doubleClicked.connect(self.edit_student)
 
+        self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
+
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
         scrollable_headers = ["P", "A", "L"] + attendance_dates
@@ -264,7 +269,9 @@ class Mainform(QMainWindow):
         self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
 
         # Set the main layout
-        self.setCentralWidget(container)
+        self.container = QWidget()
+        self.container.setLayout(self.layout)
+        self.setCentralWidget(self.container)
 
         self.refresh_student_table()  # Populate the tables during initialization
         self.reset_column_widths()
@@ -336,17 +343,9 @@ class Mainform(QMainWindow):
         metadata_form.exec_()  # Open the form as a modal dialog
 
     def resizeEvent(self, event):
-        """Adjust the width of the scrollable table dynamically."""
-        if hasattr(self, "frozen_table_width") and self.frozen_table_width > 0:
-            # Calculate the available width for the scrollable table
-            available_width = self.width() - self.frozen_table_width
-
-            # Ensure the scrollable table takes up the remaining space
-            if (available_width > 0):
-                self.scrollable_table.setFixedWidth(available_width)
-            else:
-                self.scrollable_table.setFixedWidth(0)  # Fallback to 0 if no space is available
-
+        """Adjust the width and position of the scrollable table dynamically."""
+        if hasattr(self, "frozen_table") and self.frozen_table.width() > 0:
+            QTimer.singleShot(0, self.update_scrollable_table_position)  # Delay the update
         super().resizeEvent(event)  # Call the base class implementation
 
     def get_attendance_dates(self):
@@ -517,6 +516,7 @@ class Mainform(QMainWindow):
         self.refresh_student_table()
 
     def reset_column_widths(self):
+        """Reset the column widths of the frozen table to their default values."""
         self.frozen_table.setColumnWidth(0, 20)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
         self.frozen_table.setColumnWidth(2, 80)  # Nickname
@@ -524,6 +524,9 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(4, 40)  # PreTest
         self.frozen_table.setColumnWidth(5, 40)  # PostTest
         self.frozen_table.setColumnWidth(6, 40)  # Attn
+
+        self.adjust_frozen_table_width()  # Recalculate frozen table width
+        self.update_scrollable_table_position()  # Update scrollable table position
 
     def reset_scrollable_column_widths(self):
         """Reset the column widths of the scrollable table to their default values."""
@@ -538,6 +541,38 @@ class Mainform(QMainWindow):
 
         # Ensure all columns are resizable
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+
+    def adjust_frozen_table_width(self):
+        """Adjust the frozen table's frame width to match the total column widths."""
+        total_width = sum(self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount()))
+        print(f"Calculated frozen table width: {total_width}")  # Debugging
+        self.frozen_table.setFixedWidth(total_width)
+        self.frozen_table_width = total_width  # Update the frozen table width
+        self.update_scrollable_table_position()  # Ensure the scrollable table is updated
+
+    def update_scrollable_table_position(self):
+        """Update the position and width of the scrollable table."""
+        # Get the right edge of the frozen table using geometry for accurate positioning
+        frozen_table_right = self.frozen_table.geometry().right()
+        print(f"Frozen table right edge (delayed): {frozen_table_right}")  # Debugging
+
+        # Calculate the available width for the scrollable table
+        available_width = self.width() - frozen_table_right
+        print(f"Available width for scrollable table (delayed): {available_width}")  # Debugging
+
+        # Ensure the scrollable table takes up the remaining space
+        if available_width > 0:
+            self.scrollable_table.setFixedWidth(available_width)
+        else:
+            self.scrollable_table.setFixedWidth(0)  # Fallback to 0 if no space is available
+
+        # Align the scrollable table to the right of the frozen table and match its y-coordinate
+        self.scrollable_table.move(frozen_table_right, self.frozen_table.geometry().top())
+        print(f"Scrollable table moved to (delayed): {self.scrollable_table.geometry()}")  # Debugging
+        print(f"Parent layout margins: {self.layout.contentsMargins()}")  # Debugging
+        print(f"Parent layout geometry: {self.container.geometry()}")  # Debugging
+        print(f"Frozen table geometry: {self.frozen_table.geometry()}")  # Debugging
+        print(f"Scrollable table geometry: {self.scrollable_table.geometry()}")  # Debugging
 
 
 if __name__ == "__main__":
