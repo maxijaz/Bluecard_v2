@@ -236,9 +236,12 @@ class Mainform(QMainWindow):
         self.scrollable_table = QTableView()
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
         self.scrollable_table.verticalHeader().hide()
-        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+
+        # Set the minimum section size for the horizontal header
+        self.scrollable_table.horizontalHeader().setMinimumSectionSize(5)  # Set minimum width to 5 pixels
 
         # Set the AttendanceDelegate for the scrollable table
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
@@ -253,6 +256,9 @@ class Mainform(QMainWindow):
         self.table_layout.addWidget(self.scrollable_table)
         self.layout.addLayout(self.table_layout)
 
+        # Reset column widths for the scrollable table
+        self.reset_scrollable_column_widths()
+
         # Connect selection models for synchronization
         self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
         self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
@@ -262,6 +268,7 @@ class Mainform(QMainWindow):
 
         self.refresh_student_table()  # Populate the tables during initialization
         self.reset_column_widths()
+        self.reset_scrollable_column_widths()
 
     # Button Methods
     def add_edit_student(self):
@@ -517,6 +524,20 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(4, 40)  # PreTest
         self.frozen_table.setColumnWidth(5, 40)  # PostTest
         self.frozen_table.setColumnWidth(6, 40)  # Attn
+
+    def reset_scrollable_column_widths(self):
+        """Reset the column widths of the scrollable table to their default values."""
+        # Fixed widths for the first three columns (P, A, L)
+        self.scrollable_table.setColumnWidth(0, 35)  # P
+        self.scrollable_table.setColumnWidth(1, 35)  # A
+        self.scrollable_table.setColumnWidth(2, 35)  # L
+
+        # Fixed widths for the date columns
+        for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
+            self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
+
+        # Ensure all columns are resizable
+        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
 
 
 if __name__ == "__main__":
