@@ -194,17 +194,20 @@ class Mainform(QMainWindow):
         self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
+        # Set the minimum section size for the horizontal header
+        self.frozen_table.horizontalHeader().setMinimumSectionSize(5)
+
         # Set column widths
-        self.frozen_table.setColumnWidth(0, 10)  # #
+        self.frozen_table.setColumnWidth(0, 20)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
-        self.frozen_table.setColumnWidth(2, 100)  # Nickname
-        self.frozen_table.setColumnWidth(3, 60)  # Score
-        self.frozen_table.setColumnWidth(4, 60)  # PreTest
-        self.frozen_table.setColumnWidth(5, 60)  # PostTest
-        self.frozen_table.setColumnWidth(6, 25)  # Attn
+        self.frozen_table.setColumnWidth(2, 80)  # Nickname
+        self.frozen_table.setColumnWidth(3, 40)  # Score
+        self.frozen_table.setColumnWidth(4, 40)  # PreTest
+        self.frozen_table.setColumnWidth(5, 40)  # PostTest
+        self.frozen_table.setColumnWidth(6, 40)  # Attn
 
         # Calculate total width of frozen table
-        self.frozen_table_width = 10 + 150 + 100 + 60 + 60 + 60 + 90
+        self.frozen_table_width = 410  # Match the sum of the column widths
         self.frozen_table.setFixedWidth(self.frozen_table_width)
 
         # Set the FrozenTableDelegate for the frozen table
