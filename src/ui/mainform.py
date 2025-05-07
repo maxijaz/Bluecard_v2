@@ -188,7 +188,7 @@ class Mainform(QMainWindow):
         self.frozen_table = QTableView()
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
         self.frozen_table.verticalHeader().hide()
-        self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -261,6 +261,7 @@ class Mainform(QMainWindow):
         self.setCentralWidget(container)
 
         self.refresh_student_table()  # Populate the tables during initialization
+        self.reset_column_widths()
 
     # Button Methods
     def add_edit_student(self):
@@ -334,7 +335,7 @@ class Mainform(QMainWindow):
             available_width = self.width() - self.frozen_table_width
 
             # Ensure the scrollable table takes up the remaining space
-            if available_width > 0:
+            if (available_width > 0):
                 self.scrollable_table.setFixedWidth(available_width)
             else:
                 self.scrollable_table.setFixedWidth(0)  # Fallback to 0 if no space is available
@@ -507,6 +508,15 @@ class Mainform(QMainWindow):
         student_form.exec_()
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
+
+    def reset_column_widths(self):
+        self.frozen_table.setColumnWidth(0, 20)  # #
+        self.frozen_table.setColumnWidth(1, 150)  # Name
+        self.frozen_table.setColumnWidth(2, 80)  # Nickname
+        self.frozen_table.setColumnWidth(3, 40)  # Score
+        self.frozen_table.setColumnWidth(4, 40)  # PreTest
+        self.frozen_table.setColumnWidth(5, 40)  # PostTest
+        self.frozen_table.setColumnWidth(6, 40)  # Attn
 
 
 if __name__ == "__main__":
