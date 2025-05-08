@@ -6,6 +6,7 @@ import json
 from flask import Flask, render_template_string, send_file
 import pdfkit
 from threading import Timer
+from datetime import datetime, timedelta
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -57,10 +58,31 @@ def home():
     group1_metadata = {key: metadata.get(key, "N/A") for key in group1_fields}
     group2_metadata = {key: metadata.get(key, "N/A") for key in group2_fields}
 
-    # Collect all unique attendance dates
-    all_dates = sorted(
-        {date for student in students.values() for date in student.get("attendance", {}).keys()}
-    )
+    # Generate all class dates based on metadata
+    def generate_class_dates(start_date, days, max_classes):
+        day_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+            "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        start_date = datetime.strptime(start_date, "%d/%m/%Y")
+        class_days = [day_map[day.strip()] for day in days.split(",") if day.strip() in day_map]
+        class_dates = []
+
+        current_date = start_date
+        while len(class_dates) < max_classes:
+            if current_date.weekday() in class_days:
+                class_dates.append(current_date.strftime("%d/%m/%Y"))
+            current_date += timedelta(days=1)
+
+        return class_dates
+
+    # Extract metadata values
+    start_date = metadata.get("StartDate", "01/01/2025")
+    days = metadata.get("Days", "Monday, Wednesday")
+    max_classes = int(metadata.get("MaxClasses", "20"))
+
+    # Generate all class dates
+    all_dates = generate_class_dates(start_date, days, max_classes)
 
     # Calculate running totals for attendance
     running_total_p = sum(
@@ -75,6 +97,10 @@ def home():
         sum(1 for status in student.get("attendance", {}).values() if status == "L")
         for student in students.values()
     )
+
+    # Calculate running totals for each date
+    class_time = int(metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+    running_totals = [class_time * (i + 1) for i in range(len(all_dates))]
 
     # Generate HTML content dynamically
     company_name = metadata.get("Company", "N/A")
@@ -121,6 +147,13 @@ def home():
                     <th>L</th>
                     {"".join(f"<th>{date}</th>" for date in all_dates)}
                 </tr>
+                <tr>
+                    <td colspan="6" style="font-weight: bold; text-align: right;">Running Total</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    {"".join(f"<td>{total}</td>" for total in running_totals)}
+                </tr>
                 {"".join(
                     f"<tr>"
                     f"<td>{idx + 1}</td>"  # Running number
@@ -139,13 +172,6 @@ def home():
                     + f"</tr>"
                     for idx, (student_id, student) in enumerate(students.items())  # Use enumerate for running number
                 )}
-                <tr>
-                    <td colspan="6" style="font-weight: bold; text-align: right;">Running Total</td>
-                    <td>{running_total_p}</td>
-                    <td>{running_total_a}</td>
-                    <td>{running_total_l}</td>
-                    {"".join("<td>-</td>" for _ in all_dates)}  <!-- Placeholder for dates -->
-                </tr>
             </table>
         </body>
     </html>
