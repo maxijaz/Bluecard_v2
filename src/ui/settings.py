@@ -95,6 +95,20 @@ class SettingsForm(QDialog):
             self.column_visibility[key] = checkbox
             layout.addWidget(checkbox)
 
+        # Scrollable table column visibility checkboxes
+        self.scrollable_column_visibility = {}
+        scrollable_column_fields = {
+            "show_p": "Show P",
+            "show_a": "Show A",
+            "show_l": "Show L",
+            "show_dates": "Show Dates"
+        }
+        for key, label in scrollable_column_fields.items():
+            checkbox = QCheckBox(label)
+            checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
+            self.scrollable_column_visibility[key] = checkbox
+            layout.addWidget(checkbox)
+
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
@@ -121,6 +135,10 @@ class SettingsForm(QDialog):
         updated_settings.update({
             key: "Yes" if checkbox.isChecked() else "No"
             for key, checkbox in self.column_visibility.items()
+        })
+        updated_settings.update({
+            key: "Yes" if checkbox.isChecked() else "No"
+            for key, checkbox in self.scrollable_column_visibility.items()
         })
         try:
             with open(DEFAULT_PATH, "w", encoding="utf-8") as f:

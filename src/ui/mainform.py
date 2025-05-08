@@ -105,10 +105,44 @@ class Mainform(QMainWindow):
             "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
             "Attn": self.default_settings.get("show_attn", "Yes") == "Yes"
         }
+        self.scrollable_column_visibility = {
+            "P": self.default_settings.get("show_p", "Yes") == "Yes",
+            "A": self.default_settings.get("show_a", "Yes") == "Yes",
+            "L": self.default_settings.get("show_l", "Yes") == "Yes",
+            "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
+        }
 
         # Initialize frozen_table_width
         self.frozen_table_width = 0  # Ensure it is always defined
 
+        # Initialize UI
+        self.init_ui()
+
+    def reset_scrollable_column_widths(self):
+        """Reset the column widths of the scrollable table to their default values."""
+        # Fixed widths for the first three columns (P, A, L)
+        columns = ["P", "A", "L"]
+        widths = [35, 35, 35]
+        for i, column in enumerate(columns):
+            if self.scrollable_column_visibility[column]:
+                self.scrollable_table.setColumnWidth(i, widths[i])
+                self.scrollable_table.setColumnHidden(i, False)
+            else:
+                self.scrollable_table.setColumnHidden(i, True)
+
+        # Fixed widths for the date columns
+        for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
+            if self.scrollable_column_visibility["Dates"]:
+                self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
+                self.scrollable_table.setColumnHidden(col, False)
+            else:
+                self.scrollable_table.setColumnHidden(col, True)
+
+        # Ensure all columns are resizable
+        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+
+    def init_ui(self):
+        """Initialize the UI components."""
         # Main container widget
         container = QWidget()
         self.layout = QVBoxLayout(container)
@@ -547,20 +581,6 @@ class Mainform(QMainWindow):
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position
 
-    def reset_scrollable_column_widths(self):
-        """Reset the column widths of the scrollable table to their default values."""
-        # Fixed widths for the first three columns (P, A, L)
-        self.scrollable_table.setColumnWidth(0, 35)  # P
-        self.scrollable_table.setColumnWidth(1, 35)  # A
-        self.scrollable_table.setColumnWidth(2, 35)  # L
-
-        # Fixed widths for the date columns
-        for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
-            self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
-
-        # Ensure all columns are resizable
-        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-
     def adjust_frozen_table_width(self):
         """Adjust the frozen table's frame width to match the total column widths."""
         total_width = sum(self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount()))
@@ -602,13 +622,6 @@ class Mainform(QMainWindow):
                 return json.load(f)
         except json.JSONDecodeError:
             return {}
-
-    def init_ui(self):
-        """Initialize the UI components."""
-        # ... existing code ...
-
-        # Set column widths and visibility
-        self.reset_column_widths()
 
 
 if __name__ == "__main__":
