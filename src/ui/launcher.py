@@ -1,12 +1,13 @@
 from PyQt5.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QLabel, QHeaderView, QWidget, QMessageBox, QApplication
+    QPushButton, QLabel, QHeaderView, QWidget, QMessageBox, QApplication, QDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import load_data, save_data
 from ui.mainform import Mainform
 from ui.metadata_form import MetadataForm
 from ui.archive_manager import ArchiveManager
+from ui.settings import SettingsForm
 import sys
 import json
 import os
@@ -186,9 +187,16 @@ class Launcher(QMainWindow):
         # Logic to open the TTR goes here
 
     def open_settings(self):
-        """Open the Settings."""
+        """Open the Settings dialog."""
         print("Opening Settings...")
-        # Logic to open the Settings goes here
+        settings_form = SettingsForm(self, self.theme, self.refresh_theme)
+        if settings_form.exec_() == QDialog.Accepted:
+            print("Settings updated.")
+
+    def refresh_theme(self, new_theme):
+        """Refresh the theme in the Launcher."""
+        self.theme = new_theme
+        print(f"Theme updated to: {new_theme}")
 
     def refresh_table(self):
         """Refresh the table with updated class data."""
