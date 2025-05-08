@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QCheckBox
 )
 from PyQt5.QtCore import Qt
 import json
@@ -81,6 +81,20 @@ class SettingsForm(QDialog):
             form_layout.addRow(key.replace("def_", "").capitalize() + ":", entry)
         layout.addLayout(form_layout)
 
+        # Frozen table column visibility checkboxes
+        self.column_visibility = {}
+        column_fields = {
+            "show_score": "Show Score",
+            "show_prestest": "Show PreTest",
+            "show_posttest": "Show PostTest",
+            "show_attn": "Show Attn"
+        }
+        for key, label in column_fields.items():
+            checkbox = QCheckBox(label)
+            checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
+            self.column_visibility[key] = checkbox
+            layout.addWidget(checkbox)
+
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
@@ -104,6 +118,10 @@ class SettingsForm(QDialog):
 
         # Save default settings to default.json
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
+        updated_settings.update({
+            key: "Yes" if checkbox.isChecked() else "No"
+            for key, checkbox in self.column_visibility.items()
+        })
         try:
             with open(DEFAULT_PATH, "w", encoding="utf-8") as f:
                 json.dump(updated_settings, f, indent=4)

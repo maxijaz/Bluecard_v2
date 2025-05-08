@@ -7,15 +7,8 @@
     "def_ccp": "120",
     "def_travel": "200",
     "def_bonus": "1000",
-    "def_consultant": "Default Consultant",
-    "def_room": "Default Room",
-    "def_coursebook": "Default CourseBook",
-    "def_maxclasses": "20",
-    "def_startdate": "01/01/2025",
-    "def_finishdate": "31/12/2025",
-    "def_days": "Monday, Wednesday",
-    "def_time": "09:00 - 11:00",
-    "def_notes": "Default Notes",
-    "def_company": "Default Company",
-    "def_class_no": "OLO001"
+    "show_score": "Yes",
+    "show_prestest": "Yes",
+    "show_posttest": "Yes",
+    "show_attn": "Yes"
 }

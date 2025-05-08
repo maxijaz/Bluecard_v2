@@ -13,6 +13,10 @@ from .student_manager import StudentManager
 from datetime import datetime, timedelta
 import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
 from .archive_manager import ArchiveManager
+import os  # Import os for file path operations
+import json  # Import json for reading and writing JSON files
+
+DEFAULT_PATH = "data/default.json"  # Define the path to the default settings file
 
 
 class TableModel(QAbstractTableModel):
@@ -92,6 +96,15 @@ class Mainform(QMainWindow):
         self.theme = theme
         self.metadata = self.data["classes"][self.class_id]["metadata"]
         self.students = self.data["classes"][self.class_id]["students"]
+
+        # Load column visibility settings
+        self.default_settings = self.load_default_settings()
+        self.column_visibility = {
+            "Score": self.default_settings.get("show_score", "Yes") == "Yes",
+            "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
+            "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
+            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes"
+        }
 
         # Initialize frozen_table_width
         self.frozen_table_width = 0  # Ensure it is always defined
@@ -520,10 +533,16 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(0, 20)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
         self.frozen_table.setColumnWidth(2, 80)  # Nickname
-        self.frozen_table.setColumnWidth(3, 40)  # Score
-        self.frozen_table.setColumnWidth(4, 40)  # PreTest
-        self.frozen_table.setColumnWidth(5, 40)  # PostTest
-        self.frozen_table.setColumnWidth(6, 40)  # Attn
+
+        # Dynamically set visibility for the remaining columns
+        columns = ["Score", "PreTest", "PostTest", "Attn"]
+        widths = [40, 40, 40, 40]
+        for i, column in enumerate(columns, start=3):
+            if self.column_visibility[column]:
+                self.frozen_table.setColumnWidth(i, widths[i - 3])
+                self.frozen_table.setColumnHidden(i, False)
+            else:
+                self.frozen_table.setColumnHidden(i, True)
 
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position
@@ -573,6 +592,23 @@ class Mainform(QMainWindow):
         print(f"Parent layout geometry: {self.container.geometry()}")  # Debugging
         print(f"Frozen table geometry: {self.frozen_table.geometry()}")  # Debugging
         print(f"Scrollable table geometry: {self.scrollable_table.geometry()}")  # Debugging
+
+    def load_default_settings(self):
+        """Load default settings from default.json."""
+        if not os.path.exists(DEFAULT_PATH):
+            return {}
+        try:
+            with open(DEFAULT_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
+
+    def init_ui(self):
+        """Initialize the UI components."""
+        # ... existing code ...
+
+        # Set column widths and visibility
+        self.reset_column_widths()
 
 
 if __name__ == "__main__":
