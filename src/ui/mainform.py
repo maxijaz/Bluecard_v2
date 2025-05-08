@@ -13,8 +13,13 @@ from .student_manager import StudentManager
 from datetime import datetime, timedelta
 import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
 from .archive_manager import ArchiveManager
-import os  # Import os for file path operations
 import json  # Import json for reading and writing JSON files
+import subprocess  # Import subprocess to run external scripts
+import sys
+import os # Import sys and os for path manipulation
+
+# Add the src directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 DEFAULT_PATH = "data/default.json"  # Define the path to the default settings file
 
@@ -214,6 +219,11 @@ class Mainform(QMainWindow):
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
+
+        # Add a button to run htmlbluecard.py
+        html_button = QPushButton("Run HTML Output")
+        html_button.clicked.connect(self.run_html_output)  # Connect button to method
+        self.layout.addWidget(html_button)  # Add button to the main layout
 
         # Table Section
         self.table_layout = QHBoxLayout()
@@ -622,6 +632,19 @@ class Mainform(QMainWindow):
                 return json.load(f)
         except json.JSONDecodeError:
             return {}
+
+    def run_html_output(self):
+        """Run htmlbluecard.py to output HTML."""
+        try:
+            # Run htmlbluecard.py in a separate process
+            subprocess.Popen(
+                ["python", "src/ui/htmlbluecard.py"],
+                shell=True,
+                cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")),  # Set working directory
+            )
+            QMessageBox.information(self, "HTML Output", "HTML output is running in your browser.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to run HTML output: {e}")
 
 
 if __name__ == "__main__":
