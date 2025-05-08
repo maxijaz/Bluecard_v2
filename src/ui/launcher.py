@@ -19,7 +19,7 @@ class Launcher(QMainWindow):
         self.theme = theme
         self.setWindowTitle("Bluecard Launcher")
         self.setGeometry(100, 100, 450, 450)
-        self.setFixedSize(600, 450)
+        self.setFixedSize(395, 300)
 
         # Load class data
         self.data = load_data()
@@ -42,11 +42,16 @@ class Launcher(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # Use fixed column widths
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.layout.addWidget(self.table)
+
+        # Set column widths
+        self.table.setColumnWidth(0, 150)  # Class No
+        self.table.setColumnWidth(1, 150)  # Company
+        self.table.setColumnWidth(2, 75)   # Archived
 
         # Connect double-click event to open_class
         self.table.doubleClicked.connect(self.open_class)
@@ -54,38 +59,43 @@ class Launcher(QMainWindow):
         # Populate the table
         self.populate_table()
 
-        # Buttons
-        button_layout = QHBoxLayout()
+        # Buttons - Row 1
+        button_layout_row1 = QHBoxLayout()
 
         open_button = QPushButton("Open")
         open_button.clicked.connect(self.open_class)
-        button_layout.addWidget(open_button)
+        button_layout_row1.addWidget(open_button)
 
         edit_button = QPushButton("Edit")
         edit_button.clicked.connect(self.edit_class)
-        button_layout.addWidget(edit_button)
+        button_layout_row1.addWidget(edit_button)
 
         add_button = QPushButton("Add New Class")
         add_button.clicked.connect(self.add_new_class)
-        button_layout.addWidget(add_button)
-
-        archive_button = QPushButton("Archive")
-        archive_button.clicked.connect(self.archive_class)
-        button_layout.addWidget(archive_button)
-
-        archive_manager_button = QPushButton("Archive Manager")
-        archive_manager_button.clicked.connect(self.open_archive_manager)
-        button_layout.addWidget(archive_manager_button)
-
-        ttr_button = QPushButton("TTR")
-        ttr_button.clicked.connect(self.open_ttr)
-        button_layout.addWidget(ttr_button)
+        button_layout_row1.addWidget(add_button)
 
         settings_button = QPushButton("Settings")
         settings_button.clicked.connect(self.open_settings)
-        button_layout.addWidget(settings_button)
+        button_layout_row1.addWidget(settings_button)
 
-        self.layout.addLayout(button_layout)
+        self.layout.addLayout(button_layout_row1)
+
+        # Buttons - Row 2
+        button_layout_row2 = QHBoxLayout()
+
+        archive_button = QPushButton("Archive")
+        archive_button.clicked.connect(self.archive_class)
+        button_layout_row2.addWidget(archive_button)
+
+        archive_manager_button = QPushButton("Archive Manager")
+        archive_manager_button.clicked.connect(self.open_archive_manager)
+        button_layout_row2.addWidget(archive_manager_button)
+
+        ttr_button = QPushButton("TTR")
+        ttr_button.clicked.connect(self.open_ttr)
+        button_layout_row2.addWidget(ttr_button)
+
+        self.layout.addLayout(button_layout_row2)
 
     def populate_table(self):
         """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
@@ -176,9 +186,19 @@ class Launcher(QMainWindow):
             QMessageBox.information(self, "Archived", f"Class {class_id} has been archived.")
 
     def open_archive_manager(self):
-        """Open the Archive Manager."""
-        print("Opening Archive Manager...")
-        archive_manager = ArchiveManager(self, self.data, self.theme, self.populate_table)
+        """Open the Archive Manager for all archived classes."""
+        archived_classes = {
+            class_id: class_data
+            for class_id, class_data in self.classes.items()
+            if class_data.get("metadata", {}).get("archive", "No") == "Yes"
+        }
+
+        if not archived_classes:
+            QMessageBox.information(self, "No Archived Classes", "There are no archived classes to manage.")
+            return
+
+        print(f"Opening Archive Manager for archived classes: {list(archived_classes.keys())}")
+        archive_manager = ArchiveManager(self, self.data, archived_classes, self.refresh_table)
         archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):

@@ -1,0 +1,10 @@
+# === START OF EDITABLE SECTION ===
+# Copilot Instructions:
+# ✅ You may edit the code between these markers.
+# ❌ Do NOT modify code outside of this section.
+# 📝 Task: [Insert your specific instruction here, e.g., "Add input validation"]
+# ==================================
+
+# Your code here
+
+# === END OF EDITABLE SECTION ===
