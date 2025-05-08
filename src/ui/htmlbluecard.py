@@ -62,6 +62,20 @@ def home():
         {date for student in students.values() for date in student.get("attendance", {}).keys()}
     )
 
+    # Calculate running totals for attendance
+    running_total_p = sum(
+        sum(1 for status in student.get("attendance", {}).values() if status == "P")
+        for student in students.values()
+    )
+    running_total_a = sum(
+        sum(1 for status in student.get("attendance", {}).values() if status == "A")
+        for student in students.values()
+    )
+    running_total_l = sum(
+        sum(1 for status in student.get("attendance", {}).values() if status == "L")
+        for student in students.values()
+    )
+
     # Generate HTML content dynamically
     company_name = metadata.get("Company", "N/A")
     html_content = f"""
@@ -125,6 +139,13 @@ def home():
                     + f"</tr>"
                     for idx, (student_id, student) in enumerate(students.items())  # Use enumerate for running number
                 )}
+                <tr>
+                    <td colspan="6" style="font-weight: bold; text-align: right;">Running Total</td>
+                    <td>{running_total_p}</td>
+                    <td>{running_total_a}</td>
+                    <td>{running_total_l}</td>
+                    {"".join("<td>-</td>" for _ in all_dates)}  <!-- Placeholder for dates -->
+                </tr>
             </table>
         </body>
     </html>
