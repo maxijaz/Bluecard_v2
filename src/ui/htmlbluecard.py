@@ -49,6 +49,14 @@ def home():
     hidden_metadata_fields = {"teacherno", "classtime", "maxclasses", "rate", "ccp", "travel", "bonus", "notes", "class_no"}
     metadata = {key: value for key, value in metadata.items() if key.lower() not in hidden_metadata_fields}
 
+    # Split metadata into two groups
+    group1_fields = ["Company", "Consultant", "Teacher", "Room", "CourseBook"]
+    group2_fields = ["CourseHours", "StartDate", "FinishDate", "Days", "Time"]
+
+    # Prepare group1 and group2 metadata
+    group1_metadata = {key: metadata.get(key, "N/A") for key in group1_fields}
+    group2_metadata = {key: metadata.get(key, "N/A") for key in group2_fields}
+
     # Collect all unique attendance dates
     all_dates = sorted(
         {date for student in students.values() for date in student.get("attendance", {}).keys()}
@@ -71,13 +79,24 @@ def home():
         <body>
             <h1>Class Attendance - {class_id} - {company_name}</h1>
             <table>
-                <tr><th>Field</th><th>Value</th></tr>
-                {"".join(f"<tr><td>{key}</td><td>{value}</td></tr>" for key, value in metadata.items())}
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+                {"".join(
+                    f"<tr>"
+                    f"<td>{key1}</td><td>{value1}</td>"
+                    f"<td>{key2}</td><td>{value2}</td>"
+                    f"</tr>"
+                    for (key1, value1), (key2, value2) in zip(group1_metadata.items(), group2_metadata.items())
+                )}
             </table>
             <h2>Students</h2>
             <table>
                 <tr>
-                    <th>ID</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Nickname</th>
                     <th>Score</th>
@@ -90,7 +109,7 @@ def home():
                 </tr>
                 {"".join(
                     f"<tr>"
-                    f"<td>{student_id}</td>"
+                    f"<td>{idx + 1}</td>"  # Running number
                     f"<td>{student.get('name', '')}</td>"
                     f"<td>{student.get('nickname', '')}</td>"
                     f"<td>{student.get('score', '')}</td>"
@@ -104,7 +123,7 @@ def home():
                         for date in all_dates
                     )
                     + f"</tr>"
-                    for student_id, student in students.items()
+                    for idx, (student_id, student) in enumerate(students.items())  # Use enumerate for running number
                 )}
             </table>
         </body>
