@@ -7,12 +7,12 @@
     "def_ccp": "120",
     "def_travel": "200",
     "def_bonus": "1000",
-    "show_score": "No",
-    "show_prestest": "No",
-    "show_posttest": "No",
+    "show_score": "Yes",
+    "show_prestest": "Yes",
+    "show_posttest": "Yes",
     "show_attn": "Yes",
-    "show_p": "No",
-    "show_a": "No",
-    "show_l": "No",
+    "show_p": "Yes",
+    "show_a": "Yes",
+    "show_l": "Yes",
     "show_dates": "Yes"
 }

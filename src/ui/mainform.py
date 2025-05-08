@@ -221,7 +221,7 @@ class Mainform(QMainWindow):
         self.table_layout.setContentsMargins(0, 0, 0, 0)
 
         # Frozen Table
-        frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]  # Updated PreTest -> Pre, PostTest -> Post
         frozen_data = [
             [
                 idx + 1,
@@ -464,7 +464,7 @@ class Mainform(QMainWindow):
         active_students = {key: student for key, student in self.students.items() if student.get("active", "Yes") == "Yes"}
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "PreTest", "PostTest", "Attn"]
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]  # Updated PreTest -> Pre, PostTest -> Post
         frozen_data = [
             [
                 idx + 1,
