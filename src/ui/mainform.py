@@ -636,6 +636,11 @@ class Mainform(QMainWindow):
     def run_html_output(self):
         """Run htmlbluecard.py to output HTML."""
         try:
+            # Write data to a temporary JSON file
+            temp_data_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "temp_data.json"))
+            with open(temp_data_file, "w", encoding="utf-8") as f:
+                json.dump(self.data, f, indent=4)
+
             # Run htmlbluecard.py in a separate process
             subprocess.Popen(
                 ["python", "src/ui/htmlbluecard.py"],

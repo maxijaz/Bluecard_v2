@@ -1,0 +1,152 @@
+{
+    "classes": {
+        "OLO123": {
+            "metadata": {
+                "class_no": "OLO123",
+                "Company": "ACERs",
+                "Consultant": "Frasers",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "Floor 23",
+                "CourseBook": "IEX",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "20",
+                "StartDate": "01/05/2025",
+                "FinishDate": "15/06/2025",
+                "Days": "Tuesday, Thursday",
+                "Time": "17:00 - 19:00",
+                "Notes": "Bring Projector and screen",
+                "rate": "530",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000"
+            },
+            "students": {
+                "S001": {
+                    "name": "Alice Kim",
+                    "gender": "Female",
+                    "nickname": "Ali",
+                    "score": "82% - A",
+                    "pre_test": "70%",
+                    "post_test": "90%",
+                    "active": "Yes",
+                    "note": "Very punctual and loves discussions",
+                    "attendance": {
+                        "01/05/2025": "P",
+                        "06/05/2025": "A",
+                        "08/05/2025": "P",
+                        "13/05/2025": "L",
+                        "15/05/2025": "P"
+                    }
+                },
+                "S002": {
+                    "name": "Ben Lees",
+                    "nickname": "Nokd",
+                    "gender": "Male",
+                    "score": "55% - B",
+                    "pre_test": "50%",
+                    "post_test": "75%",
+                    "note": "Likes conversations and grammar",
+                    "active": "Yes",
+                    "attendance": {
+                        "01/05/2025": "L",
+                        "06/05/2025": "P",
+                        "08/05/2025": "P",
+                        "13/05/2025": "A",
+                        "15/05/2025": "P"
+                    }
+                },
+                "S003": {
+                    "name": "mick",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S004": {
+                    "name": "john",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S006": {
+                    "name": "Jee Monkey",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S007": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S008": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S009": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S010": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S011": {
+                    "name": "New Student",
+                    "nickname": "Newbie",
+                    "gender": "Other",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "Test student",
+                    "active": "Yes",
+                    "attendance": {}
+                }
+            },
+            "archive": "No"
+        }
+    }
+}
