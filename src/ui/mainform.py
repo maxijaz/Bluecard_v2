@@ -133,7 +133,7 @@ class Mainform(QMainWindow):
         # Fixed widths for the date columns
         for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
             if self.scrollable_column_visibility["Dates"]:
-                self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
+                self.scrollable_table.setColumnWidth(col, 40)  # Default width for date columns
                 self.scrollable_table.setColumnHidden(col, False)
             else:
                 self.scrollable_table.setColumnHidden(col, True)
@@ -515,7 +515,7 @@ class Mainform(QMainWindow):
 
         # Set fixed width for date columns
         for col in range(3, len(scrollable_headers)):  # Date columns start at index 3
-            self.scrollable_table.setColumnWidth(col, 50)  # Fixed width for date columns
+            self.scrollable_table.setColumnWidth(col, 40)  # Fixed width for date columns
             self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
 
         # Center the headers for P, A, L
