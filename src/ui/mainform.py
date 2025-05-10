@@ -657,7 +657,15 @@ class Mainform(QMainWindow):
         # Update the metadata dictionary
         self.metadata = self.data["classes"][self.class_id]["metadata"]
 
-        # Update the metadata fields
+        # Clear the existing metadata layout
+        metadata_widget = self.layout.itemAt(0).widget()
+        metadata_layout = metadata_widget.layout()
+        while metadata_layout.count():
+            item = metadata_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Rebuild the metadata fields
         metadata_fields = [
             ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
              f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
@@ -668,16 +676,32 @@ class Mainform(QMainWindow):
             ("Notes:", self.metadata.get("Notes", ""), "", ""),
         ]
 
-        # Iterate over the metadata fields and update the corresponding widgets
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
-            # Update Value 1
-            value1_widget = self.layout.itemAt(0).widget().layout().itemAtPosition(row, 1).widget()
-            value1_widget.setText(value1)
+            # Label 1
+            label1_widget = QLabel(label1)
+            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
+            label1_widget.setFixedWidth(100)  # Set fixed width for labels
+            metadata_layout.addWidget(label1_widget, row, 0)
+
+            # Value 1
+            value1_widget = QLabel(value1)
+            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
+            value1_widget.setFixedWidth(200)  # Set fixed width for fields
+            metadata_layout.addWidget(value1_widget, row, 1)
 
             if label2:
-                # Update Value 2
-                value2_widget = self.layout.itemAt(0).widget().layout().itemAtPosition(row, 3).widget()
-                value2_widget.setText(value2)
+                # Label 2
+                label2_widget = QLabel(label2)
+                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
+                label2_widget.setFixedWidth(100)  # Set fixed width for labels
+                metadata_layout.addWidget(label2_widget, row, 2)
+
+            if value2:
+                # Value 2
+                value2_widget = QLabel(value2)
+                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
+                value2_widget.setFixedWidth(200)  # Set fixed width for fields
+                metadata_layout.addWidget(value2_widget, row, 3)
 
     def open_calendar_view(self):
         """Open the calendar view to display and manage the schedule."""
@@ -690,16 +714,44 @@ class Mainform(QMainWindow):
         # Define a callback to handle saving changes from the calendar
         def on_save_callback(selected_dates):
             print(f"Selected dates from calendar: {selected_dates}")  # Debugging: Check selected dates
-            self.metadata["Dates"] = selected_dates  # Update the metadata with the selected dates
 
-            # Replace "Empty-1" with the earliest selected date
-            if selected_dates:
-                self.metadata["StartDate"] = selected_dates[0]  # Set the earliest date as StartDate
+            # Remove placeholders from the existing Dates metadata
+            existing_dates = [date for date in self.metadata.get("Dates", []) if not date.startswith("Empty-")]
+            print(f"Existing dates after removing placeholders: {existing_dates}")  # Debugging: Check existing dates
+
+            # Combine existing dates with newly selected dates, ensuring no duplicates
+            combined_dates = list(dict.fromkeys(existing_dates + selected_dates))
+            print(f"Combined dates: {combined_dates}")  # Debugging: Check combined dates
+
+            # Sort dates chronologically
+            combined_dates = sorted(combined_dates, key=lambda d: datetime.strptime(d, "%d/%m/%Y"))
+
+            # Update StartDate to the earliest date
+            if combined_dates:
+                self.metadata["StartDate"] = combined_dates[0]
                 print(f"StartDate set to: {self.metadata['StartDate']}")  # Debugging: Check StartDate
 
-            save_data(self.data)  # Save the updated data
+            # Ensure the total number of dates matches MaxClasses
+            max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])  # Extract the numeric part of MaxClasses
+            total_dates = len(combined_dates)
+            if total_dates < max_classes:
+                # Add placeholders to fill up to MaxClasses
+                placeholders = [f"Empty-{i + 1}" for i in range(total_dates, max_classes)]
+                combined_dates.extend(placeholders)
+
+            # Trim the list if it exceeds MaxClasses
+            combined_dates = combined_dates[:max_classes]
+
+            # Update the Dates metadata
+            self.metadata["Dates"] = combined_dates
             print(f"Metadata after saving dates: {self.metadata}")  # Debugging: Check updated metadata
-            self.refresh_student_table()  # Refresh the table to reflect the new dates
+
+            # Save the updated data
+            save_data(self.data)
+
+            # Refresh the metadata and table to reflect the changes
+            self.refresh_metadata()
+            self.refresh_student_table()
 
         # Open the CalendarView
         max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])  # Extract the numeric part of MaxClasses

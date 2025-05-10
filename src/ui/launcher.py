@@ -277,6 +277,18 @@ class Launcher(QMainWindow):
         """Open the Mainform after saving a new class."""
         print(f"Opening Mainform for new class ID: {class_id}")
 
+        # Check if StartDate is provided
+        metadata = self.data["classes"][class_id]["metadata"]
+        start_date = metadata.get("StartDate", "").strip()
+        if start_date:
+            print(f"StartDate provided: {start_date}")  # Debugging: Check StartDate
+            metadata["Dates"] = [start_date] + [f"Empty-{i + 1}" for i in range(int(metadata.get("MaxClasses", "20").split()[0]) - 1)]
+        else:
+            print("No StartDate provided. Using default empty dates.")  # Debugging: No StartDate
+            metadata["Dates"] = [f"Empty-{i + 1}" for i in range(int(metadata.get("MaxClasses", "20").split()[0]))]
+
+        save_data(self.data)  # Save the updated data
+
         # Open the Mainform window with the correct data
         self.mainform = Mainform(class_id, self.data, self.theme)
         self.mainform.showMaximized()  # Open the Mainform maximized
