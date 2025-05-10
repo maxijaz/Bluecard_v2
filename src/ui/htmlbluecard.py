@@ -114,65 +114,68 @@ def home():
                 th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
                 th {{ background-color: #f2f2f2; }}
                 h1, h2 {{ color: #333; }}
+                .bottom-space {{ margin-bottom: 1in; }} /* Add 1-inch space below the table */
             </style>
         </head>
         <body>
             <h1>Class Attendance - {class_id} - {company_name}</h1>
-            <table>
-                <tr>
-                    <th>Field</th>
-                    <th>Value</th>
-                    <th>Field</th>
-                    <th>Value</th>
-                </tr>
-                {"".join(
-                    f"<tr>"
-                    f"<td>{key1}</td><td>{value1}</td>"
-                    f"<td>{key2}</td><td>{value2}</td>"
-                    f"</tr>"
-                    for (key1, value1), (key2, value2) in zip(group1_metadata.items(), group2_metadata.items())
-                )}
-            </table>
-            <h2>Students</h2>
-            <table>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Nickname</th>
-                    <th>Score</th>
-                    <th>Pre-Test</th>
-                    <th>Post-Test</th>
-                    <th>P</th>
-                    <th>A</th>
-                    <th>L</th>
-                    {"".join(f"<th>{date}</th>" for date in all_dates)}
-                </tr>
-                <tr>
-                    <td colspan="6" style="font-weight: bold; text-align: right;">Running Total</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    {"".join(f"<td>{total}</td>" for total in running_totals)}
-                </tr>
-                {"".join(
-                    f"<tr>"
-                    f"<td>{idx + 1}</td>"  # Running number
-                    f"<td>{student.get('name', '')}</td>"
-                    f"<td>{student.get('nickname', '')}</td>"
-                    f"<td>{student.get('score', '')}</td>"
-                    f"<td>{student.get('pre_test', '')}</td>"
-                    f"<td>{student.get('post_test', '')}</td>"
-                    + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'P')}</td>"
-                    + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'A')}</td>"
-                    + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'L')}</td>"
-                    + "".join(
-                        f"<td>{student.get('attendance', {}).get(date, '-')}</td>"
-                        for date in all_dates
-                    )
-                    + f"</tr>"
-                    for idx, (student_id, student) in enumerate(students.items())  # Use enumerate for running number
-                )}
-            </table>
+            <div class="bottom-space">
+                <table>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                    {"".join(
+                        f"<tr>"
+                        f"<td>{key1}</td><td>{value1}</td>"
+                        f"<td>{key2}</td><td>{value2}</td>"
+                        f"</tr>"
+                        for (key1, value1), (key2, value2) in zip(group1_metadata.items(), group2_metadata.items())
+                    )}
+                </table>
+                <h2>Students</h2>
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Nickname</th>
+                        <th>Score</th>
+                        <th>Pre-Test</th>
+                        <th>Post-Test</th>
+                        <th>P</th>
+                        <th>A</th>
+                        <th>L</th>
+                        {"".join(f"<th>{date}</th>" for date in all_dates)}
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="font-weight: bold; text-align: right;">Running Total</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        {"".join(f"<td>{total}</td>" for total in running_totals)}
+                    </tr>
+                    {"".join(
+                        f"<tr>"
+                        f"<td>{idx + 1}</td>"  # Running number
+                        f"<td>{student.get('name', '')}</td>"
+                        f"<td>{student.get('nickname', '')}</td>"
+                        f"<td>{student.get('score', '')}</td>"
+                        f"<td>{student.get('pre_test', '')}</td>"
+                        f"<td>{student.get('post_test', '')}</td>"
+                        + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'P')}</td>"
+                        + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'A')}</td>"
+                        + f"<td>{sum(1 for status in student.get('attendance', {}).values() if status == 'L')}</td>"
+                        + "".join(
+                            f"<td>{student.get('attendance', {}).get(date, '-')}</td>"
+                            for date in all_dates
+                        )
+                        + f"</tr>"
+                        for idx, (student_id, student) in enumerate(students.items())  # Use enumerate for running number
+                    )}
+                </table>
+            </div>
         </body>
     </html>
     """
