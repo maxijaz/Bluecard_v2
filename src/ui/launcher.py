@@ -8,6 +8,7 @@ from ui.mainform import Mainform
 from ui.metadata_form import MetadataForm
 from ui.archive_manager import ArchiveManager
 from ui.settings import SettingsForm
+from .calendar import CalendarView
 import sys
 import json
 import os

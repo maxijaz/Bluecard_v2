@@ -17,6 +17,7 @@ import json  # Import json for reading and writing JSON files
 import subprocess  # Import subprocess to run external scripts
 import sys
 import os # Import sys and os for path manipulation
+from .calendar import CalendarView
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -217,7 +218,7 @@ class Mainform(QMainWindow):
         remove_student_btn.clicked.connect(self.remove_student)
         metadata_form_btn.clicked.connect(self.open_metadata_form)
         html_button.clicked.connect(self.run_html_output)
-        manage_dates_btn.clicked.connect(lambda: QMessageBox.information(self, "Manage Dates", "This feature is under development."))
+        manage_dates_btn.clicked.connect(self.open_calendar_view)
 
         # Add buttons to the layout
         buttons = [add_edit_student_btn, remove_student_btn, html_button, metadata_form_btn, manage_dates_btn]
@@ -420,6 +421,9 @@ class Mainform(QMainWindow):
 
     def get_attendance_dates(self):
         """Get all unique attendance dates dynamically based on StartDate, Days, and MaxClasses."""
+        if "Dates" in self.metadata:
+            return self.metadata["Dates"]
+
         max_classes_str = self.metadata.get("MaxClasses", "10")
         max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "10" from "10 (1 hour remains)")
 
@@ -485,9 +489,10 @@ class Mainform(QMainWindow):
 
         # Filter students where "Archive" = "No"
         active_students = {key: student for key, student in self.students.items() if student.get("active", "Yes") == "Yes"}
+        print(f"Active students: {active_students}")  # Debugging: Check active students
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]  # Updated PreTest -> Pre, PostTest -> Post
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]
         frozen_data = [
             [
                 idx + 1,
@@ -503,11 +508,13 @@ class Mainform(QMainWindow):
 
         # Add "Running Total" row to the frozen table
         frozen_data.insert(0, ["", "Running Total", "", "", "", "", ""])
+        print(f"Frozen table data: {frozen_data}")  # Debugging: Check frozen table data
 
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
         # Rebuild the scrollable table data
-        attendance_dates = self.get_attendance_dates()
+        attendance_dates = self.metadata.get("Dates", [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))])
+        print(f"Attendance dates for scrollable table: {attendance_dates}")  # Debugging: Check attendance dates
         scrollable_headers = ["P", "A", "L"] + attendance_dates
         scrollable_data = []
 
@@ -526,30 +533,9 @@ class Mainform(QMainWindow):
 
         # Add "Running Total" row to the scrollable table
         scrollable_data.insert(0, running_total_row)
-
-        print(f"Scrollable data: {scrollable_data}")  # Debugging: Check scrollable table data
+        print(f"Scrollable table data: {scrollable_data}")  # Debugging: Check scrollable table data
 
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
-
-        # Style the first three columns (P, A, L)
-        for col in range(3):
-            self.scrollable_table.setColumnWidth(col, 35)  # Fixed width for P, A, L
-            self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
-
-        # Set fixed width for date columns
-        for col in range(3, len(scrollable_headers)):  # Date columns start at index 3
-            self.scrollable_table.setColumnWidth(col, 40)  # Fixed width for date columns
-            self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
-
-        # Center the headers for P, A, L
-        self.scrollable_table.horizontalHeader().setStyleSheet(
-            """
-            QHeaderView::section {
-                font-weight: normal;
-                text-align: center;
-            }
-            """
-        )
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -692,6 +678,34 @@ class Mainform(QMainWindow):
                 # Update Value 2
                 value2_widget = self.layout.itemAt(0).widget().layout().itemAtPosition(row, 3).widget()
                 value2_widget.setText(value2)
+
+    def open_calendar_view(self):
+        """Open the calendar view to display and manage the schedule."""
+        print("Opening Calendar View...")  # Debugging: Method entry
+
+        # Get the current attendance dates
+        scheduled_dates = self.get_attendance_dates()
+        print(f"Scheduled dates before calendar: {scheduled_dates}")  # Debugging: Check current dates
+
+        # Define a callback to handle saving changes from the calendar
+        def on_save_callback(selected_dates):
+            print(f"Selected dates from calendar: {selected_dates}")  # Debugging: Check selected dates
+            self.metadata["Dates"] = selected_dates  # Update the metadata with the selected dates
+
+            # Replace "Empty-1" with the earliest selected date
+            if selected_dates:
+                self.metadata["StartDate"] = selected_dates[0]  # Set the earliest date as StartDate
+                print(f"StartDate set to: {self.metadata['StartDate']}")  # Debugging: Check StartDate
+
+            save_data(self.data)  # Save the updated data
+            print(f"Metadata after saving dates: {self.metadata}")  # Debugging: Check updated metadata
+            self.refresh_student_table()  # Refresh the table to reflect the new dates
+
+        # Open the CalendarView
+        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])  # Extract the numeric part of MaxClasses
+        print(f"Max classes allowed: {max_classes}")  # Debugging: Check max classes
+        calendar_view = CalendarView(self, scheduled_dates, on_save_callback, max_dates=max_classes)
+        calendar_view.exec_()
 
 
 if __name__ == "__main__":
