@@ -28,12 +28,27 @@ class CalendarView(QDialog):
         # Highlight already scheduled dates
         self.highlight_dates(self.selected_dates)
 
+        # Highlight today's date in red
+        self.highlight_today()
+
         # Save button
         save_button = QPushButton("Save Changes")
         save_button.clicked.connect(self.save_changes)
         layout.addWidget(save_button)
 
+    def highlight_today(self):
+        """Highlight today's date in red without showing the blue selection box."""
+        today = QDate.currentDate()
+        format = QTextCharFormat()
+        format.setBackground(QColor(255, 102, 102))  # Light red background
+        format.setForeground(QColor("black"))  # Ensure the text is visible
+        self.calendar.setDateTextFormat(today, format)
+
+        # Clear the blue selection box
+        self.calendar.setSelectedDate(QDate())  # Set to an invalid date to clear selection
+
     def highlight_dates(self, dates):
+        """Highlight selected dates in light blue."""
         format = QTextCharFormat()
         format.setBackground(QColor("lightblue"))
         for date in dates:
@@ -41,19 +56,34 @@ class CalendarView(QDialog):
                 self.calendar.setDateTextFormat(date, format)
 
     def clear_highlight(self, date):
+        """Clear the highlight for a specific date."""
         if date.isValid():
             self.calendar.setDateTextFormat(date, QTextCharFormat())
 
     def toggle_date_selection(self, date):
-        if date in self.selected_dates:
-            self.selected_dates.remove(date)
-            self.clear_highlight(date)
+        """Toggle the selection of a date."""
+        if self.max_dates == 1:
+            # Single-date mode: Clear the previous selection and select the new date
+            if self.selected_dates:
+                # Clear the previously selected date
+                for selected_date in self.selected_dates:
+                    self.clear_highlight(selected_date)
+                self.selected_dates.clear()
+
+            # Add the new date
+            self.selected_dates.add(date)
+            self.highlight_dates([date])
         else:
-            if len(self.selected_dates) < self.max_dates:
-                self.selected_dates.add(date)
-                self.highlight_dates([date])
+            # Multi-date mode: Toggle the selection of the clicked date
+            if date in self.selected_dates:
+                self.selected_dates.remove(date)
+                self.clear_highlight(date)
             else:
-                QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
+                if len(self.selected_dates) < self.max_dates:
+                    self.selected_dates.add(date)
+                    self.highlight_dates([date])
+                else:
+                    QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
 
     def save_changes(self):
         """Save the selected dates."""
