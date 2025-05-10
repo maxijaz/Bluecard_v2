@@ -139,7 +139,7 @@ class Mainform(QMainWindow):
         # Fixed widths for the date columns
         for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
             if self.scrollable_column_visibility["Dates"]:
-                self.scrollable_table.setColumnWidth(col, 40)  # Default width for date columns
+                self.scrollable_table.setColumnWidth(col, 60)  # Default width for date columns
                 self.scrollable_table.setColumnHidden(col, False)
             else:
                 self.scrollable_table.setColumnHidden(col, True)
