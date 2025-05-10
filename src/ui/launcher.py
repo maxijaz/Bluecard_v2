@@ -9,6 +9,7 @@ from ui.metadata_form import MetadataForm
 from ui.archive_manager import ArchiveManager
 from ui.settings import SettingsForm
 from .calendar import CalendarView
+from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 import sys
 import json
 import os
@@ -282,10 +283,14 @@ class Launcher(QMainWindow):
         start_date = metadata.get("StartDate", "").strip()
         if start_date:
             print(f"StartDate provided: {start_date}")  # Debugging: Check StartDate
-            metadata["Dates"] = [start_date] + [f"Empty-{i + 1}" for i in range(int(metadata.get("MaxClasses", "20").split()[0]) - 1)]
+            metadata["Dates"] = [start_date]
         else:
             print("No StartDate provided. Using default empty dates.")  # Debugging: No StartDate
-            metadata["Dates"] = [f"Empty-{i + 1}" for i in range(int(metadata.get("MaxClasses", "20").split()[0]))]
+            metadata["Dates"] = []
+
+        # Ensure metadata and students are synchronized
+        students = self.data["classes"][class_id]["students"]
+        metadata, students = update_dates(metadata, students)
 
         save_data(self.data)  # Save the updated data
 

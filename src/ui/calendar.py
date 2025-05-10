@@ -4,7 +4,7 @@ from PyQt5.QtGui import QTextCharFormat, QColor
 
 
 class CalendarView(QDialog):
-    def __init__(self, parent=None, scheduled_dates=None, on_save_callback=None, max_dates=20):
+    def __init__(self, parent=None, scheduled_dates=None, on_save_callback=None, max_dates=20, protected_dates=None):
         super().__init__(parent)
         self.setWindowTitle("Class Schedule Calendar")
         self.setFixedSize(400, 400)
@@ -15,6 +15,9 @@ class CalendarView(QDialog):
         # Convert incoming date strings to QDate objects
         self.scheduled_dates = [QDate.fromString(d, "dd/MM/yyyy") for d in (scheduled_dates or [])]
         self.selected_dates = set(self.scheduled_dates)
+
+        # Convert protected dates to QDate objects
+        self.protected_dates = [QDate.fromString(d, "dd/MM/yyyy") for d in (protected_dates or [])]
 
         # Layout
         layout = QVBoxLayout(self)
@@ -27,6 +30,9 @@ class CalendarView(QDialog):
 
         # Highlight already scheduled dates
         self.highlight_dates(self.selected_dates)
+
+        # Highlight protected dates in gray
+        self.highlight_protected_dates(self.protected_dates)
 
         # Highlight today's date in red
         self.highlight_today()
@@ -44,13 +50,19 @@ class CalendarView(QDialog):
         format.setForeground(QColor("black"))  # Ensure the text is visible
         self.calendar.setDateTextFormat(today, format)
 
-        # Clear the blue selection box
-        self.calendar.setSelectedDate(QDate())  # Set to an invalid date to clear selection
-
     def highlight_dates(self, dates):
         """Highlight selected dates in light blue."""
         format = QTextCharFormat()
         format.setBackground(QColor("lightblue"))
+        for date in dates:
+            if date.isValid():
+                self.calendar.setDateTextFormat(date, format)
+
+    def highlight_protected_dates(self, dates):
+        """Highlight protected dates in gray."""
+        format = QTextCharFormat()
+        format.setBackground(QColor("gray"))
+        format.setForeground(QColor("white"))  # Ensure the text is visible
         for date in dates:
             if date.isValid():
                 self.calendar.setDateTextFormat(date, format)
@@ -62,28 +74,20 @@ class CalendarView(QDialog):
 
     def toggle_date_selection(self, date):
         """Toggle the selection of a date."""
-        if self.max_dates == 1:
-            # Single-date mode: Clear the previous selection and select the new date
-            if self.selected_dates:
-                # Clear the previously selected date
-                for selected_date in self.selected_dates:
-                    self.clear_highlight(selected_date)
-                self.selected_dates.clear()
+        if date in self.protected_dates:
+            # Prevent changes to protected dates
+            QMessageBox.warning(self, "Protected Date", "This date cannot be changed because it has attendance data.")
+            return
 
-            # Add the new date
-            self.selected_dates.add(date)
-            self.highlight_dates([date])
+        if date in self.selected_dates:
+            self.selected_dates.remove(date)
+            self.clear_highlight(date)
         else:
-            # Multi-date mode: Toggle the selection of the clicked date
-            if date in self.selected_dates:
-                self.selected_dates.remove(date)
-                self.clear_highlight(date)
+            if len(self.selected_dates) < self.max_dates:
+                self.selected_dates.add(date)
+                self.highlight_dates([date])
             else:
-                if len(self.selected_dates) < self.max_dates:
-                    self.selected_dates.add(date)
-                    self.highlight_dates([date])
-                else:
-                    QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
+                QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
 
     def save_changes(self):
         """Save the selected dates."""

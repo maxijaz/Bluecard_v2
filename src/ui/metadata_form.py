@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import save_data
 from .calendar import CalendarView  # Import CalendarView
+from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 
 
 class MetadataForm(QDialog):
@@ -167,7 +168,6 @@ class MetadataForm(QDialog):
 
         # Preserve existing dates and rebuild the Dates metadata
         existing_dates = self.data["classes"][self.class_id]["metadata"].get("Dates", []) if self.is_edit else []
-        existing_dates = [date for date in existing_dates if not date.startswith("Empty-")]  # Remove placeholders
         new_start_date = metadata.get("StartDate", "")
 
         # Combine new StartDate and existing dates
@@ -178,31 +178,16 @@ class MetadataForm(QDialog):
         else:
             combined_dates = existing_dates
 
-        # Add newly selected dates from the calendar
-        selected_dates = self.data.get("selected_dates", [])
-        combined_dates.extend(selected_dates)
-
-        # Remove duplicates and sort dates chronologically
-        combined_dates = sorted(set(combined_dates), key=lambda d: datetime.strptime(d, "%d/%m/%Y"))
-
-        # Update StartDate to the earliest date
-        if combined_dates:
-            metadata["StartDate"] = combined_dates[0]
-
-        # Pad with placeholders to match MaxClasses
-        max_classes = int(metadata["MaxClasses"].split()[0])
-        total_dates = len(combined_dates)
-        if total_dates < max_classes:
-            placeholders = [f"Empty-{i + 1}" for i in range(total_dates, max_classes)]
-            combined_dates.extend(placeholders)
-
-        # Trim excess dates if necessary
-        metadata["Dates"] = combined_dates[:max_classes]
+        # Update metadata and students using update_dates
+        metadata["Dates"] = combined_dates
+        students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
+        metadata, students = update_dates(metadata, students)
 
         if not self.is_edit:
-            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
+            self.data["classes"][class_no] = {"metadata": metadata, "students": students, "archive": "No"}
         else:
             self.data["classes"][self.class_id]["metadata"] = metadata
+            self.data["classes"][self.class_id]["students"] = students
 
         save_data(self.data)
         self.on_metadata_save()
