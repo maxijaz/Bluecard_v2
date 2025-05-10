@@ -397,10 +397,12 @@ class Mainform(QMainWindow):
     def open_metadata_form(self):
         """Open the Metadata Form."""
         print("Manage Metadata button clicked")
+
+        # Pass the Dates metadata to the MetadataForm
         metadata_form = MetadataForm(
-            self, 
-            self.class_id, 
-            self.data, 
+            self,
+            self.class_id,
+            self.data,
             self.theme,  # Pass the theme argument
             self.refresh_student_table,  # Pass the on_metadata_save callback
             is_read_only=True  # Make class_no read-only

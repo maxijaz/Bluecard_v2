@@ -160,8 +160,8 @@ class Launcher(QMainWindow):
         if not defaults:
             return  # Exit if defaults could not be loaded
 
-        # Open the MetadataForm with default values
-        metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults)
+        # Open the MetadataForm with single-date mode enabled
+        metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True)
         metadata_form.class_saved.connect(self.open_mainform_after_save)  # Connect the signal
         metadata_form.exec_()  # Open the form as a modal dialog
 
