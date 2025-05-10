@@ -9,9 +9,6 @@
                 "TeacherNo": "A20049",
                 "Room": "Floor 23",
                 "CourseBook": "IEX",
-                "CourseHours": "40",
-                "ClassTime": "2",
-                "MaxClasses": "20",
                 "StartDate": "01/05/2025",
                 "FinishDate": "15/10/2025",
                 "Days": "Tuesday, Thursday",
@@ -20,7 +17,10 @@
                 "rate": "530",
                 "ccp": "120",
                 "travel": "200",
-                "bonus": "1000"
+                "bonus": "1000",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "20 x 2.0 = 40.0"
             },
             "students": {
                 "S001": {

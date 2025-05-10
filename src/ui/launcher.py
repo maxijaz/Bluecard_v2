@@ -131,7 +131,8 @@ class Launcher(QMainWindow):
         self.close()  # Close the Launcher
 
     def show_launcher(self):
-        """Reopen the Launcher and center it on the screen."""
+        """Reopen the Launcher and refresh its data."""
+        self.refresh_data()  # Refresh the data and table
         self.show()
         self.center_window()
 
@@ -280,6 +281,13 @@ class Launcher(QMainWindow):
         self.mainform.showMaximized()  # Open the Mainform maximized
         self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
         self.close()  # Close the Launcher
+
+    def refresh_data(self):
+        """Refresh the data and table in the Launcher."""
+        print("Refreshing data in Launcher...")  # Debugging: Method entry
+        self.data = load_data()  # Reload the data from the source
+        self.classes = self.data.get("classes", {})  # Update the classes dictionary
+        self.populate_table()  # Refresh the table with the updated data
 
 
 if __name__ == "__main__":

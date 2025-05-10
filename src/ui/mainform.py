@@ -209,21 +209,21 @@ class Mainform(QMainWindow):
         add_edit_student_btn = QPushButton("Add/Edit Student")
         remove_student_btn = QPushButton("Manage/Remove Students")  # Correct button
         metadata_form_btn = QPushButton("Manage Metadata")
+        html_button = QPushButton("Run HTML Output")  # Move this button here
+        manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
 
         # Connect buttons to their respective methods
         add_edit_student_btn.clicked.connect(self.add_edit_student)
         remove_student_btn.clicked.connect(self.remove_student)
         metadata_form_btn.clicked.connect(self.open_metadata_form)
+        html_button.clicked.connect(self.run_html_output)
+        manage_dates_btn.clicked.connect(lambda: QMessageBox.information(self, "Manage Dates", "This feature is under development."))
 
-        buttons = [add_edit_student_btn, remove_student_btn, metadata_form_btn]
+        # Add buttons to the layout
+        buttons = [add_edit_student_btn, remove_student_btn, html_button, metadata_form_btn, manage_dates_btn]
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
-
-        # Add a button to run htmlbluecard.py
-        html_button = QPushButton("Run HTML Output")
-        html_button.clicked.connect(self.run_html_output)  # Connect button to method
-        self.layout.addWidget(html_button)  # Add button to the main layout
 
         # Table Section
         self.table_layout = QHBoxLayout()
@@ -396,8 +396,21 @@ class Mainform(QMainWindow):
     def open_metadata_form(self):
         """Open the Metadata Form."""
         print("Manage Metadata button clicked")
-        metadata_form = MetadataForm(self, self.class_id, self.data)
-        metadata_form.exec_()  # Open the form as a modal dialog
+        metadata_form = MetadataForm(
+            self, 
+            self.class_id, 
+            self.data, 
+            self.theme,  # Pass the theme argument
+            self.refresh_student_table,  # Pass the on_metadata_save callback
+            is_read_only=True  # Make class_no read-only
+        )
+
+        # Connect the class_saved signal to refresh the metadata and student table
+        metadata_form.class_saved.connect(self.refresh_metadata)
+        metadata_form.class_saved.connect(self.refresh_student_table)
+
+        # Open the form as a modal dialog
+        metadata_form.exec_()
 
     def resizeEvent(self, event):
         """Adjust the width and position of the scrollable table dynamically."""
@@ -650,6 +663,35 @@ class Mainform(QMainWindow):
             QMessageBox.information(self, "HTML Output", "HTML output is running in your browser.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to run HTML output: {e}")
+
+    def refresh_metadata(self):
+        """Refresh the metadata section with updated data."""
+        print("Refreshing metadata...")  # Debugging: Method entry
+
+        # Update the metadata dictionary
+        self.metadata = self.data["classes"][self.class_id]["metadata"]
+
+        # Update the metadata fields
+        metadata_fields = [
+            ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
+             f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
+            ("Room:", self.metadata.get("Room", ""), "Start Date:", self.metadata.get("StartDate", "")),
+            ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
+            ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
+            ("CourseBook:", self.metadata.get("CourseBook", ""), "Time:", self.metadata.get("Time", "")),
+            ("Notes:", self.metadata.get("Notes", ""), "", ""),
+        ]
+
+        # Iterate over the metadata fields and update the corresponding widgets
+        for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
+            # Update Value 1
+            value1_widget = self.layout.itemAt(0).widget().layout().itemAtPosition(row, 1).widget()
+            value1_widget.setText(value1)
+
+            if label2:
+                # Update Value 2
+                value2_widget = self.layout.itemAt(0).widget().layout().itemAtPosition(row, 3).widget()
+                value2_widget.setText(value2)
 
 
 if __name__ == "__main__":

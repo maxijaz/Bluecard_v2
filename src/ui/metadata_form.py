@@ -10,13 +10,14 @@ from logic.parser import save_data
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
 
-    def __init__(self, parent, class_id, data, theme, on_metadata_save, defaults=None):
+    def __init__(self, parent, class_id, data, theme, on_metadata_save, defaults=None, is_read_only=False):
         super().__init__(parent)
         self.class_id = class_id
         self.data = data
         self.theme = theme
         self.on_metadata_save = on_metadata_save
         self.is_edit = class_id is not None
+        self.is_read_only = is_read_only  # New parameter to control read-only behavior
 
         # Load defaults from default.json
         if not self.is_edit:
@@ -71,6 +72,10 @@ class MetadataForm(QDialog):
                 field_input.setText(self.defaults.get(default_key, ""))
             else:
                 field_input.setText(metadata.get(key, ""))
+
+            # Make class_no read-only if is_read_only is True
+            if key == "class_no" and self.is_read_only:
+                field_input.setReadOnly(True)
 
             self.fields[key] = field_input
             scroll_layout.addRow(field_label, field_input)
