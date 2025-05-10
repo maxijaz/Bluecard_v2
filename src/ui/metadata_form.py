@@ -33,7 +33,7 @@ class MetadataForm(QDialog):
         self.defaults = defaults or {}
 
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
-        self.setFixedSize(300, 560)  # Adjusted size for additional fields
+        self.setFixedSize(500, 700)  # Adjusted size for additional fields
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Main layout

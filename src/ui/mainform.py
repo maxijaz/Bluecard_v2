@@ -126,23 +126,9 @@ class Mainform(QMainWindow):
 
     def reset_scrollable_column_widths(self):
         """Reset the column widths of the scrollable table to their default values."""
-        # Fixed widths for the first three columns (P, A, L)
-        columns = ["P", "A", "L"]
-        widths = [35, 35, 35]
-        for i, column in enumerate(columns):
-            if self.scrollable_column_visibility[column]:
-                self.scrollable_table.setColumnWidth(i, widths[i])
-                self.scrollable_table.setColumnHidden(i, False)
-            else:
-                self.scrollable_table.setColumnHidden(i, True)
-
         # Fixed widths for the date columns
-        for col in range(3, self.scrollable_table.model().columnCount()):  # Date columns start at index 3
-            if self.scrollable_column_visibility["Dates"]:
-                self.scrollable_table.setColumnWidth(col, 60)  # Default width for date columns
-                self.scrollable_table.setColumnHidden(col, False)
-            else:
-                self.scrollable_table.setColumnHidden(col, True)
+        for col in range(self.scrollable_table.model().columnCount()):  # All columns are now date columns
+            self.scrollable_table.setColumnWidth(col, 60)  # Default width for date columns
 
         # Ensure all columns are resizable
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -494,7 +480,7 @@ class Mainform(QMainWindow):
         print(f"Active students: {active_students}")  # Debugging: Check active students
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
         frozen_data = [
             [
                 idx + 1,
@@ -504,12 +490,15 @@ class Mainform(QMainWindow):
                 student.get("pre_test", ""),
                 student.get("post_test", ""),
                 len(student.get("attendance", {})),  # Attendance count
+                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "P"),
+                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "A"),
+                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "L"),
             ]
             for idx, student in enumerate(active_students.values())
         ]
 
         # Add "Running Total" row to the frozen table
-        frozen_data.insert(0, ["", "Running Total", "", "", "", "", ""])
+        frozen_data.insert(0, ["", "Running Total", "", "", "", "", "", "", "", ""])
         print(f"Frozen table data: {frozen_data}")  # Debugging: Check frozen table data
 
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
@@ -517,27 +506,27 @@ class Mainform(QMainWindow):
         # Rebuild the scrollable table data
         attendance_dates = self.metadata.get("Dates", [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))])
         print(f"Attendance dates for scrollable table: {attendance_dates}")  # Debugging: Check attendance dates
-        scrollable_headers = ["P", "A", "L"] + attendance_dates
+        scrollable_headers = attendance_dates
         scrollable_data = []
 
         for student in active_students.values():
             attendance = student.get("attendance", {})
-            total_p = sum(1 for date in attendance_dates if attendance.get(date) == "P")
-            total_a = sum(1 for date in attendance_dates if attendance.get(date) == "A")
-            total_l = sum(1 for date in attendance_dates if attendance.get(date) == "L")
-            row_data = [total_p, total_a, total_l] + [attendance.get(date, "-") for date in attendance_dates]
+            row_data = [attendance.get(date, "-") for date in attendance_dates]
             scrollable_data.append(row_data)
 
-        # Calculate the running total for the first row
+        # Add "Running Total" row to the scrollable table
         class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
         running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
-        running_total_row = ["", "", ""] + running_total
+        running_total_row = running_total
 
-        # Add "Running Total" row to the scrollable table
         scrollable_data.insert(0, running_total_row)
         print(f"Scrollable table data: {scrollable_data}")  # Debugging: Check scrollable table data
 
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+
+        # Adjust column widths
+        self.reset_column_widths()
+        self.reset_scrollable_column_widths()
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -578,16 +567,13 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(0, 20)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
         self.frozen_table.setColumnWidth(2, 80)  # Nickname
-
-        # Dynamically set visibility for the remaining columns
-        columns = ["Score", "PreTest", "PostTest", "Attn"]
-        widths = [40, 40, 40, 40]
-        for i, column in enumerate(columns, start=3):
-            if self.column_visibility[column]:
-                self.frozen_table.setColumnWidth(i, widths[i - 3])
-                self.frozen_table.setColumnHidden(i, False)
-            else:
-                self.frozen_table.setColumnHidden(i, True)
+        self.frozen_table.setColumnWidth(3, 40)  # Score
+        self.frozen_table.setColumnWidth(4, 40)  # PreTest
+        self.frozen_table.setColumnWidth(5, 40)  # PostTest
+        self.frozen_table.setColumnWidth(6, 40)  # Attn
+        self.frozen_table.setColumnWidth(7, 35)  # P
+        self.frozen_table.setColumnWidth(8, 35)  # A
+        self.frozen_table.setColumnWidth(9, 35)  # L
 
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position
