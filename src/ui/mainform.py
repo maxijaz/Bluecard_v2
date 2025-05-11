@@ -19,6 +19,8 @@ import sys
 import os # Import sys and os for path manipulation
 from .calendar import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
+from PyQt5.QtCore import QItemSelection, QItemSelectionModel
+from .pal_cod_form import PALCODForm
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -90,12 +92,9 @@ class Mainform(QMainWindow):
 
     def __init__(self, class_id, data, theme):
         super().__init__()
-        print("Initializing Mainform...")  # Debugging: Initialization
         self.setWindowTitle(f"Class Information - {class_id}")
-
-        # Set default size and constraints
-        self.resize(1280, 720)  # Default size
-        self.setMinimumSize(800, 600)  # Minimum size
+        self.resize(1280, 720)
+        self.setMinimumSize(800, 600)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         self.class_id = class_id
@@ -104,7 +103,6 @@ class Mainform(QMainWindow):
         self.metadata = self.data["classes"][self.class_id]["metadata"]
         self.students = self.data["classes"][self.class_id]["students"]
 
-        # Load column visibility settings
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
@@ -119,10 +117,7 @@ class Mainform(QMainWindow):
             "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
         }
 
-        # Initialize frozen_table_width
-        self.frozen_table_width = 0  # Ensure it is always defined
-
-        # Initialize UI
+        self.frozen_table_width = 0
         self.init_ui()
 
     def reset_scrollable_column_widths(self):
@@ -196,19 +191,21 @@ class Mainform(QMainWindow):
         buttons_layout = QHBoxLayout()
         add_edit_student_btn = QPushButton("Add/Edit Student")
         remove_student_btn = QPushButton("Manage/Remove Students")  # Correct button
-        metadata_form_btn = QPushButton("Manage Metadata")
+        pal_cod_btn = QPushButton("PAL/COD")  # New button
         html_button = QPushButton("Run HTML Output")  # Move this button here
+        metadata_form_btn = QPushButton("Manage Metadata")
         manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
 
         # Connect buttons to their respective methods
         add_edit_student_btn.clicked.connect(self.add_edit_student)
         remove_student_btn.clicked.connect(self.remove_student)
-        metadata_form_btn.clicked.connect(self.open_metadata_form)
+        pal_cod_btn.clicked.connect(self.open_pal_cod_form)  # Connect to the new form
         html_button.clicked.connect(self.run_html_output)
+        metadata_form_btn.clicked.connect(self.open_metadata_form)
         manage_dates_btn.clicked.connect(self.open_calendar_view)
 
         # Add buttons to the layout
-        buttons = [add_edit_student_btn, remove_student_btn, html_button, metadata_form_btn, manage_dates_btn]
+        buttons = [add_edit_student_btn, remove_student_btn, pal_cod_btn, html_button, metadata_form_btn, manage_dates_btn]
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
@@ -289,6 +286,9 @@ class Mainform(QMainWindow):
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+
+        # Connect the sectionClicked signal to highlight the column
+        self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
 
         # Set the minimum section size for the horizontal header
         self.scrollable_table.horizontalHeader().setMinimumSectionSize(5)  # Set minimum width to 5 pixels
@@ -474,11 +474,11 @@ class Mainform(QMainWindow):
 
     def refresh_student_table(self):
         """Refresh the student table with updated data."""
-        print("refresh_student_table called")  # Debugging: Method entry
-
-        # Filter students where "Archive" = "No"
-        active_students = {key: student for key, student in self.students.items() if student.get("active", "Yes") == "Yes"}
-        print(f"Active students: {active_students}")  # Debugging: Check active students
+        active_students = {
+            key: student
+            for key, student in self.students.items()
+            if student.get("active", "Yes") == "Yes"
+        }
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
@@ -490,7 +490,7 @@ class Mainform(QMainWindow):
                 student.get("score", ""),
                 student.get("pre_test", ""),
                 student.get("post_test", ""),
-                len(student.get("attendance", {})),  # Attendance count
+                len(student.get("attendance", {})),
                 sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "P"),
                 sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "A"),
                 sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "L"),
@@ -500,13 +500,13 @@ class Mainform(QMainWindow):
 
         # Add "Running Total" row to the frozen table
         frozen_data.insert(0, ["", "Running Total", "", "", "", "", "", "", "", ""])
-        print(f"Frozen table data: {frozen_data}")  # Debugging: Check frozen table data
-
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
         # Rebuild the scrollable table data
-        attendance_dates = self.metadata.get("Dates", [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))])
-        print(f"Attendance dates for scrollable table: {attendance_dates}")  # Debugging: Check attendance dates
+        attendance_dates = self.metadata.get(
+            "Dates",
+            [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))]
+        )
         scrollable_headers = attendance_dates
         scrollable_data = []
 
@@ -521,8 +521,6 @@ class Mainform(QMainWindow):
         running_total_row = running_total
 
         scrollable_data.insert(0, running_total_row)
-        print(f"Scrollable table data: {scrollable_data}")  # Debugging: Check scrollable table data
-
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
 
         # Adjust column widths
@@ -582,7 +580,6 @@ class Mainform(QMainWindow):
     def adjust_frozen_table_width(self):
         """Adjust the frozen table's frame width to match the total column widths."""
         total_width = sum(self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount()))
-        print(f"Calculated frozen table width: {total_width}")  # Debugging
         self.frozen_table.setFixedWidth(total_width)
         self.frozen_table_width = total_width  # Update the frozen table width
         self.update_scrollable_table_position()  # Ensure the scrollable table is updated
@@ -591,25 +588,18 @@ class Mainform(QMainWindow):
         """Update the position and width of the scrollable table."""
         # Get the right edge of the frozen table using geometry for accurate positioning
         frozen_table_right = self.frozen_table.geometry().right()
-        print(f"Frozen table right edge (delayed): {frozen_table_right}")  # Debugging
 
         # Calculate the available width for the scrollable table
         available_width = self.width() - frozen_table_right
-        print(f"Available width for scrollable table (delayed): {available_width}")  # Debugging
 
         # Ensure the scrollable table takes up the remaining space
-        if available_width > 0:
+        if (available_width > 0):
             self.scrollable_table.setFixedWidth(available_width)
         else:
             self.scrollable_table.setFixedWidth(0)  # Fallback to 0 if no space is available
 
         # Align the scrollable table to the right of the frozen table and match its y-coordinate
         self.scrollable_table.move(frozen_table_right, self.frozen_table.geometry().top())
-        print(f"Scrollable table moved to (delayed): {self.scrollable_table.geometry()}")  # Debugging
-        print(f"Parent layout margins: {self.layout.contentsMargins()}")  # Debugging
-        print(f"Parent layout geometry: {self.container.geometry()}")  # Debugging
-        print(f"Frozen table geometry: {self.frozen_table.geometry()}")  # Debugging
-        print(f"Scrollable table geometry: {self.scrollable_table.geometry()}")  # Debugging
 
     def load_default_settings(self):
         """Load default settings from default.json."""
@@ -730,6 +720,49 @@ class Mainform(QMainWindow):
         print(f"Max classes allowed: {max_classes}")  # Debugging: Check max classes
         calendar_view = CalendarView(self, scheduled_dates, on_save_callback, max_dates=max_classes, protected_dates=protected_dates)
         calendar_view.exec_()
+
+    def highlight_column(self, column_index):
+        """Highlight the entire column when a header is clicked."""
+        self.scrollable_table.selectionModel().clearSelection()
+        model = self.scrollable_table.model()
+        row_count = model.rowCount()
+        top_left = model.index(0, column_index)
+        bottom_right = model.index(row_count - 1, column_index)
+        selection = QItemSelection(top_left, bottom_right)
+        self.scrollable_table.selectionModel().select(selection, QItemSelectionModel.Select | QItemSelectionModel.Columns)
+
+    def open_pal_cod_form(self):
+        """Open the PALCODForm to update attendance."""
+        # Get the selected column index
+        selected_columns = self.scrollable_table.selectionModel().selectedColumns()
+        if not selected_columns:
+            QMessageBox.warning(self, "No Column Selected", "Please select a column header to update.")
+            return
+
+        column_index = selected_columns[0].column()  # Get the first selected column
+        if column_index < 3:  # Ensure it's not a non-date column
+            QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
+            return
+
+        # Open the PALCODForm
+        pal_cod_form = PALCODForm(self, column_index, self.update_column_values)
+        pal_cod_form.exec_()
+
+    def update_column_values(self, column_index, value):
+        """Update the selected column with the given value for all students."""
+        attendance_dates = self.metadata.get("Dates", [])
+        if column_index - 3 >= len(attendance_dates):  # Adjust for non-date columns
+            QMessageBox.warning(self, "Invalid Column", "The selected column is out of range.")
+            return
+
+        date = attendance_dates[column_index - 3]  # Get the corresponding date
+        for student in self.students.values():
+            student["attendance"][date] = value  # Update the attendance value
+
+        # Save the updated data and refresh the table
+        save_data(self.data)
+        self.refresh_student_table()
+        QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
 
 
 if __name__ == "__main__":

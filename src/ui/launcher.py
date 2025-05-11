@@ -9,7 +9,7 @@ from ui.metadata_form import MetadataForm
 from ui.archive_manager import ArchiveManager
 from ui.settings import SettingsForm
 from .calendar import CalendarView
-from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
+from logic.update_dates import update_dates, add_date, remove_date, modify_date
 import sys
 import json
 import os
@@ -44,7 +44,7 @@ class Launcher(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # Use fixed column widths
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
@@ -123,8 +123,6 @@ class Launcher(QMainWindow):
             return
 
         class_id = self.table.item(selected_row, 0).text()
-        print(f"Selected class ID: {class_id}")
-        print("Opening Mainform...")
 
         # Open the Mainform window with the correct data
         self.mainform = Mainform(class_id, self.data, self.theme)
@@ -146,7 +144,6 @@ class Launcher(QMainWindow):
             return
 
         class_id = self.table.item(selected_row, 0).text()
-        print(f"Editing class ID: {class_id}")
 
         # Open the MetadataForm for editing
         metadata_form = MetadataForm(self, class_id, self.data, self.theme, self.refresh_table)
@@ -154,8 +151,6 @@ class Launcher(QMainWindow):
 
     def add_new_class(self):
         """Add a new class with default values."""
-        print("Adding a new class...")
-
         # Load default values
         defaults = self.load_defaults()
         if not defaults:
@@ -200,26 +195,22 @@ class Launcher(QMainWindow):
             QMessageBox.information(self, "No Archived Classes", "There are no archived classes to manage.")
             return
 
-        print(f"Opening Archive Manager for archived classes: {list(archived_classes.keys())}")
         archive_manager = ArchiveManager(self, self.data, archived_classes, self.refresh_table)
         archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):
         """Open the TTR."""
-        print("Opening TTR...")
-        # Logic to open the TTR goes here
+        pass  # Logic to open the TTR goes here
 
     def open_settings(self):
         """Open the Settings dialog."""
-        print("Opening Settings...")
         settings_form = SettingsForm(self, self.theme, self.refresh_theme)
         if settings_form.exec_() == QDialog.Accepted:
-            print("Settings updated.")
+            pass  # Handle settings update
 
     def refresh_theme(self, new_theme):
         """Refresh the theme in the Launcher."""
         self.theme = new_theme
-        print(f"Theme updated to: {new_theme}")
 
     def refresh_table(self):
         """Refresh the table with updated class data."""
@@ -245,47 +236,14 @@ class Launcher(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
 
-    def save_metadata(self):
-        """Save metadata for the class."""
-        class_no = self.fields["class_no"].text().strip().upper()
-        if not class_no:
-            QMessageBox.warning(self, "Validation Error", "Class No is required.")
-            return
-
-        if class_no in self.data["classes"] and not self.is_edit:
-            QMessageBox.warning(self, "Duplicate Class ID", f"Class ID '{class_no}' already exists.")
-            return
-
-        metadata = {key: field.text().strip() for key, field in self.fields.items()}
-        metadata["CourseHours"] = self.class_hours_input.text()
-        metadata["ClassTime"] = self.class_time_input.text()
-        metadata["MaxClasses"] = self.max_classes_input.text()
-
-        if not self.is_edit:
-            self.data["classes"][class_no] = {"metadata": metadata, "students": {}, "archive": "No"}
-        else:
-            self.data["classes"][self.class_id]["metadata"] = metadata
-
-        save_data(self.data)
-        self.on_metadata_save()
-
-        # Emit the signal with the new class ID
-        self.class_saved.emit(class_no)
-
-        self.accept()  # Close the dialog
-
     def open_mainform_after_save(self, class_id):
         """Open the Mainform after saving a new class."""
-        print(f"Opening Mainform for new class ID: {class_id}")
-
         # Check if StartDate is provided
         metadata = self.data["classes"][class_id]["metadata"]
         start_date = metadata.get("StartDate", "").strip()
         if start_date:
-            print(f"StartDate provided: {start_date}")  # Debugging: Check StartDate
             metadata["Dates"] = [start_date]
         else:
-            print("No StartDate provided. Using default empty dates.")  # Debugging: No StartDate
             metadata["Dates"] = []
 
         # Ensure metadata and students are synchronized
@@ -302,7 +260,6 @@ class Launcher(QMainWindow):
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""
-        print("Refreshing data in Launcher...")  # Debugging: Method entry
         self.data = load_data()  # Reload the data from the source
         self.classes = self.data.get("classes", {})  # Update the classes dictionary
         self.populate_table()  # Refresh the table with the updated data
