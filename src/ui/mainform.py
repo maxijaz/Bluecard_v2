@@ -486,14 +486,16 @@ class Mainform(QMainWindow):
         }
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L", "CIA", "COD"]
         frozen_data = []
 
-        # Initialize totals for [Attn], [P], [A], [L]
+        # Initialize totals for [Attn], [P], [A], [L], [CIA], [COD]
         total_attn = 0
         total_p = 0
         total_a = 0
         total_l = 0
+        total_cia = 0
+        total_cod = 0
 
         for idx, student in enumerate(active_students.values()):
             attendance = student.get("attendance", {})
@@ -501,12 +503,16 @@ class Mainform(QMainWindow):
             p_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "P")
             a_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "A")
             l_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "L")
+            cia_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "CIA")
+            cod_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "COD")
 
             # Update totals
             total_attn += attn_count
             total_p += p_count
             total_a += a_count
             total_l += l_count
+            total_cia += cia_count
+            total_cod += cod_count
 
             # Add student data to the frozen table
             frozen_data.append([
@@ -520,12 +526,14 @@ class Mainform(QMainWindow):
                 p_count,
                 a_count,
                 l_count,
+                cia_count,
+                cod_count,
             ])
 
         # Add "Running Total" row to the frozen table
         frozen_data.insert(0, [
             "", "Running Total", "", "", "", "",
-            total_attn, total_p, total_a, total_l
+            total_attn, total_p, total_a, total_l, total_cia, total_cod
         ])
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
@@ -598,6 +606,8 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(7, 35)  # P
         self.frozen_table.setColumnWidth(8, 35)  # A
         self.frozen_table.setColumnWidth(9, 35)  # L
+        self.frozen_table.setColumnWidth(10, 35)  # CIA
+        self.frozen_table.setColumnWidth(11, 35)  # COD
 
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position
@@ -774,11 +784,8 @@ class Mainform(QMainWindow):
 
         date = attendance_dates[column_index]  # Get the corresponding date
 
-        # Get the current value for the selected column (first student's value as an example)
-        current_value = next(iter(self.students.values()))["attendance"].get(date, "-")
-
-        # Open the PALCODForm
-        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, current_value, date)
+        # Open the PALCODForm with COD and CIA options, without student name
+        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=True, show_student_name=False)
         pal_cod_form.exec_()
 
     def update_column_values(self, column_index, value):
@@ -862,8 +869,8 @@ class Mainform(QMainWindow):
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
 
-        # Open the PALCODForm
-        dialog = PALCODForm(self, column, None, current_value, date, student_name)
+        # Open the PALCODForm without COD and CIA options, with student name
+        dialog = PALCODForm(self, column, None, current_value, date, student_name, show_cod_cia=False, show_student_name=True)
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
 

@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 
 
 class PALCODForm(QDialog):
-    def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name):
+    def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name=None, show_cod_cia=True, show_student_name=False):
         super().__init__(parent)
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
@@ -18,14 +18,16 @@ class PALCODForm(QDialog):
         # Layout
         layout = QVBoxLayout(self)
 
-        # Display the selected student name and date
-        student_label = QLabel(f"Student: {self.student_name}")
-        student_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 5px;")
-        layout.addWidget(student_label)
-
+        # Display the date
         date_label = QLabel(f"Date: {self.date}")
         date_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(date_label)
+
+        # Optionally display the student name
+        if show_student_name and self.student_name:
+            student_label = QLabel(f"Student: {self.student_name}")
+            student_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 5px;")
+            layout.addWidget(student_label)
 
         # Buttons
         buttons = {
@@ -34,6 +36,12 @@ class PALCODForm(QDialog):
             "L = Late": "L",
             "Clear": "-",
         }
+
+        if show_cod_cia:  # Include COD and CIA options only if show_cod_cia is True
+            buttons.update({
+                "COD = Cancel": "COD",
+                "CIA = Postpone": "CIA",
+            })
 
         for label, value in buttons.items():
             button = QPushButton(label)
