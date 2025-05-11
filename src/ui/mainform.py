@@ -786,7 +786,12 @@ class Mainform(QMainWindow):
 
         # Open the PALCODForm with COD and CIA options, without student name
         pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=True, show_student_name=False)
-        pal_cod_form.exec_()
+        if pal_cod_form.exec_() == QDialog.Accepted:
+            # Get the selected value from the form
+            new_value = pal_cod_form.selected_value
+
+            # Update the attendance data for all students in the selected column
+            self.update_column_values(column_index, new_value)
 
     def update_column_values(self, column_index, value):
         """Update the selected column with the given value for all students."""
@@ -800,7 +805,7 @@ class Mainform(QMainWindow):
         date = attendance_dates[column_index]  # Get the corresponding date
 
         # Update the attendance value for all students (skip the "Running Total" row)
-        for idx, student in enumerate(self.students.values()):
+        for student in self.students.values():
             student["attendance"][date] = value
 
         # Save the updated data
@@ -808,9 +813,6 @@ class Mainform(QMainWindow):
 
         # Refresh the frozen table and scrollable table
         self.refresh_student_table()
-
-        # Optionally, show a message box to confirm the update
-        # QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
 
     def refresh_scrollable_table_column(self, column_index):
         """Refresh a specific column in the scrollable table."""
