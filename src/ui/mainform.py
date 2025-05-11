@@ -743,12 +743,19 @@ class Mainform(QMainWindow):
 
         # Validate the column index
         attendance_dates = self.metadata.get("Dates", [])
-        if column_index < 3 or column_index - 3 >= len(attendance_dates):  # Adjust for non-date columns
+        non_date_columns = 3  # Number of non-date columns (P, A, L)
+        adjusted_index = column_index - non_date_columns
+        if adjusted_index < 0 or adjusted_index >= len(attendance_dates):  # Validate the adjusted index
             QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
             return
 
+        date = attendance_dates[adjusted_index]  # Get the corresponding date
+
+        # Get the current value for the selected column (first student's value as an example)
+        current_value = next(iter(self.students.values()))["attendance"].get(date, "-")
+
         # Open the PALCODForm
-        pal_cod_form = PALCODForm(self, column_index, self.update_column_values)
+        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, current_value)
         pal_cod_form.exec_()
 
     def update_column_values(self, column_index, value):

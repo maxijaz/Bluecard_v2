@@ -2,13 +2,14 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QMessageBox
 
 
 class PALCODForm(QDialog):
-    def __init__(self, parent, column_index, update_column_callback):
+    def __init__(self, parent, column_index, update_column_callback, current_value):
         super().__init__(parent)
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
 
         self.column_index = column_index
         self.update_column_callback = update_column_callback
+        self.current_value = current_value
 
         # Layout
         layout = QVBoxLayout(self)
@@ -25,6 +26,8 @@ class PALCODForm(QDialog):
 
         for label, value in buttons.items():
             button = QPushButton(label)
+            if value == self.current_value:  # Highlight the current value
+                button.setStyleSheet("background-color: lightblue; font-weight: bold;")
             button.clicked.connect(lambda _, v=value: self.update_column(v))
             layout.addWidget(button)
 
