@@ -14,7 +14,7 @@ class SettingsForm(QDialog):
     def __init__(self, parent, current_theme, on_theme_change):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setFixedSize(450, 600)
+        self.setFixedSize(450, 700)
         self.setWindowModality(Qt.ApplicationModal)
 
         self.current_theme = current_theme
@@ -87,7 +87,9 @@ class SettingsForm(QDialog):
             "show_score": "Show Score",
             "show_prestest": "Show PreTest",
             "show_posttest": "Show PostTest",
-            "show_attn": "Show Attn"
+            "show_attn": "Show Attn",
+            "show_cia": "Show CIA",  # Add checkbox for CIA
+            "show_cod": "Show COD"   # Add checkbox for COD
         }
         for key, label in column_fields.items():
             checkbox = QCheckBox(label)
