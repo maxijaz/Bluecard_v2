@@ -560,6 +560,9 @@ class Mainform(QMainWindow):
         self.reset_column_widths()
         self.reset_scrollable_column_widths()
 
+        print("Frozen Data:", frozen_data)
+        print("Scrollable Data:", scrollable_data)
+
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
         selected_row = index.row()
