@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QMessageBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel, QMessageBox
+from PyQt5.QtCore import Qt
 
 
 class PALCODForm(QDialog):
-    def __init__(self, parent, column_index, update_column_callback, current_value):
+    def __init__(self, parent, column_index, update_column_callback, current_value, date):
         super().__init__(parent)
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
@@ -10,9 +11,15 @@ class PALCODForm(QDialog):
         self.column_index = column_index
         self.update_column_callback = update_column_callback
         self.current_value = current_value
+        self.date = date
 
         # Layout
         layout = QVBoxLayout(self)
+
+        # Display the selected date
+        date_label = QLabel(f"Selected Date: {self.date}")
+        date_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
+        layout.addWidget(date_label)
 
         # Buttons
         buttons = {

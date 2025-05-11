@@ -755,7 +755,7 @@ class Mainform(QMainWindow):
         current_value = next(iter(self.students.values()))["attendance"].get(date, "-")
 
         # Open the PALCODForm
-        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, current_value)
+        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, current_value, date)
         pal_cod_form.exec_()
 
     def update_column_values(self, column_index, value):
