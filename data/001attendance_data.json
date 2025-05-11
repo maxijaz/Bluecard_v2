@@ -36,6 +36,17 @@
                     "note": "",
                     "active": "Yes",
                     "attendance": {}
+                },
+                "S002": {
+                    "name": "Jee",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
                 }
             },
             "archive": "No"
