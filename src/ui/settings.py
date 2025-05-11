@@ -14,7 +14,7 @@ class SettingsForm(QDialog):
     def __init__(self, parent, current_theme, on_theme_change):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setFixedSize(350, 400)
+        self.setFixedSize(450, 600)
         self.setWindowModality(Qt.ApplicationModal)
 
         self.current_theme = current_theme
