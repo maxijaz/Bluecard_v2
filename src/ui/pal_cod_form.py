@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 
 
 class PALCODForm(QDialog):
-    def __init__(self, parent, column_index, update_column_callback, current_value, date):
+    def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name):
         super().__init__(parent)
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
@@ -12,12 +12,18 @@ class PALCODForm(QDialog):
         self.update_column_callback = update_column_callback
         self.current_value = current_value
         self.date = date
+        self.student_name = student_name
+        self.selected_value = None  # Initialize the selected_value attribute
 
         # Layout
         layout = QVBoxLayout(self)
 
-        # Display the selected date
-        date_label = QLabel(f"Selected Date: {self.date}")
+        # Display the selected student name and date
+        student_label = QLabel(f"Student: {self.student_name}")
+        student_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 5px;")
+        layout.addWidget(student_label)
+
+        date_label = QLabel(f"Date: {self.date}")
         date_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(date_label)
 
@@ -26,8 +32,6 @@ class PALCODForm(QDialog):
             "P = Present": "P",
             "A = Absent": "A",
             "L = Late": "L",
-            "COD = Cancel": "COD",
-            "CIA = Postpone": "CIA",
             "Clear": "-",
         }
 
@@ -43,9 +47,9 @@ class PALCODForm(QDialog):
         confirm = QMessageBox.question(
             self,
             "Confirm Update",
-            f"Are you sure you want to set all values in this column to '{value}'?",
+            f"Are you sure you want to set this field to '{value}'?",
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            self.update_column_callback(self.column_index, value)
+            self.selected_value = value  # Set the selected value
             self.accept()  # Close the form

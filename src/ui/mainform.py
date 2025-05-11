@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
-    QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate  # Added QMessageBox
+    QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate, QDialog  # Added QDialog
 )
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QFont
@@ -324,6 +324,8 @@ class Mainform(QMainWindow):
         self.refresh_student_table()  # Populate the tables during initialization
         self.reset_column_widths()
         self.reset_scrollable_column_widths()
+
+        self.scrollable_table.doubleClicked.connect(self.edit_attendance_field)
 
     # Button Methods
     def add_edit_student(self):
@@ -838,6 +840,73 @@ class Mainform(QMainWindow):
 
         # Reset column widths
         self.reset_scrollable_column_widths()
+
+    def edit_attendance_field(self, index):
+        """Open a dialog to edit the selected attendance field."""
+        row = index.row()
+        column = index.column()
+
+        # Skip the "Running Total" row
+        if row == 0:
+            QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
+            return
+
+        # Get the corresponding student and date
+        attendance_dates = self.metadata.get("Dates", [])
+        if column < 0 or column >= len(attendance_dates):
+            QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
+            return
+
+        date = attendance_dates[column]
+        student_id = list(self.students.keys())[row - 1]  # Adjust for "Running Total" row
+        student_name = self.students[student_id].get("name", "Unknown")
+        current_value = self.students[student_id]["attendance"].get(date, "-")
+
+        # Open the PALCODForm
+        dialog = PALCODForm(self, column, None, current_value, date, student_name)
+        if dialog.exec_() == QDialog.Accepted:
+            new_value = dialog.selected_value
+
+            # Update the attendance data for the specific student and date
+            self.students[student_id]["attendance"][date] = new_value
+
+            # Save the updated data
+            save_data(self.data)
+
+            # Refresh the tables
+            self.refresh_student_table()
+
+
+class EditAttendanceDialog(QDialog):
+    def __init__(self, parent, current_value):
+        super().__init__(parent)
+        self.setWindowTitle("Edit Attendance")
+        self.setFixedSize(300, 200)
+
+        self.selected_value = current_value
+
+        # Layout
+        layout = QVBoxLayout(self)
+
+        # Buttons
+        buttons = {
+            "P = Present": "P",
+            "A = Absent": "A",
+            "L = Late": "L",
+            "Clear": "-",
+        }
+
+        for label, value in buttons.items():
+            button = QPushButton(label)
+            if value == current_value:  # Highlight the current value
+                button.setStyleSheet("background-color: lightblue; font-weight: bold;")
+            button.clicked.connect(lambda _, v=value: self.select_value(v))
+            layout.addWidget(button)
+
+    def select_value(self, value):
+        """Set the selected value and close the dialog."""
+        self.selected_value = value
+        self.accept()  # Close the dialog
 
 
 if __name__ == "__main__":
