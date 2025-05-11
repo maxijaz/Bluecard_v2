@@ -108,12 +108,12 @@ class Mainform(QMainWindow):
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
             "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
             "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
-            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes"
+            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes",
+            "CIA": self.default_settings.get("show_cia", "Yes") == "Yes",  # Add CIA visibility
+            "COD": self.default_settings.get("show_cod", "Yes") == "Yes"   # Add COD visibility
         }
         self.scrollable_column_visibility = {
             "P": self.default_settings.get("show_p", "Yes") == "Yes",
-            "A": self.default_settings.get("show_a", "Yes") == "Yes",
-            "L": self.default_settings.get("show_l", "Yes") == "Yes",
             "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
         }
 
