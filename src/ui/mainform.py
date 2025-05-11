@@ -485,16 +485,10 @@ class Mainform(QMainWindow):
             if student.get("active", "Yes") == "Yes"
         }
 
-        # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
-        if self.column_visibility.get("CIA", True):  # Check if CIA should be shown
-            frozen_headers.append("CIA")
-        if self.column_visibility.get("COD", True):  # Check if COD should be shown
-            frozen_headers.append("COD")
-
-        frozen_data = []
-
-        # Initialize totals for [Attn], [P], [A], [L], [CIA], [COD]
+        # Initialize totals for all fields
+        total_score = 0
+        total_pre_test = 0
+        total_post_test = 0
         total_attn = 0
         total_p = 0
         total_a = 0
@@ -502,49 +496,86 @@ class Mainform(QMainWindow):
         total_cia = 0
         total_cod = 0
 
-        for idx, student in enumerate(active_students.values()):
+        # Calculate totals
+        for student in active_students.values():
             attendance = student.get("attendance", {})
-            attn_count = len(attendance)
-            p_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "P")
-            a_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "A")
-            l_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "L")
-            cia_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "CIA")
-            cod_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "COD")
+            total_score += int(student.get("score", 0)) if student.get("score", "").isdigit() else 0
+            total_pre_test += int(student.get("pre_test", 0)) if student.get("pre_test", "").isdigit() else 0
+            total_post_test += int(student.get("post_test", 0)) if student.get("post_test", "").isdigit() else 0
+            total_attn += len(attendance)
+            total_p += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "P")
+            total_a += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "A")
+            total_l += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "L")
+            total_cia += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "CIA")
+            total_cod += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "COD")
 
-            # Update totals
-            total_attn += attn_count
-            total_p += p_count
-            total_a += a_count
-            total_l += l_count
-            total_cia += cia_count
-            total_cod += cod_count
+        # Rebuild the frozen table data
+        frozen_headers = ["#", "Name", "Nickname"]
+        if self.column_visibility.get("Score", True):
+            frozen_headers.append("Score")
+        if self.column_visibility.get("PreTest", True):
+            frozen_headers.append("PreTest")
+        if self.column_visibility.get("PostTest", True):
+            frozen_headers.append("PostTest")
+        if self.column_visibility.get("Attn", True):
+            frozen_headers.append("Attn")
+        if self.column_visibility.get("P", True):
+            frozen_headers.append("P")
+        if self.column_visibility.get("A", True):
+            frozen_headers.append("A")
+        if self.column_visibility.get("L", True):
+            frozen_headers.append("L")
+        if self.column_visibility.get("CIA", True):
+            frozen_headers.append("CIA")
+        if self.column_visibility.get("COD", True):
+            frozen_headers.append("COD")
 
-            # Add student data to the frozen table
-            row = [
-                idx + 1,
-                student.get("name", ""),
-                student.get("nickname", ""),
-                student.get("score", ""),
-                student.get("pre_test", ""),
-                student.get("post_test", ""),
-                attn_count,
-                p_count,
-                a_count,
-                l_count,
-            ]
-            if self.column_visibility.get("CIA", True):  # Add CIA if visible
-                row.append(cia_count)
-            if self.column_visibility.get("COD", True):  # Add COD if visible
-                row.append(cod_count)
-            frozen_data.append(row)
+        frozen_data = []
 
         # Add "Running Total" row to the frozen table
-        total_row = ["", "Running Total", "", "", "", "", total_attn, total_p, total_a, total_l]
-        if self.column_visibility.get("CIA", True):  # Add CIA total if visible
+        total_row = ["", "Running Total", ""]
+        if self.column_visibility.get("Score", True):
+            total_row.append(total_score)
+        if self.column_visibility.get("PreTest", True):
+            total_row.append(total_pre_test)
+        if self.column_visibility.get("PostTest", True):
+            total_row.append(total_post_test)
+        if self.column_visibility.get("Attn", True):
+            total_row.append(total_attn)
+        if self.column_visibility.get("P", True):
+            total_row.append(total_p)
+        if self.column_visibility.get("A", True):
+            total_row.append(total_a)
+        if self.column_visibility.get("L", True):
+            total_row.append(total_l)
+        if self.column_visibility.get("CIA", True):
             total_row.append(total_cia)
-        if self.column_visibility.get("COD", True):  # Add COD total if visible
+        if self.column_visibility.get("COD", True):
             total_row.append(total_cod)
-        frozen_data.insert(0, total_row)
+        frozen_data.append(total_row)
+
+        # Add student rows
+        for idx, student in enumerate(active_students.values()):
+            row = [idx + 1, student.get("name", ""), student.get("nickname", "")]
+            if self.column_visibility.get("Score", True):
+                row.append(student.get("score", ""))
+            if self.column_visibility.get("PreTest", True):
+                row.append(student.get("pre_test", ""))
+            if self.column_visibility.get("PostTest", True):
+                row.append(student.get("post_test", ""))
+            if self.column_visibility.get("Attn", True):
+                row.append(len(student.get("attendance", {})))
+            if self.column_visibility.get("P", True):
+                row.append(sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "P"))
+            if self.column_visibility.get("A", True):
+                row.append(sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "A"))
+            if self.column_visibility.get("L", True):
+                row.append(sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "L"))
+            if self.column_visibility.get("CIA", True):
+                row.append(sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "CIA"))
+            if self.column_visibility.get("COD", True):
+                row.append(sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "COD"))
+            frozen_data.append(row)
 
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
@@ -553,18 +584,17 @@ class Mainform(QMainWindow):
             "Dates",
             [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))]
         )
-        scrollable_headers = attendance_dates  # Only include date columns
+        scrollable_headers = attendance_dates
         scrollable_data = []
 
-        # Add "Running Total" row to the scrollable table
+        # Add "Running Total" row
         class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
         running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
         scrollable_data.append(running_total)
 
         # Add student attendance rows
         for student in active_students.values():
-            attendance = student.get("attendance", {})
-            row_data = [attendance.get(date, "-") for date in attendance_dates]
+            row_data = [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
             scrollable_data.append(row_data)
 
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
@@ -814,7 +844,7 @@ class Mainform(QMainWindow):
         attendance_dates = self.metadata.get("Dates", [])
 
         # Validate the column index
-        if column_index < 0 or column_index >= len(attendance_dates):
+        if (column_index < 0 or column_index >= len(attendance_dates)):
             QMessageBox.warning(self, "Invalid Column", "The selected column is out of range.")
             return
 
