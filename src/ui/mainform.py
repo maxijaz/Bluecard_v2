@@ -783,6 +783,7 @@ class Mainform(QMainWindow):
         # If the column does not refresh, rebuild the table model
         self.refresh_scrollable_table()
 
+        # Optionally, show a message box to confirm the update
         QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
 
     def refresh_scrollable_table_column(self, column_index):
