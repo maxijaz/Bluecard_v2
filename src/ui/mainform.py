@@ -801,7 +801,7 @@ class Mainform(QMainWindow):
         self.refresh_student_table()
 
         # Optionally, show a message box to confirm the update
-        QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
+        # QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
 
     def refresh_scrollable_table_column(self, column_index):
         """Refresh a specific column in the scrollable table."""
