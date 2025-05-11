@@ -754,11 +754,15 @@ class Mainform(QMainWindow):
     def update_column_values(self, column_index, value):
         """Update the selected column with the given value for all students."""
         attendance_dates = self.metadata.get("Dates", [])
-        if column_index - 3 >= len(attendance_dates):  # Adjust for non-date columns
+        non_date_columns = 3  # Number of non-date columns (P, A, L)
+
+        # Adjust the column index to map to the attendance_dates list
+        adjusted_index = column_index - non_date_columns
+        if adjusted_index < 0 or adjusted_index >= len(attendance_dates):  # Validate the adjusted index
             QMessageBox.warning(self, "Invalid Column", "The selected column is out of range.")
             return
 
-        date = attendance_dates[column_index - 3]  # Get the corresponding date
+        date = attendance_dates[adjusted_index]  # Get the corresponding date
 
         # Update the attendance value for all students (skip the "Running Total" row)
         for idx, student in enumerate(self.students.values()):
@@ -792,10 +796,18 @@ class Mainform(QMainWindow):
         """Rebuild the scrollable table model to reflect updated data."""
         attendance_dates = self.metadata.get("Dates", [])
         scrollable_headers = attendance_dates  # Only include date columns
-        scrollable_data = [
-            [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
-            for student in self.students.values()
-        ]
+        scrollable_data = []
+
+        # Add "Running Total" row
+        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+        running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
+        scrollable_data.append(running_total)  # Add the "Running Total" row as the first row
+
+        # Add student attendance rows
+        for student in self.students.values():
+            attendance = student.get("attendance", {})
+            row_data = [attendance.get(date, "-") for date in attendance_dates]
+            scrollable_data.append(row_data)
 
         # Update the model
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
