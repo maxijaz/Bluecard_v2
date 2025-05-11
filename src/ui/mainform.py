@@ -486,7 +486,12 @@ class Mainform(QMainWindow):
         }
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L", "CIA", "COD"]
+        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
+        if self.column_visibility.get("CIA", True):  # Check if CIA should be shown
+            frozen_headers.append("CIA")
+        if self.column_visibility.get("COD", True):  # Check if COD should be shown
+            frozen_headers.append("COD")
+
         frozen_data = []
 
         # Initialize totals for [Attn], [P], [A], [L], [CIA], [COD]
@@ -515,7 +520,7 @@ class Mainform(QMainWindow):
             total_cod += cod_count
 
             # Add student data to the frozen table
-            frozen_data.append([
+            row = [
                 idx + 1,
                 student.get("name", ""),
                 student.get("nickname", ""),
@@ -526,15 +531,21 @@ class Mainform(QMainWindow):
                 p_count,
                 a_count,
                 l_count,
-                cia_count,
-                cod_count,
-            ])
+            ]
+            if self.column_visibility.get("CIA", True):  # Add CIA if visible
+                row.append(cia_count)
+            if self.column_visibility.get("COD", True):  # Add COD if visible
+                row.append(cod_count)
+            frozen_data.append(row)
 
         # Add "Running Total" row to the frozen table
-        frozen_data.insert(0, [
-            "", "Running Total", "", "", "", "",
-            total_attn, total_p, total_a, total_l, total_cia, total_cod
-        ])
+        total_row = ["", "Running Total", "", "", "", "", total_attn, total_p, total_a, total_l]
+        if self.column_visibility.get("CIA", True):  # Add CIA total if visible
+            total_row.append(total_cia)
+        if self.column_visibility.get("COD", True):  # Add COD total if visible
+            total_row.append(total_cod)
+        frozen_data.insert(0, total_row)
+
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
         # Rebuild the scrollable table data
@@ -545,15 +556,17 @@ class Mainform(QMainWindow):
         scrollable_headers = attendance_dates  # Only include date columns
         scrollable_data = []
 
+        # Add "Running Total" row to the scrollable table
+        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+        running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
+        scrollable_data.append(running_total)
+
+        # Add student attendance rows
         for student in active_students.values():
             attendance = student.get("attendance", {})
             row_data = [attendance.get(date, "-") for date in attendance_dates]
             scrollable_data.append(row_data)
 
-        # Add "Running Total" row to the scrollable table
-        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
-        running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
-        scrollable_data.insert(0, running_total)
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
 
         # Adjust column widths
