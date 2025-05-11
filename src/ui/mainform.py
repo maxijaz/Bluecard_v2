@@ -485,24 +485,46 @@ class Mainform(QMainWindow):
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn", "P", "A", "L"]
-        frozen_data = [
-            [
+        frozen_data = []
+
+        # Initialize totals for [Attn], [P], [A], [L]
+        total_attn = 0
+        total_p = 0
+        total_a = 0
+        total_l = 0
+
+        for idx, student in enumerate(active_students.values()):
+            attendance = student.get("attendance", {})
+            attn_count = len(attendance)
+            p_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "P")
+            a_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "A")
+            l_count = sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "L")
+
+            # Update totals
+            total_attn += attn_count
+            total_p += p_count
+            total_a += a_count
+            total_l += l_count
+
+            # Add student data to the frozen table
+            frozen_data.append([
                 idx + 1,
                 student.get("name", ""),
                 student.get("nickname", ""),
                 student.get("score", ""),
                 student.get("pre_test", ""),
                 student.get("post_test", ""),
-                len(student.get("attendance", {})),
-                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "P"),
-                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "A"),
-                sum(1 for date in self.metadata.get("Dates", []) if student.get("attendance", {}).get(date) == "L"),
-            ]
-            for idx, student in enumerate(active_students.values())
-        ]
+                attn_count,
+                p_count,
+                a_count,
+                l_count,
+            ])
 
         # Add "Running Total" row to the frozen table
-        frozen_data.insert(0, ["", "Running Total", "", "", "", "", "", "", "", ""])
+        frozen_data.insert(0, [
+            "", "Running Total", "", "", "", "",
+            total_attn, total_p, total_a, total_l
+        ])
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
 
         # Rebuild the scrollable table data
@@ -521,9 +543,7 @@ class Mainform(QMainWindow):
         # Add "Running Total" row to the scrollable table
         class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
         running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
-        running_total_row = running_total
-
-        scrollable_data.insert(0, running_total_row)
+        scrollable_data.insert(0, running_total)
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
 
         # Adjust column widths
@@ -777,11 +797,8 @@ class Mainform(QMainWindow):
         # Save the updated data
         save_data(self.data)
 
-        # Refresh the scrollable table gracefully
-        self.refresh_scrollable_table_column(column_index)
-
-        # If the column does not refresh, rebuild the table model
-        self.refresh_scrollable_table()
+        # Refresh the frozen table and scrollable table
+        self.refresh_student_table()
 
         # Optionally, show a message box to confirm the update
         QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
