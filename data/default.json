@@ -15,6 +15,6 @@
     "show_a": "Yes",
     "show_l": "Yes",
     "show_dates": "Yes",
-    "show_cia": "Yes",  // Add visibility setting for CIA
-    "show_cod": "Yes"   // Add visibility setting for COD
+    "show_cia": "Yes",  
+    "show_cod": "Yes"
 }
