@@ -743,13 +743,11 @@ class Mainform(QMainWindow):
 
         # Validate the column index
         attendance_dates = self.metadata.get("Dates", [])
-        non_date_columns = 3  # Number of non-date columns (P, A, L)
-        adjusted_index = column_index - non_date_columns
-        if adjusted_index < 0 or adjusted_index >= len(attendance_dates):  # Validate the adjusted index
+        if column_index < 0 or column_index >= len(attendance_dates):  # Validate the column index
             QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
             return
 
-        date = attendance_dates[adjusted_index]  # Get the corresponding date
+        date = attendance_dates[column_index]  # Get the corresponding date
 
         # Get the current value for the selected column (first student's value as an example)
         current_value = next(iter(self.students.values()))["attendance"].get(date, "-")
@@ -761,15 +759,13 @@ class Mainform(QMainWindow):
     def update_column_values(self, column_index, value):
         """Update the selected column with the given value for all students."""
         attendance_dates = self.metadata.get("Dates", [])
-        non_date_columns = 3  # Number of non-date columns (P, A, L)
 
-        # Adjust the column index to map to the attendance_dates list
-        adjusted_index = column_index - non_date_columns
-        if adjusted_index < 0 or adjusted_index >= len(attendance_dates):  # Validate the adjusted index
+        # Validate the column index
+        if column_index < 0 or column_index >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Column", "The selected column is out of range.")
             return
 
-        date = attendance_dates[adjusted_index]  # Get the corresponding date
+        date = attendance_dates[column_index]  # Get the corresponding date
 
         # Update the attendance value for all students (skip the "Running Total" row)
         for idx, student in enumerate(self.students.values()):
