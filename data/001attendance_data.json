@@ -25,7 +25,19 @@
                     "14/05/2025"
                 ]
             },
-            "students": {},
+            "students": {
+                "S001": {
+                    "name": "Payl",
+                    "nickname": "",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                }
+            },
             "archive": "No"
         }
     }

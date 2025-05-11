@@ -507,7 +507,7 @@ class Mainform(QMainWindow):
             "Dates",
             [f"Empty-{i + 1}" for i in range(int(self.metadata.get("MaxClasses", "20").split()[0]))]
         )
-        scrollable_headers = attendance_dates
+        scrollable_headers = attendance_dates  # Only include date columns
         scrollable_data = []
 
         for student in active_students.values():
@@ -740,7 +740,10 @@ class Mainform(QMainWindow):
             return
 
         column_index = selected_columns[0].column()  # Get the first selected column
-        if column_index < 3:  # Ensure it's not a non-date column
+
+        # Validate the column index
+        attendance_dates = self.metadata.get("Dates", [])
+        if column_index < 3 or column_index - 3 >= len(attendance_dates):  # Adjust for non-date columns
             QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
             return
 
@@ -756,13 +759,49 @@ class Mainform(QMainWindow):
             return
 
         date = attendance_dates[column_index - 3]  # Get the corresponding date
-        for student in self.students.values():
-            student["attendance"][date] = value  # Update the attendance value
 
-        # Save the updated data and refresh the table
+        # Update the attendance value for all students (skip the "Running Total" row)
+        for idx, student in enumerate(self.students.values()):
+            student["attendance"][date] = value
+
+        # Save the updated data
         save_data(self.data)
-        self.refresh_student_table()
+
+        # Refresh the scrollable table gracefully
+        self.refresh_scrollable_table_column(column_index)
+
+        # If the column does not refresh, rebuild the table model
+        self.refresh_scrollable_table()
+
         QMessageBox.information(self, "Update Successful", f"All values in column '{date}' have been updated to '{value}'.")
+
+    def refresh_scrollable_table_column(self, column_index):
+        """Refresh a specific column in the scrollable table."""
+        model = self.scrollable_table.model()
+        if not model:
+            return
+
+        # Notify the view that the data in the column has changed
+        row_count = model.rowCount()
+        if row_count > 0:
+            top_left = model.index(0, column_index)
+            bottom_right = model.index(row_count - 1, column_index)
+            model.dataChanged.emit(top_left, bottom_right)
+
+    def refresh_scrollable_table(self):
+        """Rebuild the scrollable table model to reflect updated data."""
+        attendance_dates = self.metadata.get("Dates", [])
+        scrollable_headers = attendance_dates  # Only include date columns
+        scrollable_data = [
+            [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
+            for student in self.students.values()
+        ]
+
+        # Update the model
+        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+
+        # Reset column widths
+        self.reset_scrollable_column_widths()
 
 
 if __name__ == "__main__":
