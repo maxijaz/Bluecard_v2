@@ -274,9 +274,9 @@ class Mainform(QMainWindow):
 
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
-        scrollable_headers = ["P", "A", "L"] + attendance_dates
+        scrollable_headers = attendance_dates  # Only include date columns
         scrollable_data = [
-            ["-", "-", "-"] + [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
+            [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
             for student in self.students.values()
         ]
 
@@ -289,6 +289,9 @@ class Mainform(QMainWindow):
 
         # Connect the sectionClicked signal to highlight the column
         self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
+
+        # **Connect the sectionDoubleClicked signal to open_pal_cod_form**
+        self.scrollable_table.horizontalHeader().sectionDoubleClicked.connect(self.open_pal_cod_form)
 
         # Set the minimum section size for the horizontal header
         self.scrollable_table.horizontalHeader().setMinimumSectionSize(5)  # Set minimum width to 5 pixels
