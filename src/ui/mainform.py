@@ -154,7 +154,7 @@ class Mainform(QMainWindow):
             ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
             ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
             ("CourseBook:", self.metadata.get("CourseBook", ""), "Time:", self.metadata.get("Time", "")),
-            ("Notes:", self.metadata.get("Notes", ""), "", ""),
+            ("Notes:", self.metadata.get("Notes", ""), "COD/CIA:", self.metadata.get("COD_CIA", "")),  # Combine Notes and COD/CIA
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
@@ -489,26 +489,8 @@ class Mainform(QMainWindow):
         }
 
         # Initialize totals for all fields
-        total_score = 0
-        total_pre_test = 0
-        total_post_test = 0
-        total_attn = 0
-        total_p = 0
-        total_a = 0
-        total_l = 0
         total_cia = 0
         total_cod = 0
-
-        # Calculate totals
-        for student in active_students.values():
-            attendance = student.get("attendance", {})
-            total_score += int(student.get("score", 0)) if student.get("score", "").isdigit() else 0
-            total_pre_test += int(student.get("pre_test", 0)) if student.get("pre_test", "").isdigit() else 0
-            total_post_test += int(student.get("post_test", 0)) if student.get("post_test", "").isdigit() else 0
-            total_attn += len(attendance)
-            total_p += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "P")
-            total_a += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "A")
-            total_l += sum(1 for date in self.metadata.get("Dates", []) if attendance.get(date) == "L")
 
         # Calculate CIA and COD totals by searching scrollable_data
         attendance_dates = self.metadata.get("Dates", [])
@@ -523,6 +505,9 @@ class Mainform(QMainWindow):
                 total_cia += 1
             if "COD" in column_values:
                 total_cod += 1
+
+        # Update the metadata with COD/CIA totals
+        self.metadata["COD_CIA"] = f"{total_cod} COD / {total_cia} CIA"
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname"]
@@ -540,10 +525,6 @@ class Mainform(QMainWindow):
             frozen_headers.append("A")
         if self.column_visibility.get("L", True):
             frozen_headers.append("L")
-        if self.column_visibility.get("CIA", True):
-            frozen_headers.append("CIA")
-        if self.column_visibility.get("COD", True):
-            frozen_headers.append("COD")
 
         frozen_data = []
 
@@ -564,7 +545,8 @@ class Mainform(QMainWindow):
                 cumulative_total += class_time
                 running_total.append(cumulative_total)
 
-        frozen_data.append(["", "Running Total", ""] + running_total)
+        # Add "-" for columns that don't need a count in the "Running Total" row
+        frozen_data.append(["", "Running Total", "-"] + ["-"] * (len(frozen_headers) - 3) + running_total)
 
         # Add student rows
         for idx, student in enumerate(active_students.values()):
@@ -583,19 +565,7 @@ class Mainform(QMainWindow):
                 row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "A"))
             if self.column_visibility.get("L", True):
                 row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "L"))
-            if self.column_visibility.get("CIA", True):
-                row.append("")  # CIA is not counted per student
-            if self.column_visibility.get("COD", True):
-                row.append("")  # COD is not counted per student
             frozen_data.append(row)
-
-        # Add totals for CIA and COD
-        frozen_data.append(["", "Totals", "", "", "", "", "", "", "", total_cia, total_cod])
-
-        # Pad rows to match the number of headers
-        for row in frozen_data:
-            while len(row) < len(frozen_headers):
-                row.append("")  # Add empty strings to pad the row
 
         # Debugging: Check frozen_data dimensions
         print("Frozen Data Dimensions:", len(frozen_data), len(frozen_headers))
@@ -629,6 +599,9 @@ class Mainform(QMainWindow):
 
         print("Frozen Data:", frozen_data)
         print("Scrollable Data:", scrollable_data)
+
+        # Refresh the metadata section to include COD/CIA totals
+        self.refresh_metadata()
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -757,7 +730,7 @@ class Mainform(QMainWindow):
             ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
             ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
             ("CourseBook:", self.metadata.get("CourseBook", ""), "Time:", self.metadata.get("Time", "")),
-            ("Notes:", self.metadata.get("Notes", ""), "", ""),
+            ("Notes:", self.metadata.get("Notes", ""), "COD/CIA:", self.metadata.get("COD_CIA", "")),  # Combine Notes and COD/CIA
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
