@@ -353,38 +353,41 @@ class Mainform(QMainWindow):
         """Handle removing or managing students."""
         # Check if a row is selected
         if not self.frozen_table.selectionModel().hasSelection():
-            # No row selected, open the ArchiveManager
-            print("No student selected. Opening Archive Manager...")
-            archive_manager = ArchiveManager(self, self.data, self.class_id, self.refresh_student_table)
-            archive_manager.exec_()  # Open the ArchiveManager as a modal dialog
+            # No row selected, open the StudentManager
+            print("No student selected. Opening Student Manager...")
+            student_manager = StudentManager(self, self.data, self.class_id, self.refresh_student_table)
+            student_manager.exec_()  # Open the StudentManager as a modal dialog
             return
 
-        # A row is selected, archive the student
+        # A row is selected, confirm removal
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
         if adjusted_row < 0:
-            QMessageBox.warning(self, "Invalid Selection", "Cannot archive the 'Running Total' row.")
+            QMessageBox.warning(self, "Invalid Selection", "Cannot remove the 'Running Total' row.")
             return
 
         # Get the student ID and data for the selected row
         student_id = list(self.students.keys())[adjusted_row]
         student_data = self.students[student_id]
 
-        # Confirm archiving the student
+        # Confirm removal of the student
         confirm = QMessageBox.question(
             self,
-            "Archive Student",
-            f"Are you sure you want to archive the student '{student_data['name']}'?",
+            "Remove Student",
+            f"Are you sure you want to remove the student '{student_data['name']}'?",
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            # Archive the student
-            self.students[student_id]["active"] = "No"  # Set active to "No"
+            # Remove the student
+            del self.students[student_id]
             save_data(self.data)  # Save the updated data
-            print(f"Student '{student_data['name']}' archived successfully.")
+            print(f"Student '{student_data['name']}' removed successfully.")
 
             # Refresh the Mainform
             self.refresh_student_table()
+        else:
+            # Clear the selection if the user clicks "No"
+            self.frozen_table.selectionModel().clearSelection()
 
     def open_metadata_form(self):
         """Open the Metadata Form."""

@@ -1,5 +1,4 @@
-import tkinter as tk
-from tkinter import ttk, messagebox, Toplevel
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
 from src.logic.parser import save_data, generate_next_student_id
 from src.ui.student_form import StudentForm
 
@@ -8,7 +7,7 @@ def validate_student_data(student_data: dict) -> bool:
     required_fields = ["name", "gender", "active"]
     for field in required_fields:
         if field not in student_data or not student_data[field]:
-            messagebox.showerror("Invalid Data", f"Field '{field}' is required.", parent=None)
+            QMessageBox.warning(None, "Invalid Data", f"Field '{field}' is required.")
             return False
 
     # Ensure the attendance field is initialized if missing
@@ -17,199 +16,70 @@ def validate_student_data(student_data: dict) -> bool:
 
     return True
 
-class StudentManager(Toplevel):
+class StudentManager(QDialog):
     def __init__(self, parent, data, class_id, refresh_callback):
         super().__init__(parent)
         self.data = data
         self.class_id = class_id
         self.refresh_callback = refresh_callback
+        self.students = self.data["classes"][self.class_id]["students"]
 
-        self.title("Student Manager")
-        self.geometry("400x300")
+        self.setWindowTitle("Student Manager")
+        self.resize(400, 300)
 
-        # Add your StudentManager UI components here
-        label = ttk.Label(self, text="Student Manager")
-        label.pack(pady=20)
+        # Main layout
+        layout = QVBoxLayout(self)
 
-        # Example: Close button
-        close_button = ttk.Button(self, text="Close", command=self.close_manager)
-        close_button.pack(pady=10)
-
-    def close_manager(self):
-        """Close the StudentManager and trigger the refresh callback."""
-        self.refresh_callback()
-        self.destroy()
-
-    def center_window(self, width, height):
-        """Center the window on the screen."""
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
-        self.geometry(f"{width}x{height}+{x}+{y}")
-
-    def create_widgets(self):
-        """Create the layout and fields for managing students."""
-        # Treeview for student data
-        self.tree = ttk.Treeview(self, columns=("Name", "Nickname", "Note", "Active"), show="headings")
-        self.tree.heading("Name", text="Name")
-        self.tree.heading("Nickname", text="Nickname")
-        self.tree.heading("Note", text="Note")
-        self.tree.heading("Active", text="Active")
-
-        # Set column widths
-        self.tree.column("Name", width=150, anchor="w")
-        self.tree.column("Nickname", width=100, anchor="w")
-        self.tree.column("Note", width=300, anchor="w")
-        self.tree.column("Active", width=100, anchor="center")
-
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        # Add hover and click effects
-        self.tree.bind("<Motion>", self.on_hover)
-        self.tree.bind("<Button-1>", self.on_click)
-
-        # Populate table
+        # Table for students
+        self.table = QTableWidget()
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderLabels(["Student ID", "Name"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.populate_table()
+        layout.addWidget(self.table)
 
         # Buttons
-        button_frame = tk.Frame(self)
-        button_frame.pack(fill=tk.X, pady=10)
+        button_layout = QVBoxLayout()
+        remove_button = QPushButton("Remove Selected Student")
+        remove_button.clicked.connect(self.remove_selected_student)
+        button_layout.addWidget(remove_button)
 
-        # Center the buttons
-        buttons_inner_frame = tk.Frame(button_frame)
-        buttons_inner_frame.pack(anchor="center")
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.close_manager)
+        button_layout.addWidget(close_button)
 
-        tk.Button(buttons_inner_frame, text="Edit", command=self.edit_student, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons_inner_frame, text="Active", command=self.set_active, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons_inner_frame, text="Not Active", command=self.set_inactive, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons_inner_frame, text="Delete", command=self.delete_student, width=12).pack(side=tk.LEFT, padx=5)
-        tk.Button(buttons_inner_frame, text="Cancel", command=self.close_form, width=12).pack(side=tk.LEFT, padx=5)
-
-    def on_hover(self, event):
-        """Handle hover effect for Treeview rows."""
-        row_id = self.tree.identify_row(event.y)
-        # Reset hover effect for all rows
-        for row in self.tree.get_children():
-            self.tree.item(row, tags=())
-        # Apply hover effect to the current row
-        if row_id:
-            self.tree.tag_configure("hover", background="#d0e7ff")  # Light blue for hover
-            self.tree.item(row_id, tags=("hover",))
-
-    def on_click(self, event):
-        """Handle click effect for Treeview rows."""
-        row_id = self.tree.identify_row(event.y)
-        # Reset click effect for all rows
-        for row in self.tree.get_children():
-            self.tree.item(row, tags=())
-        # Apply click effect to the current row
-        if row_id:
-            self.tree.tag_configure("selected", background="#1E90FF", foreground="white")  # Blue for selected row
-            self.tree.item(row_id, tags=("selected",))
+        layout.addLayout(button_layout)
 
     def populate_table(self):
         """Populate the table with student data."""
+        self.table.setRowCount(0)
         for student_id, student_data in self.students.items():
-            self.tree.insert("", tk.END, values=(
-                student_data["name"],
-                student_data["nickname"],
-                student_data["note"],
-                student_data["active"],
-            ))
+            row_position = self.table.rowCount()
+            self.table.insertRow(row_position)
+            self.table.setItem(row_position, 0, QTableWidgetItem(student_id))
+            self.table.setItem(row_position, 1, QTableWidgetItem(student_data.get("name", "Unknown")))
 
-    def edit_student(self):
-        """Edit the selected student."""
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a student to edit.", parent=self)
-            return
-        student_name = self.tree.item(selected_item, "values")[0]
-        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
-        if student_id:
-            StudentForm(self, student_id, self.students, self.refresh_callback).mainloop()
-
-    def set_active(self):
-        """Set the selected student as active."""
-        self.update_student_status("Yes")
-        self.refresh_data()  # Refresh data without closing the form
-
-    def set_inactive(self):
-        """Set the selected student as inactive."""
-        self.update_student_status("No")
-        self.refresh_data()  # Refresh data without closing the form
-
-    def update_student_status(self, status):
-        """Update the active status of the selected student."""
-        selected_item = self.tree.selection()
-        if not selected_item:
-            messagebox.showwarning("No Selection", "Please select a student.", parent=self)
-            return
-        student_name = self.tree.item(selected_item, "values")[0]
-        student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
-        if student_id:
-            self.students[student_id]["active"] = status
-            save_data(self.students)
-            self.refresh_callback()
-            self.populate_table()
-
-    def delete_student(self):
-        """Delete the selected student from the class data."""
-        selected_items = self.tree.selection()
-        if not selected_items:
-            messagebox.showwarning("No Selection", "Please select a student to delete.", parent=self)
+    def remove_selected_student(self):
+        """Remove the selected student."""
+        selected_row = self.table.currentRow()
+        if selected_row == -1:
+            QMessageBox.warning(self, "No Selection", "Please select a student to remove.")
             return
 
-        # Confirm deletion
-        confirm = messagebox.askyesno(
-            "Delete Student",
-            "Are you sure you want to delete the selected student(s)? This action cannot be undone.",
-            parent=self
+        student_id = self.table.item(selected_row, 0).text()
+        confirm = QMessageBox.question(
+            self,
+            "Remove Student",
+            f"Are you sure you want to remove student {student_id}?",
+            QMessageBox.Yes | QMessageBox.No,
         )
-        if not confirm:
-            return
+        if confirm == QMessageBox.Yes:
+            del self.students[student_id]
+            save_data(self.data)  # Save the updated data
+            self.populate_table()  # Refresh the table
+            self.refresh_callback()  # Refresh the main form
 
-        # Delete each selected student
-        for selected_item in selected_items:
-            student_name = self.tree.item(selected_item, "values")[0]
-            student_id = next((sid for sid, sdata in self.students.items() if sdata["name"] == student_name), None)
-            if student_id:
-                # Remove the student from the class data
-                self.students.pop(student_id, None)
-
-        # Save the updated data to the JSON file
-        save_data(self.students)
-
-        # Refresh the table and Mainform
-        self.refresh_data()
-
-    def add_student(self, student_data: dict):
-        """Add a new student to the class."""
-        # Ensure the attendance field is initialized as an empty dictionary if not provided
-        student_data.setdefault("attendance", {})
-
-        # Validate the student data
-        if not validate_student_data(student_data):
-            return  # Do not proceed if validation fails
-
-        # Generate a unique student ID
-        new_student_id = generate_next_student_id(self.students)
-
-        # Add the new student to the dictionary
-        self.students[new_student_id] = student_data
-
-        # Save the updated students data
-        self.data["classes"][self.class_id]["students"] = self.students
-        save_data(self.data)
-
-        # Refresh the table and Mainform
-        self.refresh_data()
-
-    def refresh_data(self):
-        """Refresh the data on the StudentManager and Mainform."""
-        self.populate_table()  # Refresh the table in StudentManager
-        self.refresh_callback()  # Refresh the Mainform
-
-    def close_form(self):
-        """Close the form."""
-        self.destroy()
+    def close_manager(self):
+        """Close the StudentManager."""
+        self.refresh_callback()
+        self.accept()

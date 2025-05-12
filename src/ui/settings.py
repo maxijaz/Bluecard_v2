@@ -14,7 +14,8 @@ class SettingsForm(QDialog):
     def __init__(self, parent, current_theme, on_theme_change):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setFixedSize(450, 700)
+        self.resize(450, 700)  # Set the initial size without fixing it
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setWindowModality(Qt.ApplicationModal)
 
         self.current_theme = current_theme
@@ -152,3 +153,8 @@ class SettingsForm(QDialog):
         # Refresh Launcher with the new theme
         self.on_theme_change(selected_theme)
         self.accept()  # Close the dialog
+
+    def closeEvent(self, event):
+        """Restore the initial size when the settings form is reopened."""
+        self.resize(450, 700)
+        super().closeEvent(event)

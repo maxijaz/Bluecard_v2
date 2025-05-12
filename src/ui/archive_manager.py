@@ -14,7 +14,8 @@ class ArchiveManager(QDialog):
         self.refresh_callback = refresh_callback  # Store the callback
 
         self.setWindowTitle("Archived Classes")
-        self.setFixedSize(395, 300)
+        self.resize(395, 300)  # Set the initial size without fixing it
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Main layout
         layout = QVBoxLayout(self)
@@ -119,3 +120,8 @@ class ArchiveManager(QDialog):
         if self.refresh_callback:
             self.refresh_callback()  # Trigger the callback
         self.accept()  # Close the dialog
+
+    def closeEvent(self, event):
+        """Restore the initial size when the archive manager is reopened."""
+        self.resize(395, 300)
+        super().closeEvent(event)

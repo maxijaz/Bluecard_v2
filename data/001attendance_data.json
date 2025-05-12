@@ -111,7 +111,8 @@
                 "MaxClasses": "20 x 2.0 = 40.0",
                 "Dates": [
                     "19/05/2025"
-                ]
+                ],
+                "archive": "Yes"
             },
             "students": {},
             "archive": "No"
