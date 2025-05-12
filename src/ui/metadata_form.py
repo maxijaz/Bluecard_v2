@@ -34,7 +34,7 @@ class MetadataForm(QDialog):
         self.defaults = defaults or {}
 
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
-        self.setFixedSize(500, 600)  # Adjusted size for additional fields
+        self.resize(500, 600)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Main layout
@@ -219,3 +219,8 @@ class MetadataForm(QDialog):
         max_dates = 1 if self.single_date_mode else 20  # Allow only 1 date in single-date mode
         calendar_view = CalendarView(self, scheduled_dates=scheduled_dates, on_save_callback=on_save_callback, max_dates=max_dates)
         calendar_view.exec_()
+
+    def closeEvent(self, event):
+        """Restore the initial size when the form is reopened."""
+        self.resize(500, 600)
+        super().closeEvent(event)

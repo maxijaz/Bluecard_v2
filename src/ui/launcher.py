@@ -20,8 +20,8 @@ class Launcher(QMainWindow):
         super().__init__()
         self.theme = theme
         self.setWindowTitle("Bluecard Launcher")
-        self.setGeometry(100, 100, 450, 450)
-        self.setFixedSize(395, 300)
+        self.resize(395, 300)  # Set the initial size without fixing it
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Load class data
         self.data = load_data()
@@ -263,6 +263,11 @@ class Launcher(QMainWindow):
         self.data = load_data()  # Reload the data from the source
         self.classes = self.data.get("classes", {})  # Update the classes dictionary
         self.populate_table()  # Refresh the table with the updated data
+
+    def closeEvent(self, event):
+        """Restore the initial size when the launcher is reopened."""
+        self.resize(395, 300)
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":
