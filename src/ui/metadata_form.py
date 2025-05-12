@@ -2,13 +2,13 @@ import json
 import os
 from datetime import datetime  # Import datetime
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox, QCheckBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import save_data
 from .calendar import CalendarView  # Import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
-
+from datetime import datetime, timedelta
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -59,7 +59,6 @@ class MetadataForm(QDialog):
             ("CourseBook", "CourseBook"),
             ("Start Date", "StartDate"),  # Remove mask for Start Date
             ("Finish Date", "FinishDate"),  # Remove mask for Finish Date
-            ("Days", "Days"),
             ("Time", "Time"),
             ("Notes", "Notes"),
             ("Rate", "rate"),
@@ -89,6 +88,24 @@ class MetadataForm(QDialog):
             else:
                 self.fields[key] = field_input
                 scroll_layout.addRow(field_label, field_input)
+
+        # Days Field (Checkboxes)
+        self.days_label = QLabel("Days:")
+        self.days_checkboxes = {}
+        days_layout = QHBoxLayout()
+        for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
+            checkbox = QCheckBox(day)
+            self.days_checkboxes[day] = checkbox
+            days_layout.addWidget(checkbox)
+
+        # Prepopulate checkboxes if editing
+        if self.is_edit:
+            selected_days = metadata.get("Days", "").split(", ")
+            for day in selected_days:
+                if day in self.days_checkboxes:
+                    self.days_checkboxes[day].setChecked(True)
+
+        scroll_layout.addRow(self.days_label, days_layout)
 
         # CourseHours
         self.class_hours_label = QLabel("Course Hours:")
@@ -166,20 +183,17 @@ class MetadataForm(QDialog):
         metadata["ClassTime"] = self.class_time_input.text()
         metadata["MaxClasses"] = self.max_classes_input.text()
 
-        # Preserve existing dates and rebuild the Dates metadata
-        existing_dates = self.data["classes"][self.class_id]["metadata"].get("Dates", []) if self.is_edit else []
-        new_start_date = metadata.get("StartDate", "")
+        # Combine selected days into a comma-separated string
+        selected_days = [day for day, checkbox in self.days_checkboxes.items() if checkbox.isChecked()]
+        metadata["Days"] = ", ".join(selected_days)
 
-        # Combine new StartDate and existing dates
-        if new_start_date:
-            if new_start_date in existing_dates:
-                existing_dates.remove(new_start_date)
-            combined_dates = [new_start_date] + existing_dates
-        else:
-            combined_dates = existing_dates
+        # Generate dates dynamically
+        max_classes = int(metadata["MaxClasses"].split()[0])  # Extract the numeric part of MaxClasses
+        start_date_str = metadata.get("StartDate", "")
+        days_str = metadata.get("Days", "")
+        metadata["Dates"] = generate_dates(start_date_str, days_str, max_classes)
 
         # Update metadata and students using update_dates
-        metadata["Dates"] = combined_dates
         students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
         metadata, students = update_dates(metadata, students)
 
@@ -224,3 +238,35 @@ class MetadataForm(QDialog):
         """Restore the initial size when the form is reopened."""
         self.resize(500, 600)
         super().closeEvent(event)
+
+def generate_dates(start_date_str, days_str, max_classes):
+    """Generate a list of dates based on StartDate, Days, and MaxClasses."""
+    # Parse StartDate
+    try:
+        start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+    except ValueError:
+        start_date = None  # If StartDate is invalid or missing
+
+    # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
+    weekdays = []
+    if days_str:
+        day_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+            "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
+
+    # Generate dates dynamically
+    dates = []
+    if start_date and weekdays:
+        current_date = start_date
+        while len(dates) < max_classes:
+            if current_date.weekday() in weekdays:
+                dates.append(current_date.strftime("%d/%m/%Y"))
+            current_date += timedelta(days=1)  # Move to the next day
+
+    # Fallback to placeholders if no valid dates are generated
+    if not dates:
+        dates = [f"Date{i + 1}" for i in range(max_classes)]
+
+    return dates

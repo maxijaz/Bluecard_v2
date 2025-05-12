@@ -13,6 +13,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date
 import sys
 import json
 import os
+from datetime import datetime, timedelta
 
 
 class Launcher(QMainWindow):
@@ -158,7 +159,25 @@ class Launcher(QMainWindow):
 
         # Open the MetadataForm with single-date mode enabled
         metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True)
-        metadata_form.class_saved.connect(self.open_mainform_after_save)  # Connect the signal
+
+        def handle_class_saved(class_id):
+            """Handle the class_saved signal."""
+            metadata = self.data["classes"][class_id]["metadata"]
+            start_date = metadata.get("StartDate", "").strip()
+            days = metadata.get("Days", "").strip()
+            max_classes = int(metadata.get("MaxClasses", "20").split()[0])  # Extract numeric part of MaxClasses
+
+            # Generate dates and update metadata
+            metadata["Dates"] = generate_dates(start_date, days, max_classes)
+
+            # Save the updated data
+            save_data(self.data)
+
+            # Open the Mainform window with the correct data
+            self.open_mainform_after_save(class_id)
+
+        metadata_form.class_saved.connect(handle_class_saved)  # Connect the signal
+
         metadata_form.exec_()  # Open the form as a modal dialog
 
     def archive_class(self):
@@ -238,19 +257,17 @@ class Launcher(QMainWindow):
 
     def open_mainform_after_save(self, class_id):
         """Open the Mainform after saving a new class."""
-        # Check if StartDate is provided
         metadata = self.data["classes"][class_id]["metadata"]
         start_date = metadata.get("StartDate", "").strip()
-        if start_date:
-            metadata["Dates"] = [start_date]
-        else:
-            metadata["Dates"] = []
+        days = metadata.get("Days", "").strip()
+        max_classes = int(metadata.get("MaxClasses", "20").split()[0])  # Extract numeric part of MaxClasses
 
-        # Ensure metadata and students are synchronized
-        students = self.data["classes"][class_id]["students"]
-        metadata, students = update_dates(metadata, students)
+        # Generate dates if not already present
+        if not metadata.get("Dates"):
+            metadata["Dates"] = generate_dates(start_date, days, max_classes)
 
-        save_data(self.data)  # Save the updated data
+        # Save the updated data
+        save_data(self.data)
 
         # Open the Mainform window with the correct data
         self.mainform = Mainform(class_id, self.data, self.theme)
@@ -268,6 +285,39 @@ class Launcher(QMainWindow):
         """Restore the initial size when the launcher is reopened."""
         self.resize(395, 300)
         super().closeEvent(event)
+
+
+def generate_dates(start_date_str, days_str, max_classes):
+    """Generate a list of dates based on StartDate, Days, and MaxClasses."""
+    # Parse StartDate
+    try:
+        start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+    except ValueError:
+        start_date = None  # If StartDate is invalid or missing
+
+    # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
+    weekdays = []
+    if days_str:
+        day_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+            "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
+
+    # Generate dates dynamically
+    dates = []
+    if start_date and weekdays:
+        current_date = start_date
+        while len(dates) < max_classes:
+            if current_date.weekday() in weekdays:
+                dates.append(current_date.strftime("%d/%m/%Y"))
+            current_date += timedelta(days=1)  # Move to the next day
+
+    # Fallback to placeholders if no valid dates are generated
+    if not dates:
+        dates = [f"Date{i + 1}" for i in range(max_classes)]
+
+    return dates
 
 
 if __name__ == "__main__":
