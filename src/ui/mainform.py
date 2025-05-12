@@ -374,14 +374,14 @@ class Mainform(QMainWindow):
         confirm = QMessageBox.question(
             self,
             "Remove Student",
-            f"Are you sure you want to remove the student '{student_data['name']}'?",
+            f"Are you sure you want to mark the student '{student_data['name']}' as inactive?",
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            # Remove the student
-            del self.students[student_id]
+            # Mark the student as inactive
+            self.students[student_id]["active"] = "No"
             save_data(self.data)  # Save the updated data
-            print(f"Student '{student_data['name']}' removed successfully.")
+            print(f"Student '{student_data['name']}' marked as inactive.")
 
             # Refresh the Mainform
             self.refresh_student_table()
