@@ -4,16 +4,16 @@
             "metadata": {
                 "class_no": "olo123",
                 "Company": "ACERd",
-                "Consultant": "",
+                "Consultant": "Apple",
                 "Teacher": "Paul R",
                 "TeacherNo": "A20049",
-                "Room": "",
-                "CourseBook": "",
+                "Room": "Next to LIFT B",
+                "CourseBook": "IEX Pre-Intermediate",
                 "StartDate": "14/05/2025",
                 "FinishDate": "",
-                "Days": "",
-                "Time": "",
-                "Notes": "",
+                "Days": "Mondays, Wednesdays",
+                "Time": "17:00 - 19:00",
+                "Notes": "Bring a PROJECTOR",
                 "rate": "520",
                 "ccp": "120",
                 "travel": "200",
@@ -22,9 +22,9 @@
                 "ClassTime": "2",
                 "MaxClasses": "20 x 2.0 = 40.0",
                 "Dates": [
+                    "14/05/2025",
                     "12/05/2025",
                     "13/05/2025",
-                    "14/05/2025",
                     "15/05/2025",
                     "16/05/2025",
                     "17/05/2025",
@@ -34,8 +34,7 @@
                     "21/05/2025",
                     "22/05/2025",
                     "23/05/2025"
-                ],
-                "COD_CIA": "1 COD / 1 CIA"
+                ]
             },
             "students": {
                 "S001": {
@@ -49,7 +48,7 @@
                     "active": "Yes",
                     "attendance": {
                         "12/05/2025": "COD",
-                        "13/05/2025": "CIA",
+                        "13/05/2025": "P",
                         "14/05/2025": "P",
                         "15/05/2025": "L",
                         "16/05/2025": "P",
@@ -73,7 +72,7 @@
                     "active": "Yes",
                     "attendance": {
                         "12/05/2025": "COD",
-                        "13/05/2025": "CIA",
+                        "13/05/2025": "P",
                         "14/05/2025": "A",
                         "15/05/2025": "A",
                         "16/05/2025": "P",

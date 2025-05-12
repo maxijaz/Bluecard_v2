@@ -642,15 +642,15 @@ class Mainform(QMainWindow):
         self.frozen_table.setColumnWidth(0, 20)  # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
         self.frozen_table.setColumnWidth(2, 80)  # Nickname
-        self.frozen_table.setColumnWidth(3, 40)  # Score
-        self.frozen_table.setColumnWidth(4, 40)  # PreTest
-        self.frozen_table.setColumnWidth(5, 40)  # PostTest
-        self.frozen_table.setColumnWidth(6, 40)  # Attn
-        self.frozen_table.setColumnWidth(7, 35)  # P
-        self.frozen_table.setColumnWidth(8, 35)  # A
-        self.frozen_table.setColumnWidth(9, 35)  # L
-        self.frozen_table.setColumnWidth(10, 35)  # CIA
-        self.frozen_table.setColumnWidth(11, 35)  # COD
+        self.frozen_table.setColumnWidth(3, 55)  # Score
+        self.frozen_table.setColumnWidth(4, 55)  # PreTest
+        self.frozen_table.setColumnWidth(5, 55)  # PostTest
+        self.frozen_table.setColumnWidth(6, 35)  # Attn
+        self.frozen_table.setColumnWidth(7, 30)  # P
+        self.frozen_table.setColumnWidth(8, 30)  # A
+        self.frozen_table.setColumnWidth(9, 30)  # L
+        self.frozen_table.setColumnWidth(10, 30)  # CIA
+        self.frozen_table.setColumnWidth(11, 30)  # COD
 
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position
@@ -899,17 +899,30 @@ class Mainform(QMainWindow):
         column = index.column()
 
         # Skip the "Running Total" row
-        if (row == 0):
+        if row == 0:
             QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
             return
 
-        # Get the corresponding student and date
+        # Get the corresponding date and column data
         attendance_dates = self.metadata.get("Dates", [])
-        if (column < 0 or column >= len(attendance_dates)):
+        if column < 0 or column >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
             return
 
         date = attendance_dates[column]
+        column_values = [self.students[student_id]["attendance"].get(date, "-") for student_id in self.students]
+
+        # Check if the column contains "CIA" or "COD"
+        if "CIA" in column_values or "COD" in column_values:
+            QMessageBox.warning(
+                self,
+                "Edit Blocked",
+                "Press header [date] to clear CIA or COD before \nchanging any individual attendance data (P,A,L)....",
+                QMessageBox.Cancel,
+            )
+            return  # Do not proceed with editing
+
+        # Get the student ID and current value
         student_id = list(self.students.keys())[row - 1]  # Adjust for "Running Total" row
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
