@@ -28,7 +28,7 @@ class StudentManager(QDialog):
         self.students = self.data["classes"][self.class_id]["students"]
 
         self.setWindowTitle("Student Manager")
-        self.resize(400, 300)  # Set the initial size
+        self.resize(500, 300)  # Adjusted size to accommodate the new column
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Main layout
@@ -36,17 +36,23 @@ class StudentManager(QDialog):
 
         # Table for students
         self.table = QTableWidget()
-        self.table.setColumnCount(3)  # Add a third column for "Active"
-        self.table.setHorizontalHeaderLabels(["Student ID", "Name", "Active"])
+        self.table.setColumnCount(4)  # Add a fourth column for "Nickname"
+        self.table.setHorizontalHeaderLabels(["Student ID", "Name", "Nickname", "Active"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)  # Highlight the whole row on click
         self.populate_table()
         layout.addWidget(self.table)
 
         # Buttons
         button_layout = QVBoxLayout()
+
         toggle_active_button = QPushButton("Toggle Active Status")
         toggle_active_button.clicked.connect(self.toggle_active_status)
         button_layout.addWidget(toggle_active_button)
+
+        delete_button = QPushButton("Delete Student")
+        delete_button.clicked.connect(self.delete_student)
+        button_layout.addWidget(delete_button)
 
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.close_manager)
@@ -62,7 +68,8 @@ class StudentManager(QDialog):
             self.table.insertRow(row_position)
             self.table.setItem(row_position, 0, QTableWidgetItem(student_id))
             self.table.setItem(row_position, 1, QTableWidgetItem(student_data.get("name", "Unknown")))
-            self.table.setItem(row_position, 2, QTableWidgetItem(student_data.get("active", "No")))  # Add "Active" field
+            self.table.setItem(row_position, 2, QTableWidgetItem(student_data.get("nickname", "")))  # Add "Nickname" field
+            self.table.setItem(row_position, 3, QTableWidgetItem(student_data.get("active", "No")))  # Add "Active" field
 
     def toggle_active_status(self):
         """Toggle the active status of the selected student."""
@@ -88,6 +95,28 @@ class StudentManager(QDialog):
             self.populate_table()  # Refresh the table
             self.refresh_callback()  # Refresh the main form
 
+    def delete_student(self):
+        """Delete the selected student."""
+        selected_row = self.table.currentRow()
+        if selected_row == -1:
+            QMessageBox.warning(self, "No Selection", "Please select a student to delete.")
+            return
+
+        student_id = self.table.item(selected_row, 0).text()
+
+        # Confirm deletion
+        confirm = QMessageBox.warning(
+            self,
+            "Delete Student",
+            f"Deleting this student will remove all data and is unrecoverable. Are you sure you want to delete student {student_id}?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if confirm == QMessageBox.Yes:
+            del self.students[student_id]
+            save_data(self.data)  # Save the updated data
+            self.populate_table()  # Refresh the table
+            self.refresh_callback()  # Refresh the main form
+
     def close_manager(self):
         """Close the StudentManager."""
         self.refresh_callback()
@@ -95,5 +124,5 @@ class StudentManager(QDialog):
 
     def closeEvent(self, event):
         """Restore the initial size when the StudentManager is reopened."""
-        self.resize(400, 300)
+        self.resize(500, 300)
         super().closeEvent(event)
