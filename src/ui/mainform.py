@@ -332,22 +332,35 @@ class Mainform(QMainWindow):
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
 
-        if selected_row == -1:
+        # Adjust for the "Running Total" row
+        adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
+
+        if adjusted_row < 0:
+            # No valid student row selected, add a new student
             print("Add Student button clicked")
             def refresh_callback():
                 print("Refreshing student table after adding a student...")
                 self.refresh_student_table()
+                self.frozen_table.selectionModel().clearSelection()  # Clear selection after adding
+
             student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
             student_form.exec_()
         else:
+            # A valid student row is selected, edit the student
             print("Edit Student button clicked")
-            student_id = list(self.students.keys())[selected_row]
-            student_data = self.students[student_id]
-            def refresh_callback():
-                print("Refreshing student table after editing a student...")
-                self.refresh_student_table()
-            student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
-            student_form.exec_()
+            try:
+                student_id = list(self.students.keys())[adjusted_row]
+                student_data = self.students[student_id]
+
+                def refresh_callback():
+                    print("Refreshing student table after editing a student...")
+                    self.refresh_student_table()
+                    self.frozen_table.selectionModel().clearSelection()  # Clear selection after editing
+
+                student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
+                student_form.exec_()
+            except IndexError:
+                QMessageBox.warning(self, "Error", "Invalid row selected. Please try again.")
 
     def remove_student(self):
         """Handle removing or managing students."""

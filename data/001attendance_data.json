@@ -34,17 +34,18 @@
                     "21/05/2025",
                     "22/05/2025",
                     "23/05/2025"
-                ]
+                ],
+                "COD_CIA": "1 COD / 0 CIA"
             },
             "students": {
                 "S001": {
-                    "name": "Payl",
-                    "nickname": "",
-                    "gender": "Female",
-                    "score": "",
-                    "pre_test": "",
-                    "post_test": "",
-                    "note": "",
+                    "name": "Paul",
+                    "nickname": "monkey",
+                    "gender": "Male",
+                    "score": "100%",
+                    "pre_test": "10%",
+                    "post_test": "100%",
+                    "note": "Lazy boy",
                     "active": "Yes",
                     "attendance": {
                         "12/05/2025": "COD",
@@ -63,12 +64,12 @@
                 },
                 "S002": {
                     "name": "Jee",
-                    "nickname": "",
+                    "nickname": "Ding Dong",
                     "gender": "Female",
-                    "score": "",
-                    "pre_test": "",
-                    "post_test": "",
-                    "note": "",
+                    "score": "99%",
+                    "pre_test": "55%",
+                    "post_test": "89%",
+                    "note": "Ding DOOOONG",
                     "active": "Yes",
                     "attendance": {
                         "12/05/2025": "COD",
