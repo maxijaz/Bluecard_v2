@@ -87,6 +87,34 @@
                 }
             },
             "archive": "No"
+        },
+        "OLO125": {
+            "metadata": {
+                "class_no": "olo125",
+                "Company": "pizza hut",
+                "Consultant": "",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "",
+                "CourseBook": "",
+                "StartDate": "19/05/2025",
+                "FinishDate": "",
+                "Days": "",
+                "Time": "",
+                "Notes": "",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000",
+                "CourseHours": "40",
+                "ClassTime": "2",
+                "MaxClasses": "20 x 2.0 = 40.0",
+                "Dates": [
+                    "19/05/2025"
+                ]
+            },
+            "students": {},
+            "archive": "No"
         }
     }
 }
