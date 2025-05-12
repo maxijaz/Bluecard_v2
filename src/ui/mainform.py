@@ -124,7 +124,7 @@ class Mainform(QMainWindow):
         """Reset the column widths of the scrollable table to their default values."""
         # Fixed widths for the date columns
         for col in range(self.scrollable_table.model().columnCount()):  # All columns are now date columns
-            self.scrollable_table.setColumnWidth(col, 60)  # Default width for date columns
+            self.scrollable_table.setColumnWidth(col, 40)  # Default width for date columns
 
         # Ensure all columns are resizable
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
