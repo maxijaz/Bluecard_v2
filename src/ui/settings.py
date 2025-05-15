@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QCheckBox
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QCheckBox, QGridLayout, QSpacerItem, QSizePolicy, QTableView
 )
 from PyQt5.QtCore import Qt
 import json
@@ -14,7 +14,7 @@ class SettingsForm(QDialog):
     def __init__(self, parent, current_theme, on_theme_change):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.resize(450, 700)  # Set the initial size without fixing it
+        self.resize(450, 400)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setWindowModality(Qt.ApplicationModal)
 
@@ -51,6 +51,9 @@ class SettingsForm(QDialog):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
 
+        # Make sure this is at the top, before any assignment to self.scrollable_column_visibility
+        self.scrollable_column_visibility = {}
+
         # Theme selection
         theme_layout = QHBoxLayout()
         theme_label = QLabel("Select Theme:")
@@ -80,37 +83,81 @@ class SettingsForm(QDialog):
             entry = QLineEdit(value)
             self.entries[key] = entry
             form_layout.addRow(key.replace("def_", "").capitalize() + ":", entry)
-        layout.addLayout(form_layout)
+        layout.addLayout(form_layout, stretch=0)
 
-        # Frozen table column visibility checkboxes
+        layout.addSpacerItem(QSpacerItem(0, 8, QSizePolicy.Minimum, QSizePolicy.Fixed))  # 8 pixels high spacer
+
+        # Add heading/label for tickboxes
+        tickbox_heading = QLabel("Select columns to show / hide on mainform (Bluecard).")
+        tickbox_heading.setAlignment(Qt.AlignLeft)
+        tickbox_heading.setStyleSheet("font-weight: bold; margin-bottom: 4px;")
+        layout.addWidget(tickbox_heading)
+
+        # --- Frozen table column visibility tickboxes (first group) ---
         self.column_visibility = {}
-        column_fields = {
-            "show_nickname": "Show Nickname",  # <-- Add this line
-            "show_company_no": "Show Company No",
-            "show_score": "Show Score",
-            "show_prestest": "Show PreTest",
-            "show_posttest": "Show PostTest",
-            "show_attn": "Show Attn",
-            "show_p": "Show P",
-            "show_a": "Show A",
-            "show_l": "Show L"
-        }
-        for key, label in column_fields.items():
-            checkbox = QCheckBox(label)
+        main_columns = [
+            ("show_nickname", "Nickname"),
+            ("show_company_no", "Company No"),
+            ("show_score", "Score"),
+            ("show_prestest", "PreTest"),
+            ("show_posttest", "PostTest"),
+        ]
+
+        main_grid = QGridLayout()
+        main_grid.setHorizontalSpacing(12)
+        main_grid.setVerticalSpacing(2)
+        main_grid.setContentsMargins(0, 0, 0, 0)
+        for col, (key, label) in enumerate(main_columns):
+            label_widget = QLabel(label)
+            label_widget.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
+            main_grid.addWidget(label_widget, 0, col)
+            checkbox = QCheckBox()
             checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
             self.column_visibility[key] = checkbox
-            layout.addWidget(checkbox)
+            main_grid.addWidget(checkbox, 1, col, alignment=Qt.AlignHCenter | Qt.AlignTop)
 
-        # Scrollable table column visibility checkboxes
-        self.scrollable_column_visibility = {}
-        scrollable_column_fields = {
-            "show_dates": "Show Dates"
-        }
-        for key, label in scrollable_column_fields.items():
-            checkbox = QCheckBox(label)
+        layout.addLayout(main_grid)
+
+        # --- Spacer between groups ---
+        layout.addSpacerItem(QSpacerItem(0, 8, QSizePolicy.Minimum, QSizePolicy.Fixed))
+
+        # --- Frozen table column visibility tickboxes (second group) ---
+        secondary_columns = [
+            ("show_attn", "Attn"),
+            ("show_p", "P"),
+            ("show_a", "A"),
+            ("show_l", "L"),
+            ("show_dates", "Show Dates"),
+        ]
+
+        secondary_grid = QGridLayout()
+        secondary_grid.setHorizontalSpacing(12)
+        secondary_grid.setVerticalSpacing(2)
+        secondary_grid.setContentsMargins(0, 0, 0, 0)
+        for col, (key, label) in enumerate(secondary_columns):
+            label_widget = QLabel(label)
+            label_widget.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
+            secondary_grid.addWidget(label_widget, 0, col)
+            checkbox = QCheckBox()
             checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
-            self.scrollable_column_visibility[key] = checkbox
-            layout.addWidget(checkbox)
+            if key == "show_dates":
+                self.scrollable_column_visibility[key] = checkbox
+            else:
+                self.column_visibility[key] = checkbox
+            secondary_grid.addWidget(checkbox, 1, col, alignment=Qt.AlignHCenter | Qt.AlignTop)
+
+        layout.addLayout(secondary_grid)
+
+        # Add a vertical expanding spacer so tickboxes stay at the top
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        # Table layout
+        self.table_layout = QVBoxLayout()
+        layout.addLayout(self.table_layout)
+
+        # Add frozen table
+        self.frozen_table = QTableView()
+        self.table_layout.addWidget(self.frozen_table)
 
         # Buttons
         button_layout = QHBoxLayout()
