@@ -333,6 +333,14 @@ class Mainform(QMainWindow):
         self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
         self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
 
+        # Synchronize vertical scrollbars
+        self.frozen_table.verticalScrollBar().valueChanged.connect(
+            self.scrollable_table.verticalScrollBar().setValue
+        )
+        self.scrollable_table.verticalScrollBar().valueChanged.connect(
+            self.frozen_table.verticalScrollBar().setValue
+        )
+
         # Set the main layout
         self.container = QWidget()
         self.container.setLayout(self.layout)
