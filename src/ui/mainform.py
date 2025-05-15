@@ -693,22 +693,31 @@ class Mainform(QMainWindow):
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
 
-    def reset_column_widths(self):
-        """Reset the column widths of the frozen table to their default values."""
-        self.frozen_table.setColumnWidth(0, 20)   # #
-        self.frozen_table.setColumnWidth(1, 150)  # Name
-        self.frozen_table.setColumnWidth(2, 80)   # Nickname
-        self.frozen_table.setColumnWidth(3, 80)   # Company No
-        self.frozen_table.setColumnWidth(4, 55)   # Score
-        self.frozen_table.setColumnWidth(5, 55)   # PreTest
-        self.frozen_table.setColumnWidth(6, 55)   # PostTest
-        self.frozen_table.setColumnWidth(7, 35)   # Attn
-        self.frozen_table.setColumnWidth(8, 30)   # P
-        self.frozen_table.setColumnWidth(9, 30)   # A
-        self.frozen_table.setColumnWidth(10, 30)  # L
+    FROZEN_COLUMN_WIDTHS = {
+        "#": 20,
+        "Name": 150,
+        "Nickname": 80,
+        "Company No": 80,
+        "Score": 55,
+        "PreTest": 55,
+        "PostTest": 55,
+        "Attn": 35,
+        "P": 30,
+        "A": 30,
+        "L": 30,
+    }
 
-        self.adjust_frozen_table_width()  # Recalculate frozen table width
-        self.update_scrollable_table_position()  # Update scrollable table position
+    def reset_column_widths(self):
+        """Reset the column widths of the frozen table to their fixed values based on header name."""
+        model = self.frozen_table.model()
+        if not model:
+            return
+        for col in range(model.columnCount()):
+            header = model.headers[col]
+            width = self.FROZEN_COLUMN_WIDTHS.get(header, 50)  # Default to 50 if not found
+            self.frozen_table.setColumnWidth(col, width)
+        self.adjust_frozen_table_width()
+        self.update_scrollable_table_position()
 
     def adjust_frozen_table_width(self):
         """Adjust the frozen table's frame width to match the total column widths."""
