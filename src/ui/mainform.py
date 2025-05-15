@@ -130,7 +130,7 @@ class Mainform(QMainWindow):
         """Reset the column widths of the scrollable table to their default values."""
         # Fixed widths for the date columns
         for col in range(self.scrollable_table.model().columnCount()):  # All columns are now date columns
-            self.scrollable_table.setColumnWidth(col, 40)  # Default width for date columns
+            self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
 
         # Ensure all columns are resizable
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -699,14 +699,14 @@ class Mainform(QMainWindow):
         self.refresh_student_table()
 
     FROZEN_COLUMN_WIDTHS = {
-        "#": 20,
+        "#": 30,
         "Name": 150,
-        "Nickname": 80,
-        "Company No": 80,
-        "Score": 55,
-        "PreTest": 55,
-        "PostTest": 55,
-        "Attn": 35,
+        "Nickname": 100,
+        "Company No": 100,
+        "Score": 65,
+        "PreTest": 65,
+        "PostTest": 65,
+        "Attn": 50,
         "P": 30,
         "A": 30,
         "L": 30,

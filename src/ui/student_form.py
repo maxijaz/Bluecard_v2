@@ -164,14 +164,16 @@ class StudentForm(QDialog):
     def open_bulk_import_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Bulk Import Students")
-        dialog.resize(900, 600)
+        dialog.resize(1000, 600)
         layout = QVBoxLayout(dialog)
 
-        info_label = QLabel("Paste upto 150 students data from Excel below (columns: Name, Nickname, Gender, Score, Pre-Test, Post-Test, Note, Active).")
+        info_label = QLabel("Paste up to 150 students data from Excel below (columns: Name, Nickname, Company No, Gender, Score, Pre-Test, Post-Test, Note).")
         layout.addWidget(info_label)
 
         table = QTableWidget(25, 8)  # 25 rows, 8 columns as default
-        table.setHorizontalHeaderLabels(["Name", "Nickname", "Gender", "Score", "Pre-Test", "Post-Test", "Note", "Active"])
+        table.setHorizontalHeaderLabels([
+            "Name", "Nickname", "Company No", "Gender", "Score", "Pre-Test", "Post-Test", "Note"
+        ])
         layout.addWidget(table)
 
         add_rows_button = QPushButton("Add Rows")
@@ -241,23 +243,24 @@ class StudentForm(QDialog):
                 continue  # Skip empty rows
             name = name_item.text().strip()
             nickname = table.item(row, 1).text().strip() if table.item(row, 1) else ""
-            gender = table.item(row, 2).text().strip() if table.item(row, 2) else "Female"
-            score = table.item(row, 3).text().strip() if table.item(row, 3) else ""
-            pre_test = table.item(row, 4).text().strip() if table.item(row, 4) else ""
-            post_test = table.item(row, 5).text().strip() if table.item(row, 5) else ""
-            note = table.item(row, 6).text().strip() if table.item(row, 6) else ""
-            active = table.item(row, 7).text().strip() if table.item(row, 7) else "Yes"
+            company_no = table.item(row, 2).text().strip() if table.item(row, 2) else ""
+            gender = table.item(row, 3).text().strip() if table.item(row, 3) else "Female"
+            score = table.item(row, 4).text().strip() if table.item(row, 4) else ""
+            pre_test = table.item(row, 5).text().strip() if table.item(row, 5) else ""
+            post_test = table.item(row, 6).text().strip() if table.item(row, 6) else ""
+            note = table.item(row, 7).text().strip() if table.item(row, 7) else ""
 
             student_id = generate_next_student_id(students)
             students[student_id] = {
                 "name": name,
                 "nickname": nickname,
+                "company_no": company_no,
                 "gender": gender,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
                 "note": note,
-                "active": active,
+                "active": "Yes",  # Always set to Yes
                 "attendance": {},
             }
         save_data(self.data)
