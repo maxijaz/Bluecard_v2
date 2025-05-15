@@ -96,23 +96,26 @@ class StudentManager(QDialog):
             self.refresh_callback()  # Refresh the main form
 
     def delete_student(self):
-        """Delete the selected student."""
-        selected_row = self.table.currentRow()
-        if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select a student to delete.")
+        """Delete the selected student(s)."""
+        selected_rows = set(idx.row() for idx in self.table.selectionModel().selectedRows())
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Please select one or more students to delete.")
             return
 
-        student_id = self.table.item(selected_row, 0).text()
+        # Gather student IDs to delete
+        student_ids = [self.table.item(row, 0).text() for row in selected_rows]
 
         # Confirm deletion
         confirm = QMessageBox.warning(
             self,
-            "Delete Student",
-            f"Deleting this student will remove all data and is unrecoverable. Are you sure you want to delete student {student_id}?",
+            "Delete Student(s)",
+            f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(student_ids)} student(s)?",
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            del self.students[student_id]
+            for student_id in student_ids:
+                if student_id in self.students:
+                    del self.students[student_id]
             save_data(self.data)  # Save the updated data
             self.populate_table()  # Refresh the table
             self.refresh_callback()  # Refresh the main form

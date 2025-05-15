@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
@@ -164,19 +164,43 @@ class StudentForm(QDialog):
     def open_bulk_import_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Bulk Import Students")
-        dialog.resize(700, 400)
+        dialog.resize(900, 600)
         layout = QVBoxLayout(dialog)
 
-        info_label = QLabel("Paste student data from Excel below (columns: Name, Nickname, Gender, Score, Pre-Test, Post-Test, Note, Active).")
+        info_label = QLabel("Paste upto 150 students data from Excel below (columns: Name, Nickname, Gender, Score, Pre-Test, Post-Test, Note, Active).")
         layout.addWidget(info_label)
 
-        table = QTableWidget(10, 8)  # 10 rows, 8 columns as default
+        table = QTableWidget(25, 8)  # 25 rows, 8 columns as default
         table.setHorizontalHeaderLabels(["Name", "Nickname", "Gender", "Score", "Pre-Test", "Post-Test", "Note", "Active"])
         layout.addWidget(table)
+
+        add_rows_button = QPushButton("Add Rows")
+        layout.addWidget(add_rows_button)
+
+        def add_more_rows():
+            current_rows = table.rowCount()
+            if current_rows >= 150:
+                QMessageBox.warning(dialog, "Limit Reached", "Maximum of 150 rows allowed.")
+                return
+            rows_to_add, ok = QInputDialog.getInt(dialog, "Add Rows", "How many rows to add?", 10, 1, 150 - current_rows)
+            if ok:
+                table.setRowCount(min(150, current_rows + rows_to_add))
+
+        add_rows_button.clicked.connect(add_more_rows)
 
         paste_button = QPushButton("Paste from Clipboard")
         paste_button.clicked.connect(lambda: self.paste_from_clipboard(table))
         layout.addWidget(paste_button)
+
+        clear_button = QPushButton("Clear All")
+        layout.addWidget(clear_button)
+
+        def clear_all():
+            for row in range(table.rowCount()):
+                for col in range(table.columnCount()):
+                    table.setItem(row, col, QTableWidgetItem(""))
+
+        clear_button.clicked.connect(clear_all)
 
         save_button = QPushButton("Save Imported Students")
         save_button.clicked.connect(lambda: self.save_bulk_import(table, dialog))
@@ -189,11 +213,23 @@ class StudentForm(QDialog):
         clipboard = QApplication.clipboard()
         text = clipboard.text()
         rows = text.strip().split('\n')
-        for row_idx, row_data in enumerate(rows):
-            columns = row_data.split('\t')
-            for col_idx, value in enumerate(columns):
-                if row_idx < table.rowCount() and col_idx < table.columnCount():
-                    table.setItem(row_idx, col_idx, QTableWidgetItem(value))
+
+        selected_ranges = table.selectedRanges()
+        if selected_ranges and selected_ranges[0].columnCount() == 1:
+            # Paste into the selected column
+            col = selected_ranges[0].leftColumn()
+            start_row = selected_ranges[0].topRow()
+            for i, row_data in enumerate(rows):
+                value = row_data.strip()
+                if start_row + i < table.rowCount():
+                    table.setItem(start_row + i, col, QTableWidgetItem(value))
+        else:
+            # Default: paste as a block
+            for row_idx, row_data in enumerate(rows):
+                columns = row_data.split('\t')
+                for col_idx, value in enumerate(columns):
+                    if row_idx < table.rowCount() and col_idx < table.columnCount():
+                        table.setItem(row_idx, col_idx, QTableWidgetItem(value))
 
     def save_bulk_import(self, table, dialog):
         students = self.data["classes"][self.class_id]["students"]
