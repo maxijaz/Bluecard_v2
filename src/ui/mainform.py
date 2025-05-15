@@ -21,6 +21,7 @@ from .calendar import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 from PyQt5.QtCore import QItemSelection, QItemSelectionModel
 from .pal_cod_form import PALCODForm
+from ui.settings import SettingsForm  # Make sure this import is at the top
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -195,11 +196,13 @@ class Mainform(QMainWindow):
         # Buttons Section
         buttons_layout = QHBoxLayout()
         add_edit_student_btn = QPushButton("Add/Edit Student")
-        remove_student_btn = QPushButton("Manage/Remove Students")  # Correct button
-        pal_cod_btn = QPushButton("PAL/COD")  # New button
-        html_button = QPushButton("Run HTML Output")  # Move this button here
+        remove_student_btn = QPushButton("Manage/Remove Students")
+        pal_cod_btn = QPushButton("PAL/COD")
+        html_button = QPushButton("Run HTML Output")
         metadata_form_btn = QPushButton("Manage Metadata")
         manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
+        settings_btn = QPushButton("Settings")
+        settings_btn.clicked.connect(self.open_settings)
 
         # Connect buttons to their respective methods
         add_edit_student_btn.clicked.connect(self.add_edit_student)
@@ -210,7 +213,10 @@ class Mainform(QMainWindow):
         manage_dates_btn.clicked.connect(self.open_calendar_view)
 
         # Add buttons to the layout
-        buttons = [add_edit_student_btn, remove_student_btn, pal_cod_btn, html_button, metadata_form_btn, manage_dates_btn]
+        buttons = [
+            add_edit_student_btn, remove_student_btn, pal_cod_btn,
+            html_button, metadata_form_btn, manage_dates_btn, settings_btn  # Add settings_btn here
+        ]
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
@@ -989,6 +995,35 @@ class Mainform(QMainWindow):
 
             # Refresh the tables
             self.refresh_student_table()
+
+    def open_settings(self):
+        """Open the Settings dialog."""
+        settings_form = SettingsForm(self, self.theme, self.apply_theme_and_refresh)
+        settings_form.exec_()
+
+    def apply_theme_and_refresh(self, selected_theme):
+        # Reload settings and refresh UI as needed
+        self.default_settings = self.load_default_settings()
+        self.theme = selected_theme
+
+        # Rebuild column visibility dictionaries from updated settings
+        self.column_visibility = {
+            "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",
+            "CompanyNo": self.default_settings.get("show_company_no", "Yes") == "Yes",
+            "Score": self.default_settings.get("show_score", "Yes") == "Yes",
+            "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
+            "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
+            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes",
+            "P": self.default_settings.get("show_p", "Yes") == "Yes",
+            "A": self.default_settings.get("show_a", "Yes") == "Yes",
+            "L": self.default_settings.get("show_l", "Yes") == "Yes"
+        }
+        self.scrollable_column_visibility = {
+            "show_dates": self.default_settings.get("show_dates", "Yes") == "Yes"
+        }
+
+        self.refresh_student_table()
+        # Optionally, refresh other UI elements if needed
 
 
 class EditAttendanceDialog(QDialog):

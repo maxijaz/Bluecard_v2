@@ -198,10 +198,16 @@ class SettingsForm(QDialog):
             return
 
         # Refresh Launcher with the new theme
-        self.on_theme_change(selected_theme)
+        if self.on_theme_change:
+            self.on_theme_change(self.theme_dropdown.currentText())
         self.accept()  # Close the dialog
 
     def closeEvent(self, event):
         """Restore the initial size when the settings form is reopened."""
         self.resize(450, 700)
         super().closeEvent(event)
+
+    def open_settings(self):
+        """Open the Settings dialog."""
+        settings_form = SettingsForm(self, self.theme, self.apply_theme_and_refresh)
+        settings_form.exec_()
