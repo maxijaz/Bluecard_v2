@@ -282,13 +282,6 @@ class Mainform(QMainWindow):
         # Set the FrozenTableDelegate for the frozen table
         self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
 
-        # Center-align all headers except the "Name" column
-        for col in range(self.frozen_table.model().columnCount()):
-            if col == 1:  # "Name" column
-                self.frozen_table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            else:
-                self.frozen_table.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
-
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold;")
 
         # Connect double-click signal to edit_student method
@@ -629,6 +622,10 @@ class Mainform(QMainWindow):
             print("Row Length:", len(row))
 
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+
+        # Center-align all headers in the frozen table
+        header = self.frozen_table.horizontalHeader()
+        header.setDefaultAlignment(Qt.AlignCenter | Qt.AlignVCenter)
 
         # Rebuild the scrollable table data
         scrollable_headers = attendance_dates
