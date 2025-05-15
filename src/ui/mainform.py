@@ -105,6 +105,7 @@ class Mainform(QMainWindow):
 
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
+            "CompanyNo": self.default_settings.get("show_company_no", "Yes") == "Yes",
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
             "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
             "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
@@ -215,6 +216,8 @@ class Mainform(QMainWindow):
 
         # Frozen Table
         frozen_headers = ["#", "Name", "Nickname"]
+        if self.column_visibility.get("CompanyNo", True):
+            frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
             frozen_headers.append("Score")
         if self.column_visibility.get("PreTest", True):
@@ -228,6 +231,7 @@ class Mainform(QMainWindow):
                 idx + 1,
                 student.get("name", ""),
                 student.get("nickname", ""),
+                student.get("company_no", ""),
                 student.get("score", ""),
                 student.get("pre_test", ""),
                 student.get("post_test", ""),
@@ -530,6 +534,8 @@ class Mainform(QMainWindow):
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name", "Nickname"]
+        if self.column_visibility.get("CompanyNo", True):
+            frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
             frozen_headers.append("Score")
         if self.column_visibility.get("PreTest", True):
@@ -570,6 +576,8 @@ class Mainform(QMainWindow):
         # Add student rows
         for idx, student in enumerate(active_students.values()):
             row = [idx + 1, student.get("name", ""), student.get("nickname", "")]
+            if self.column_visibility.get("CompanyNo", True):
+                row.append(student.get("company_no", ""))
             if self.column_visibility.get("Score", True):
                 row.append(student.get("score", ""))
             if self.column_visibility.get("PreTest", True):
@@ -658,18 +666,17 @@ class Mainform(QMainWindow):
 
     def reset_column_widths(self):
         """Reset the column widths of the frozen table to their default values."""
-        self.frozen_table.setColumnWidth(0, 20)  # #
+        self.frozen_table.setColumnWidth(0, 20)   # #
         self.frozen_table.setColumnWidth(1, 150)  # Name
-        self.frozen_table.setColumnWidth(2, 80)  # Nickname
-        self.frozen_table.setColumnWidth(3, 55)  # Score
-        self.frozen_table.setColumnWidth(4, 55)  # PreTest
-        self.frozen_table.setColumnWidth(5, 55)  # PostTest
-        self.frozen_table.setColumnWidth(6, 35)  # Attn
-        self.frozen_table.setColumnWidth(7, 30)  # P
-        self.frozen_table.setColumnWidth(8, 30)  # A
-        self.frozen_table.setColumnWidth(9, 30)  # L
-        self.frozen_table.setColumnWidth(10, 30)  # CIA
-        self.frozen_table.setColumnWidth(11, 30)  # COD
+        self.frozen_table.setColumnWidth(2, 80)   # Nickname
+        self.frozen_table.setColumnWidth(3, 80)   # Company No
+        self.frozen_table.setColumnWidth(4, 55)   # Score
+        self.frozen_table.setColumnWidth(5, 55)   # PreTest
+        self.frozen_table.setColumnWidth(6, 55)   # PostTest
+        self.frozen_table.setColumnWidth(7, 35)   # Attn
+        self.frozen_table.setColumnWidth(8, 30)   # P
+        self.frozen_table.setColumnWidth(9, 30)   # A
+        self.frozen_table.setColumnWidth(10, 30)  # L
 
         self.adjust_frozen_table_width()  # Recalculate frozen table width
         self.update_scrollable_table_position()  # Update scrollable table position

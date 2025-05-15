@@ -63,7 +63,7 @@ def validate_class_format(data: dict) -> bool:
             return False
         for student_id, student_data in students.items():
             required_student_fields = [
-                "name", "gender", "nickname", "score", "pre_test", "post_test",
+                "name", "company_no", "gender", "nickname", "score", "pre_test", "post_test",
                 "active", "note", "attendance"
             ]
             if not all(field in student_data for field in required_student_fields):

@@ -48,6 +48,7 @@
                 "S001": {
                     "name": "Paul",
                     "nickname": "monkey",
+                    "company_no": "D123456",
                     "gender": "Male",
                     "score": "100%",
                     "pre_test": "10%",
@@ -89,6 +90,7 @@
                 "S002": {
                     "name": "Jee",
                     "nickname": "Ding Dong",
+                    "company_no": "D123457",
                     "gender": "Female",
                     "score": "99%",
                     "pre_test": "55%",
