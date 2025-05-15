@@ -88,9 +88,7 @@ class SettingsForm(QDialog):
             "show_score": "Show Score",
             "show_prestest": "Show PreTest",
             "show_posttest": "Show PostTest",
-            "show_attn": "Show Attn",
-            "show_cia": "Show CIA",  # Add checkbox for CIA
-            "show_cod": "Show COD"   # Add checkbox for COD
+            "show_attn": "Show Attn"
         }
         for key, label in column_fields.items():
             checkbox = QCheckBox(label)

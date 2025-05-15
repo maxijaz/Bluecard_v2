@@ -108,9 +108,7 @@ class Mainform(QMainWindow):
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
             "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
             "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
-            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes",
-            "CIA": self.default_settings.get("show_cia", "Yes") == "Yes",  # Add CIA visibility
-            "COD": self.default_settings.get("show_cod", "Yes") == "Yes"   # Add COD visibility
+            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes"
         }
         self.scrollable_column_visibility = {
             "P": self.default_settings.get("show_p", "Yes") == "Yes",
@@ -216,7 +214,15 @@ class Mainform(QMainWindow):
         self.table_layout.setContentsMargins(0, 0, 0, 0)
 
         # Frozen Table
-        frozen_headers = ["#", "Name", "Nickname", "Score", "Pre", "Post", "Attn"]  # Updated PreTest -> Pre, PostTest -> Post
+        frozen_headers = ["#", "Name", "Nickname"]
+        if self.column_visibility.get("Score", True):
+            frozen_headers.append("Score")
+        if self.column_visibility.get("PreTest", True):
+            frozen_headers.append("PreTest")
+        if self.column_visibility.get("PostTest", True):
+            frozen_headers.append("PostTest")
+        if self.column_visibility.get("Attn", True):
+            frozen_headers.append("Attn")
         frozen_data = [
             [
                 idx + 1,
