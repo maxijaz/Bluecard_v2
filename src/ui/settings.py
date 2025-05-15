@@ -85,7 +85,8 @@ class SettingsForm(QDialog):
         # Frozen table column visibility checkboxes
         self.column_visibility = {}
         column_fields = {
-            "show_company_no": "Show Company No",  # <-- Add this line
+            "show_nickname": "Show Nickname",  # <-- Add this line
+            "show_company_no": "Show Company No",
             "show_score": "Show Score",
             "show_prestest": "Show PreTest",
             "show_posttest": "Show PostTest",

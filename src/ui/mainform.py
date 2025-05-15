@@ -42,7 +42,10 @@ class TableModel(QAbstractTableModel):
 
     def data(self, index, role=Qt.DisplayRole):
         if role == Qt.DisplayRole:
-            return self.data[index.row()][index.column()]
+            try:
+                return self.data[index.row()][index.column()]
+            except IndexError:
+                return ""
         elif role == Qt.BackgroundRole:
             # Alternate row coloring for better readability
             if index.row() % 2 == 0:
@@ -105,6 +108,7 @@ class Mainform(QMainWindow):
 
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
+            "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",  # <-- Add this line
             "CompanyNo": self.default_settings.get("show_company_no", "Yes") == "Yes",
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
             "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
@@ -215,7 +219,9 @@ class Mainform(QMainWindow):
         self.table_layout.setContentsMargins(0, 0, 0, 0)
 
         # Frozen Table
-        frozen_headers = ["#", "Name", "Nickname"]
+        frozen_headers = ["#","Name"]
+        if self.column_visibility.get("Nickname", True):
+            frozen_headers.append("Nickname")
         if self.column_visibility.get("CompanyNo", True):
             frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
@@ -571,11 +577,24 @@ class Mainform(QMainWindow):
                 running_total.append(cumulative_total)
 
         # Add "-" for columns that don't need a count in the "Running Total" row
-        frozen_data.append(["", "Running Total", "-"] + ["-"] * (len(frozen_headers) - 3) + running_total)
+        # Build the running total row to match the visible frozen headers
+        running_total_row = []
+        header_iter = iter(frozen_headers)
+        for header in frozen_headers:
+            if header == "#":
+                running_total_row.append("")
+            elif header == "Name":
+                running_total_row.append("Running Total")
+            else:
+                running_total_row.append("-")
+        # Do NOT append running_total here, as frozen table should only have as many columns as headers
+        frozen_data.append(running_total_row)
 
         # Add student rows
         for idx, student in enumerate(active_students.values()):
-            row = [idx + 1, student.get("name", ""), student.get("nickname", "")]
+            row = [idx + 1, student.get("name", "")]
+            if self.column_visibility.get("Nickname", True):
+                row.append(student.get("nickname", ""))
             if self.column_visibility.get("CompanyNo", True):
                 row.append(student.get("company_no", ""))
             if self.column_visibility.get("Score", True):
