@@ -90,7 +90,10 @@ class SettingsForm(QDialog):
             "show_score": "Show Score",
             "show_prestest": "Show PreTest",
             "show_posttest": "Show PostTest",
-            "show_attn": "Show Attn"
+            "show_attn": "Show Attn",
+            "show_p": "Show P",
+            "show_a": "Show A",
+            "show_l": "Show L"
         }
         for key, label in column_fields.items():
             checkbox = QCheckBox(label)
@@ -101,9 +104,6 @@ class SettingsForm(QDialog):
         # Scrollable table column visibility checkboxes
         self.scrollable_column_visibility = {}
         scrollable_column_fields = {
-            "show_p": "Show P",
-            "show_a": "Show A",
-            "show_l": "Show L",
             "show_dates": "Show Dates"
         }
         for key, label in scrollable_column_fields.items():

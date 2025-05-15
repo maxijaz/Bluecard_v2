@@ -108,15 +108,17 @@ class Mainform(QMainWindow):
 
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
-            "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",  # <-- Add this line
+            "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",
             "CompanyNo": self.default_settings.get("show_company_no", "Yes") == "Yes",
             "Score": self.default_settings.get("show_score", "Yes") == "Yes",
             "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
             "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
-            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes"
+            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes",
+            "P": self.default_settings.get("show_p", "Yes") == "Yes",   # <-- Add
+            "A": self.default_settings.get("show_a", "Yes") == "Yes",   # <-- Add
+            "L": self.default_settings.get("show_l", "Yes") == "Yes"    # <-- Add
         }
         self.scrollable_column_visibility = {
-            "P": self.default_settings.get("show_p", "Yes") == "Yes",
             "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
         }
 
