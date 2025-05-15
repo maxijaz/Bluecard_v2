@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
@@ -97,6 +97,10 @@ class StudentForm(QDialog):
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
 
+        bulk_import_button = QPushButton("Bulk Import")
+        bulk_import_button.clicked.connect(self.open_bulk_import_dialog)
+        button_layout.addWidget(bulk_import_button)
+
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
@@ -156,3 +160,71 @@ class StudentForm(QDialog):
             if student_id not in existing_ids:
                 return student_id
             idx += 1
+
+    def open_bulk_import_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Bulk Import Students")
+        dialog.resize(700, 400)
+        layout = QVBoxLayout(dialog)
+
+        info_label = QLabel("Paste student data from Excel below (columns: Name, Nickname, Gender, Score, Pre-Test, Post-Test, Note, Active).")
+        layout.addWidget(info_label)
+
+        table = QTableWidget(10, 8)  # 10 rows, 8 columns as default
+        table.setHorizontalHeaderLabels(["Name", "Nickname", "Gender", "Score", "Pre-Test", "Post-Test", "Note", "Active"])
+        layout.addWidget(table)
+
+        paste_button = QPushButton("Paste from Clipboard")
+        paste_button.clicked.connect(lambda: self.paste_from_clipboard(table))
+        layout.addWidget(paste_button)
+
+        save_button = QPushButton("Save Imported Students")
+        save_button.clicked.connect(lambda: self.save_bulk_import(table, dialog))
+        layout.addWidget(save_button)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    def paste_from_clipboard(self, table):
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        rows = text.strip().split('\n')
+        for row_idx, row_data in enumerate(rows):
+            columns = row_data.split('\t')
+            for col_idx, value in enumerate(columns):
+                if row_idx < table.rowCount() and col_idx < table.columnCount():
+                    table.setItem(row_idx, col_idx, QTableWidgetItem(value))
+
+    def save_bulk_import(self, table, dialog):
+        students = self.data["classes"][self.class_id]["students"]
+        from logic.parser import generate_next_student_id, save_data
+
+        for row in range(table.rowCount()):
+            name_item = table.item(row, 0)
+            if not name_item or not name_item.text().strip():
+                continue  # Skip empty rows
+            name = name_item.text().strip()
+            nickname = table.item(row, 1).text().strip() if table.item(row, 1) else ""
+            gender = table.item(row, 2).text().strip() if table.item(row, 2) else "Female"
+            score = table.item(row, 3).text().strip() if table.item(row, 3) else ""
+            pre_test = table.item(row, 4).text().strip() if table.item(row, 4) else ""
+            post_test = table.item(row, 5).text().strip() if table.item(row, 5) else ""
+            note = table.item(row, 6).text().strip() if table.item(row, 6) else ""
+            active = table.item(row, 7).text().strip() if table.item(row, 7) else "Yes"
+
+            student_id = generate_next_student_id(students)
+            students[student_id] = {
+                "name": name,
+                "nickname": nickname,
+                "gender": gender,
+                "score": score,
+                "pre_test": pre_test,
+                "post_test": post_test,
+                "note": note,
+                "active": active,
+                "attendance": {},
+            }
+        save_data(self.data)
+        self.refresh_callback()
+        QMessageBox.information(self, "Bulk Import", "Students imported successfully!")
+        dialog.accept()
