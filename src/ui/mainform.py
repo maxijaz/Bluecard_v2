@@ -541,7 +541,9 @@ class Mainform(QMainWindow):
         self.metadata["COD_CIA"] = f"{total_cod} COD / {total_cia} CIA"
 
         # Rebuild the frozen table data
-        frozen_headers = ["#", "Name", "Nickname"]
+        frozen_headers = ["#", "Name"]
+        if self.column_visibility.get("Nickname", True):
+            frozen_headers.append("Nickname")
         if self.column_visibility.get("CompanyNo", True):
             frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
@@ -581,7 +583,7 @@ class Mainform(QMainWindow):
         # Add "-" for columns that don't need a count in the "Running Total" row
         # Build the running total row to match the visible frozen headers
         running_total_row = []
-        header_iter = iter(frozen_headers)
+        # header_iter = iter(frozen_headers)
         for header in frozen_headers:
             if header == "#":
                 running_total_row.append("")
