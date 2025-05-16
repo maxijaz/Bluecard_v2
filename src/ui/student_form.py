@@ -106,8 +106,8 @@ class StudentForm(QDialog):
 
     def save_student(self):
         """Save the student data."""
-        name = self.name_entry.text().strip()
-        nickname = self.nickname_entry.text().strip()
+        name = self.capitalize_words(self.name_entry.text().strip())
+        nickname = self.capitalize_words(self.nickname_entry.text().strip())
         gender = "Male" if self.male_radio.isChecked() else "Female"
         score = self.score_entry.text().strip()
         pre_test = self.pre_test_entry.text().strip()
@@ -247,15 +247,14 @@ class StudentForm(QDialog):
             # --- Skip header row if pasted ---
             if name_item.text().strip().lower() == "name":
                 continue
-            # Or, skip if the whole row matches the headers
             if all(
                 table.item(row, col) and table.item(row, col).text().strip().lower() == headers[col].lower()
                 for col in range(table.columnCount())
             ):
                 continue
 
-            name = name_item.text().strip()
-            nickname = table.item(row, 1).text().strip() if table.item(row, 1) else ""
+            name = self.capitalize_words(name_item.text().strip())
+            nickname = self.capitalize_words(table.item(row, 1).text().strip()) if table.item(row, 1) else ""
             company_no = table.item(row, 2).text().strip() if table.item(row, 2) else ""
             gender = table.item(row, 3).text().strip() if table.item(row, 3) else "Female"
             score = table.item(row, 4).text().strip() if table.item(row, 4) else ""
@@ -280,3 +279,6 @@ class StudentForm(QDialog):
         self.refresh_callback()
         QMessageBox.information(self, "Bulk Import", "Students imported successfully!")
         dialog.accept()
+
+    def capitalize_words(self, s):
+        return " ".join(w[:1].upper() + w[1:] if w else "" for w in s.split())

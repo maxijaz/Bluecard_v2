@@ -48,7 +48,7 @@
             "students": {
                 "S001": {
                     "name": "Paul",
-                    "nickname": "monkey",
+                    "nickname": "Monkey King",
                     "company_no": "D123456",
                     "gender": "Male",
                     "score": "100%",
@@ -89,7 +89,7 @@
                     }
                 },
                 "S002": {
-                    "name": "Jee",
+                    "name": "Jee Suadee",
                     "nickname": "Ding Dong",
                     "company_no": "D123457",
                     "gender": "Female",
