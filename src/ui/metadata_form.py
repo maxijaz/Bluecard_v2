@@ -179,6 +179,19 @@ class MetadataForm(QDialog):
             return
 
         metadata = {key: field.text().strip() for key, field in self.fields.items()}
+
+        # --- Apply formatting rules ---
+        metadata["class_no"] = class_no  # Always uppercase
+
+        # Company: Capitalize first letter of each word, but preserve existing uppercase letters
+        def smart_title(s):
+            return " ".join(
+                w if (len(w) > 1 and w.isupper()) else w[:1].upper() + w[1:]
+                for w in s.split()
+            )
+        company = metadata.get("Company", "")
+        metadata["Company"] = smart_title(company)
+
         metadata["CourseHours"] = self.class_hours_input.text()
         metadata["ClassTime"] = self.class_time_input.text()
         metadata["MaxClasses"] = self.max_classes_input.text()
