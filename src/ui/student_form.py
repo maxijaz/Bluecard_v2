@@ -14,7 +14,7 @@ class StudentForm(QDialog):
         self.student_data = student_data
 
         self.setWindowTitle("Edit Student" if student_id else "Add Student")
-        self.setFixedSize(350, 400)
+        self.setFixedSize(300, 350)
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(10)
@@ -40,7 +40,7 @@ class StudentForm(QDialog):
         grid.addWidget(self.company_no_entry, 2, 1, alignment=Qt.AlignTop)
 
         # Row 3
-        grid.addWidget(self.bold_label("Gender:"), 3, 0, alignment=Qt.AlignTop)
+        grid.addWidget(self.bold_label("Gender:"), 3, 0, alignment=Qt.AlignVCenter)
         gender_layout = QHBoxLayout()
         self.male_radio = QRadioButton("Male")
         self.female_radio = QRadioButton("Female")
@@ -56,7 +56,7 @@ class StudentForm(QDialog):
         gender_widget = QWidget()
         gender_widget.setLayout(gender_layout)
         gender_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        grid.addWidget(gender_widget, 3, 1, alignment=Qt.AlignTop)
+        grid.addWidget(gender_widget, 3, 1, alignment=Qt.AlignVCenter)
 
         # Row 4
         grid.addWidget(self.bold_label("Score:"), 4, 0, alignment=Qt.AlignTop)
@@ -79,7 +79,7 @@ class StudentForm(QDialog):
         grid.addWidget(self.note_entry, 7, 1, alignment=Qt.AlignTop)
 
         # Row 8
-        grid.addWidget(self.bold_label("Active:"), 8, 0, alignment=Qt.AlignTop)
+        grid.addWidget(self.bold_label("Active:"), 8, 0, alignment=Qt.AlignVCenter)
         active_layout = QHBoxLayout()
         self.active_yes = QRadioButton("Yes")
         self.active_no = QRadioButton("No")
@@ -95,7 +95,7 @@ class StudentForm(QDialog):
         active_widget = QWidget()
         active_widget.setLayout(active_layout)
         active_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        grid.addWidget(active_widget, 8, 1, alignment=Qt.AlignTop)
+        grid.addWidget(active_widget, 8, 1, alignment=Qt.AlignVCenter)
 
         main_layout.addLayout(grid)
 
