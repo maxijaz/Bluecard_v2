@@ -979,6 +979,17 @@ class Mainform(QMainWindow):
             return
 
         date = attendance_dates[column]
+
+        # --- Only allow editing if the header is a valid date ---
+        # Check if the header is a real date (e.g., "20/05/2025")
+        if not (len(date) == 10 and date[2] == "/" and date[5] == "/"):
+            QMessageBox.warning(
+                self,
+                "Invalid Date",
+                "Please add dates first before attempting to change attendance."
+            )
+            return
+
         # row - 1 because row 0 is running total, row 1 is first student, etc.
         student_keys = list(self.students.keys())
         if (row - 1) < 0 or (row - 1) >= len(student_keys):
