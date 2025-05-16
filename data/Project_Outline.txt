@@ -459,17 +459,15 @@ Add. <------ line separator ---------->
 # 8. Add or EDIT Student information - Form for adding and editing student data
 
 +-----------------------------------------------------------+
-|            Add /  Edit Student Information                |      ← Heading (bold, centered, 24pt)
-+-------------------------+---------------------------------+
-|                         |                                 |      ← Heading Blank (bold, centered, 18pt)
-+-------------------------+---------------------------------+
-|**Students:**            | [            S001             ] |      ← Data (labels **Students**, bold, centered, 18pt)
-+-------------------------+---------------------------------+
-|**Name:**                | [          Alice Kim          ] |      ← Data (S001, regular, centered, 18pt)
+|            Add /  Edit Student Information                |      
++-------------------------+---------------------------------+      
+|**Name:**                | [          Alice Kim          ] |     
 +-------------------------+---------------------------------+
 |**Nickname:**            | [            Ali              ] | 
 +-------------------------+---------------------------------+
-|**Gender:**              | [    male    ]   [   female   ] |      ← Button (bold, centered, 16pt) 
+|**Company No:**          | [           D123456           ] |
++-------------------------+---------------------------------+
+|**Gender:**              | [    male    ]   [   female   ] |      
 +-------------------------+---------------------------------+
 |**Score:**               | [          82% - A            ] |    
 +-------------------------+---------------------------------+
@@ -477,12 +475,12 @@ Add. <------ line separator ---------->
 +-------------------------+---------------------------------+
 |**PostTest:**            | [             90%             ] | 
 +-------------------------+---------------------------------+
-|**Note:**                | [Very punctual                ] |     ← Data ((Very punctual, regular, left, 18pt)                
+|**Note:**                | [Very punctual                ] |                     
 +-------------------------+---------------------------------+
-|**Active**               | [     Yes    ]   [     No     ] |     ← Button (bold, centered, 16pt)   
+|**Active**               | [     Yes    ]   [     No     ] |       
 +-------------------------+---------------------------------+
 
-                  [ Save ]  [ Cancel ]      ← Buttons (bold, centered, 18pt)
+                  [ Save ]  [ Cancel ] [Bulk Import]   
 
 8. Add or EDIT Student information and Button format, sequence and logic:
 1. Standard Windows 3-button control group (Minimize, Maximize/Restore, Close X).

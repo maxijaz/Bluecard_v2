@@ -178,7 +178,54 @@
                 ],
                 "COD_CIA": "0 COD / 0 CIA"
             },
-            "students": {},
+            "students": {
+                "S001": {
+                    "name": "Emily Johnson III",
+                    "nickname": "Joe",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S002": {
+                    "name": "Daniel Kim",
+                    "nickname": "Harry Parry",
+                    "gender": "Female",
+                    "score": "100",
+                    "pre_test": "56",
+                    "post_test": "85",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S003": {
+                    "name": "Sophia Martinez",
+                    "nickname": "",
+                    "company_no": "",
+                    "gender": "",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                },
+                "S004": {
+                    "name": "Liam Thompson",
+                    "nickname": "",
+                    "company_no": "",
+                    "gender": "",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {}
+                }
+            },
             "archive": "No"
         }
     }

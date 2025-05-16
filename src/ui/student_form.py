@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog
+    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
-
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None):
@@ -15,24 +14,33 @@ class StudentForm(QDialog):
         self.student_data = student_data
 
         self.setWindowTitle("Edit Student" if student_id else "Add Student")
-        self.setFixedSize(400, 500)
+        self.setFixedSize(350, 400)
 
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)
 
-        # Name
-        layout.addWidget(QLabel("Name:"))
-        self.name_entry = QLineEdit()
-        self.name_entry.setText(student_data.get("name", "") if student_data else "")
-        layout.addWidget(self.name_entry)
+        grid = QGridLayout()
+        grid.setSpacing(8)
+        grid.setColumnStretch(0, 0)
+        grid.setColumnStretch(1, 0)
 
-        # Nickname
-        layout.addWidget(QLabel("Nickname:"))
-        self.nickname_entry = QLineEdit()
-        self.nickname_entry.setText(student_data.get("nickname", "") if student_data else "")
-        layout.addWidget(self.nickname_entry)
+        # Row 0
+        grid.addWidget(self.bold_label("Name:"), 0, 0, alignment=Qt.AlignTop)
+        self.name_entry = QLineEdit(student_data.get("name", "") if student_data else "")
+        grid.addWidget(self.name_entry, 0, 1, alignment=Qt.AlignTop)
 
-        # Gender
-        layout.addWidget(QLabel("Gender:"))
+        # Row 1
+        grid.addWidget(self.bold_label("Nickname:"), 1, 0, alignment=Qt.AlignTop)
+        self.nickname_entry = QLineEdit(student_data.get("nickname", "") if student_data else "")
+        grid.addWidget(self.nickname_entry, 1, 1, alignment=Qt.AlignTop)
+
+        # Row 2
+        grid.addWidget(self.bold_label("Company No:"), 2, 0, alignment=Qt.AlignTop)
+        self.company_no_entry = QLineEdit(student_data.get("company_no", "") if student_data else "")
+        grid.addWidget(self.company_no_entry, 2, 1, alignment=Qt.AlignTop)
+
+        # Row 3
+        grid.addWidget(self.bold_label("Gender:"), 3, 0, alignment=Qt.AlignTop)
         gender_layout = QHBoxLayout()
         self.male_radio = QRadioButton("Male")
         self.female_radio = QRadioButton("Female")
@@ -42,37 +50,36 @@ class StudentForm(QDialog):
             else:
                 self.female_radio.setChecked(True)
         else:
-            self.female_radio.setChecked(True)  # Default to Female
+            self.female_radio.setChecked(True)
         gender_layout.addWidget(self.male_radio)
         gender_layout.addWidget(self.female_radio)
-        layout.addLayout(gender_layout)
+        gender_widget = QWidget()
+        gender_widget.setLayout(gender_layout)
+        gender_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        grid.addWidget(gender_widget, 3, 1, alignment=Qt.AlignTop)
 
-        # Score
-        layout.addWidget(QLabel("Score:"))
-        self.score_entry = QLineEdit()
-        self.score_entry.setText(student_data.get("score", "") if student_data else "")
-        layout.addWidget(self.score_entry)
+        # Row 4
+        grid.addWidget(self.bold_label("Score:"), 4, 0, alignment=Qt.AlignTop)
+        self.score_entry = QLineEdit(student_data.get("score", "") if student_data else "")
+        grid.addWidget(self.score_entry, 4, 1, alignment=Qt.AlignTop)
 
-        # Pre-Test
-        layout.addWidget(QLabel("Pre-Test:"))
-        self.pre_test_entry = QLineEdit()
-        self.pre_test_entry.setText(student_data.get("pre_test", "") if student_data else "")
-        layout.addWidget(self.pre_test_entry)
+        # Row 5
+        grid.addWidget(self.bold_label("Pre-Test:"), 5, 0, alignment=Qt.AlignTop)
+        self.pre_test_entry = QLineEdit(student_data.get("pre_test", "") if student_data else "")
+        grid.addWidget(self.pre_test_entry, 5, 1, alignment=Qt.AlignTop)
 
-        # Post-Test
-        layout.addWidget(QLabel("Post-Test:"))
-        self.post_test_entry = QLineEdit()
-        self.post_test_entry.setText(student_data.get("post_test", "") if student_data else "")
-        layout.addWidget(self.post_test_entry)
+        # Row 6
+        grid.addWidget(self.bold_label("Post-Test:"), 6, 0, alignment=Qt.AlignTop)
+        self.post_test_entry = QLineEdit(student_data.get("post_test", "") if student_data else "")
+        grid.addWidget(self.post_test_entry, 6, 1, alignment=Qt.AlignTop)
 
-        # Note
-        layout.addWidget(QLabel("Note:"))
-        self.note_entry = QLineEdit()
-        self.note_entry.setText(student_data.get("note", "") if student_data else "")
-        layout.addWidget(self.note_entry)
+        # Row 7
+        grid.addWidget(self.bold_label("Note:"), 7, 0, alignment=Qt.AlignTop)
+        self.note_entry = QLineEdit(student_data.get("note", "") if student_data else "")
+        grid.addWidget(self.note_entry, 7, 1, alignment=Qt.AlignTop)
 
-        # Active
-        layout.addWidget(QLabel("Active:"))
+        # Row 8
+        grid.addWidget(self.bold_label("Active:"), 8, 0, alignment=Qt.AlignTop)
         active_layout = QHBoxLayout()
         self.active_yes = QRadioButton("Yes")
         self.active_no = QRadioButton("No")
@@ -82,10 +89,15 @@ class StudentForm(QDialog):
             else:
                 self.active_no.setChecked(True)
         else:
-            self.active_yes.setChecked(True)  # Default to Yes
+            self.active_yes.setChecked(True)
         active_layout.addWidget(self.active_yes)
         active_layout.addWidget(self.active_no)
-        layout.addLayout(active_layout)
+        active_widget = QWidget()
+        active_widget.setLayout(active_layout)
+        active_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        grid.addWidget(active_widget, 8, 1, alignment=Qt.AlignTop)
+
+        main_layout.addLayout(grid)
 
         # Buttons
         button_layout = QHBoxLayout()
@@ -101,8 +113,17 @@ class StudentForm(QDialog):
         bulk_import_button.clicked.connect(self.open_bulk_import_dialog)
         button_layout.addWidget(bulk_import_button)
 
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setSizeGripEnabled(False)
+
+    def bold_label(self, text):
+        label = QLabel(text)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        return label
 
     def save_student(self):
         """Save the student data."""
@@ -162,6 +183,26 @@ class StudentForm(QDialog):
             idx += 1
 
     def open_bulk_import_dialog(self):
+        class BulkImportTable(QTableWidget):
+            def __init__(self, parent, paste_callback, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.parent = parent
+                self.paste_callback = paste_callback
+                self.setContextMenuPolicy(Qt.CustomContextMenu)
+                self.customContextMenuRequested.connect(self.open_context_menu)
+
+            def keyPressEvent(self, event):
+                if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_V:
+                    self.paste_callback(self)
+                else:
+                    super().keyPressEvent(event)
+
+            def open_context_menu(self, position):
+                menu = QMenu(self)
+                paste_action = menu.addAction("Paste")
+                paste_action.triggered.connect(lambda: self.paste_callback(self))
+                menu.exec_(self.viewport().mapToGlobal(position))
+
         dialog = QDialog(self)
         dialog.setWindowTitle("Bulk Import Students")
         dialog.resize(1000, 600)
@@ -170,7 +211,7 @@ class StudentForm(QDialog):
         info_label = QLabel("Paste up to 150 students data from Excel below (columns: Name, Nickname, Company No, Gender, Score, Pre-Test, Post-Test, Note).")
         layout.addWidget(info_label)
 
-        table = QTableWidget(25, 8)  # 25 rows, 8 columns as default
+        table = BulkImportTable(self, self.paste_from_clipboard, 25, 8)
         table.setHorizontalHeaderLabels([
             "Name", "Nickname", "Company No", "Gender", "Score", "Pre-Test", "Post-Test", "Note"
         ])
@@ -190,7 +231,7 @@ class StudentForm(QDialog):
 
         add_rows_button.clicked.connect(add_more_rows)
 
-        paste_button = QPushButton("Paste from Clipboard")
+        paste_button = QPushButton("Paste from Clipboard (Ctrl+V)")
         paste_button.clicked.connect(lambda: self.paste_from_clipboard(table))
         layout.addWidget(paste_button)
 
