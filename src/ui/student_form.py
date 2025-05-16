@@ -237,10 +237,23 @@ class StudentForm(QDialog):
         students = self.data["classes"][self.class_id]["students"]
         from logic.parser import generate_next_student_id, save_data
 
+        headers = ["Name", "Nickname", "Company No", "Gender", "Score", "Pre-Test", "Post-Test", "Note"]
+
         for row in range(table.rowCount()):
             name_item = table.item(row, 0)
             if not name_item or not name_item.text().strip():
                 continue  # Skip empty rows
+
+            # --- Skip header row if pasted ---
+            if name_item.text().strip().lower() == "name":
+                continue
+            # Or, skip if the whole row matches the headers
+            if all(
+                table.item(row, col) and table.item(row, col).text().strip().lower() == headers[col].lower()
+                for col in range(table.columnCount())
+            ):
+                continue
+
             name = name_item.text().strip()
             nickname = table.item(row, 1).text().strip() if table.item(row, 1) else ""
             company_no = table.item(row, 2).text().strip() if table.item(row, 2) else ""

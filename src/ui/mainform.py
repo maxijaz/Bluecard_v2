@@ -979,9 +979,18 @@ class Mainform(QMainWindow):
             return
 
         date = attendance_dates[column]
-        column_values = [self.students[student_id]["attendance"].get(date, "-") for student_id in self.students]
+        # row - 1 because row 0 is running total, row 1 is first student, etc.
+        student_keys = list(self.students.keys())
+        if (row - 1) < 0 or (row - 1) >= len(student_keys):
+            QMessageBox.warning(self, "Invalid Selection", "Student row out of range.")
+            return
+
+        student_id = student_keys[row - 1]
+        student_name = self.students[student_id].get("name", "Unknown")
+        current_value = self.students[student_id]["attendance"].get(date, "-")
 
         # Check if the column contains "CIA" or "COD"
+        column_values = [self.students[sid]["attendance"].get(date, "-") for sid in self.students]
         if "CIA" in column_values or "COD" in column_values:
             QMessageBox.warning(
                 self,
@@ -990,11 +999,6 @@ class Mainform(QMainWindow):
                 QMessageBox.Cancel,
             )
             return  # Do not proceed with editing
-
-        # Get the student ID and current value
-        student_id = list(self.students.keys())[row - 1]  # Adjust for "Running Total" row
-        student_name = self.students[student_id].get("name", "Unknown")
-        current_value = self.students[student_id]["attendance"].get(date, "-")
 
         # Open the PALCODForm without COD and CIA options, with student name
         dialog = PALCODForm(self, column, None, current_value, date, student_name, show_cod_cia=False, show_student_name=True)
