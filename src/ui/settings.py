@@ -14,7 +14,7 @@ class SettingsForm(QDialog):
     def __init__(self, parent, current_theme, on_theme_change):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.resize(450, 400)  # Set the initial size without fixing it
+        self.resize(350, 400)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setWindowModality(Qt.ApplicationModal)
 
@@ -104,7 +104,7 @@ class SettingsForm(QDialog):
         ]
 
         main_grid = QGridLayout()
-        main_grid.setHorizontalSpacing(12)
+        main_grid.setHorizontalSpacing(2)  # Tighter horizontal gap
         main_grid.setVerticalSpacing(2)
         main_grid.setContentsMargins(0, 0, 0, 0)
         for col, (key, label) in enumerate(main_columns):
@@ -131,7 +131,7 @@ class SettingsForm(QDialog):
         ]
 
         secondary_grid = QGridLayout()
-        secondary_grid.setHorizontalSpacing(12)
+        secondary_grid.setHorizontalSpacing(2)  # Tighter horizontal gap
         secondary_grid.setVerticalSpacing(2)
         secondary_grid.setContentsMargins(0, 0, 0, 0)
         for col, (key, label) in enumerate(secondary_columns):
@@ -151,13 +151,8 @@ class SettingsForm(QDialog):
         # Add a vertical expanding spacer so tickboxes stay at the top
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        # Table layout
-        self.table_layout = QVBoxLayout()
-        layout.addLayout(self.table_layout)
-
-        # Add frozen table
-        self.frozen_table = QTableView()
-        self.table_layout.addWidget(self.frozen_table)
+        # Add a vertical expanding spacer after tickboxes
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # Buttons
         button_layout = QHBoxLayout()

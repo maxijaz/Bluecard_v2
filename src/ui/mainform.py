@@ -890,11 +890,20 @@ class Mainform(QMainWindow):
 
         # Validate the column index
         attendance_dates = self.metadata.get("Dates", [])
-        if column_index < 0 or column_index >= len(attendance_dates):  # Validate the column index
+        if column_index < 0 or column_index >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
             return
 
-        date = attendance_dates[column_index]  # Get the corresponding date
+        date = attendance_dates[column_index]
+
+        # --- Block if the header is not a real date (e.g., "Date1", "date2", "Empty-1") ---
+        if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
+            QMessageBox.warning(
+                self,
+                "Invalid Date",
+                "Cannot set P/A/L for this column. Please add real dates first before attempting to change attendance."
+            )
+            return
 
         # Open the PALCODForm with COD and CIA options, without student name
         pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=True, show_student_name=False)
