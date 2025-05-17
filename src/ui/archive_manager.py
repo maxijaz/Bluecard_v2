@@ -43,7 +43,7 @@ class ArchiveManager(QDialog):
         delete_button.clicked.connect(self.delete_class)
         button_layout.addWidget(delete_button)
 
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QPushButton("Close")
         cancel_button.clicked.connect(self.close_with_refresh)
         button_layout.addWidget(cancel_button)
 
@@ -54,6 +54,8 @@ class ArchiveManager(QDialog):
         self.table.setRowCount(0)  # Clear existing rows
         for class_id, class_data in self.archived_classes.items():
             metadata = class_data.get("metadata", {})
+            if metadata.get("archive", "No") != "Yes":
+                continue  # Only show archived classes
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
             self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
