@@ -506,7 +506,7 @@ Active [     Yes    ]   [     No     ]    →   Toggle switch between male/femal
 | Ben Lee               | [  Nok   ] |                         |  [ No ]  |   ← Table Rows data (ACERs,No, regular, left, 16pt)
 +-----------------------+------------+-------------------------+----------+   
 
-       [Edit]     [ Active ]  [ not Active ]   [ Delete ]   [ Cancel ]         ← Buttons (regular, centered, 18pt)
+       [Edit]     [ Toggle Active Status ]   [ Delete Student ]   [ Close ]         ← Buttons (regular, centered, 18pt)
 
 
 9. Student Active Manager and Button format, sequence and logic:

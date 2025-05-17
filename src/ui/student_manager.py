@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
+    QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QHBoxLayout
 )
 from PyQt5.QtCore import Qt
 from src.logic.parser import save_data, generate_next_student_id
@@ -26,9 +26,10 @@ class StudentManager(QDialog):
         self.class_id = class_id
         self.refresh_callback = refresh_callback
         self.students = self.data["classes"][self.class_id]["students"]
+        self.row_to_student_id = []
 
         self.setWindowTitle("Student Manager")
-        self.resize(500, 300)  # Adjusted size to accommodate the new column
+        self.resize(700, 300)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # Main layout
@@ -36,15 +37,15 @@ class StudentManager(QDialog):
 
         # Table for students
         self.table = QTableWidget()
-        self.table.setColumnCount(4)  # Add a fourth column for "Nickname"
-        self.table.setHorizontalHeaderLabels(["Student ID", "Name", "Nickname", "Active"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["Name", "Nickname", "Company No", "Note", "Active"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)  # Highlight the whole row on click
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.populate_table()
         layout.addWidget(self.table)
 
-        # Buttons
-        button_layout = QVBoxLayout()
+        # Buttons (horizontal layout)
+        button_layout = QHBoxLayout()
 
         toggle_active_button = QPushButton("Toggle Active Status")
         toggle_active_button.clicked.connect(self.toggle_active_status)
@@ -54,6 +55,10 @@ class StudentManager(QDialog):
         delete_button.clicked.connect(self.delete_student)
         button_layout.addWidget(delete_button)
 
+        edit_button = QPushButton("Edit Student")
+        edit_button.clicked.connect(self.edit_student)
+        button_layout.addWidget(edit_button)
+
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.close_manager)
         button_layout.addWidget(close_button)
@@ -61,64 +66,104 @@ class StudentManager(QDialog):
         layout.addLayout(button_layout)
 
     def populate_table(self):
-        """Populate the table with student data."""
         self.table.setRowCount(0)
+        self.row_to_student_id = []
         for student_id, student_data in self.students.items():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
-            self.table.setItem(row_position, 0, QTableWidgetItem(student_id))
-            self.table.setItem(row_position, 1, QTableWidgetItem(student_data.get("name", "Unknown")))
-            self.table.setItem(row_position, 2, QTableWidgetItem(student_data.get("nickname", "")))  # Add "Nickname" field
-            self.table.setItem(row_position, 3, QTableWidgetItem(student_data.get("active", "No")))  # Add "Active" field
+            self.row_to_student_id.append(student_id)
+            # Name
+            item_name = QTableWidgetItem(student_data.get("name", "Unknown"))
+            item_name.setFlags(item_name.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row_position, 0, item_name)
+            # Nickname
+            item_nick = QTableWidgetItem(student_data.get("nickname", ""))
+            item_nick.setFlags(item_nick.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row_position, 1, item_nick)
+            # Company No
+            item_company = QTableWidgetItem(student_data.get("company_no", ""))
+            item_company.setFlags(item_company.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row_position, 2, item_company)
+            # Note
+            item_note = QTableWidgetItem(student_data.get("note", ""))
+            item_note.setFlags(item_note.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row_position, 3, item_note)
+            # Active
+            item_active = QTableWidgetItem(student_data.get("active", "No"))
+            item_active.setFlags(item_active.flags() & ~Qt.ItemIsEditable)
+            self.table.setItem(row_position, 4, item_active)
 
     def toggle_active_status(self):
-        """Toggle the active status of the selected student."""
-        selected_row = self.table.currentRow()
-        if selected_row == -1:
-            QMessageBox.warning(self, "No Selection", "Please select a student to toggle their active status.")
+        selected_rows = self.table.selectionModel().selectedRows()
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Please select a student to toggle status.")
             return
-
-        student_id = self.table.item(selected_row, 0).text()
-        current_status = self.students[student_id].get("active", "No")
-        new_status = "Yes" if current_status == "No" else "No"
-
-        # Confirm the action
-        confirm = QMessageBox.question(
-            self,
-            "Toggle Active Status",
-            f"Are you sure you want to change the active status of student {student_id} to '{new_status}'?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        if confirm == QMessageBox.Yes:
-            self.students[student_id]["active"] = new_status
-            save_data(self.data)  # Save the updated data
-            self.populate_table()  # Refresh the table
-            self.refresh_callback()  # Refresh the main form
+        for idx in selected_rows:
+            row = idx.row()
+            student_id = self.row_to_student_id[row]
+            current_status = self.students[student_id].get("active", "No")
+            self.students[student_id]["active"] = "No" if current_status == "Yes" else "Yes"
+        save_data(self.data)
+        self.populate_table()
+        self.refresh_callback()
 
     def delete_student(self):
-        """Delete the selected student(s)."""
+        """Delete the selected student(s) if they are inactive."""
         selected_rows = set(idx.row() for idx in self.table.selectionModel().selectedRows())
         if not selected_rows:
             QMessageBox.warning(self, "No Selection", "Please select one or more students to delete.")
             return
 
-        # Gather student IDs to delete
-        student_ids = [self.table.item(row, 0).text() for row in selected_rows]
+        # Gather student IDs to delete, but only if Active == "No"
+        deletable_ids = []
+        undeletable_names = []
+        for row in selected_rows:
+            student_id = self.row_to_student_id[row]
+            student = self.students[student_id]
+            if student.get("active", "No") == "No":
+                deletable_ids.append(student_id)
+            else:
+                undeletable_names.append(student.get("name", student_id))
+
+        if not deletable_ids:
+            QMessageBox.warning(self, "Cannot Delete", "Only students with Active = No can be deleted.\nToggle Student Active Status = No then delete.")
+            return
 
         # Confirm deletion
         confirm = QMessageBox.warning(
             self,
             "Delete Student(s)",
-            f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(student_ids)} student(s)?",
+            f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(deletable_ids)} student(s)?",
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            for student_id in student_ids:
+            for student_id in deletable_ids:
                 if student_id in self.students:
                     del self.students[student_id]
             save_data(self.data)  # Save the updated data
             self.populate_table()  # Refresh the table
             self.refresh_callback()  # Refresh the main form
+
+            if undeletable_names:
+                QMessageBox.information(
+                    self,
+                    "Some Students Not Deleted",
+                    "The following students were not deleted because they are still active:\n" +
+                    "\n".join(undeletable_names)
+                )
+
+    def edit_student(self):
+        """Edit the selected student using StudentForm."""
+        selected_rows = self.table.selectionModel().selectedRows()
+        if not selected_rows or len(selected_rows) != 1:
+            QMessageBox.warning(self, "Select Student", "Please select a single student to edit.")
+            return
+        row = selected_rows[0].row()
+        student_id = self.row_to_student_id[row]
+        student_data = self.students[student_id]
+        form = StudentForm(self, self.class_id, self.data, self.refresh_callback, student_id=student_id, student_data=student_data)
+        form.exec_()
+        self.populate_table()
 
     def close_manager(self):
         """Close the StudentManager."""

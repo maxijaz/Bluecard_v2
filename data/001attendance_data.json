@@ -43,7 +43,8 @@
                     "16/07/2025",
                     "21/07/2025"
                 ],
-                "COD_CIA": "0 COD / 0 CIA"
+                "COD_CIA": "0 COD / 0 CIA",
+                "archive": "Yes"
             },
             "students": {
                 "S001": {
@@ -55,7 +56,7 @@
                     "pre_test": "10%",
                     "post_test": "100%",
                     "note": "Lazy boy",
-                    "active": "Yes",
+                    "active": "No",
                     "attendance": {
                         "14/05/2025": "P",
                         "19/05/2025": "A",
@@ -274,13 +275,13 @@
             },
             "students": {
                 "S001": {
-                    "name": "Paul",
-                    "nickname": "Monkey",
+                    "name": "Mick Mouse 3",
+                    "nickname": "Mickey",
                     "gender": "Female",
                     "score": "",
                     "pre_test": "",
                     "post_test": "",
-                    "note": "helo",
+                    "note": "",
                     "active": "Yes",
                     "attendance": {}
                 }

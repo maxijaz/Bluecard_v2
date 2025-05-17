@@ -45,7 +45,7 @@ class Launcher(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
@@ -207,7 +207,7 @@ class Launcher(QMainWindow):
         archived_classes = {
             class_id: class_data
             for class_id, class_data in self.classes.items()
-            if class_data.get("metadata", {}).get("archive", "No") == "Yes"
+            if class_data.get("metadata", {}).get("archive", "Yes") == "Yes"
         }
 
         if not archived_classes:

@@ -24,16 +24,11 @@ class ArchiveManager(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Class ID", "Company", "Archived"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # Use fixed column widths
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)  # Stretch columns to fill width
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         layout.addWidget(self.table)
-
-        # Set column widths
-        self.table.setColumnWidth(0, 150)  # Class ID
-        self.table.setColumnWidth(1, 150)  # Company
-        self.table.setColumnWidth(2, 75)   # Archived
 
         # Populate the table
         self.populate_table()
