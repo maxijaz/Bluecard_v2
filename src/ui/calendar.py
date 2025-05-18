@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCalendarWidget, QPushButton, QMessageBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCalendarWidget, QPushButton, QMessageBox, QHBoxLayout
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QTextCharFormat, QColor
 
@@ -13,8 +13,11 @@ class CalendarView(QDialog):
         self.on_save_callback = on_save_callback
 
         # Convert incoming date strings to QDate objects
-        self.scheduled_dates = [QDate.fromString(d, "dd/MM/yyyy") for d in (scheduled_dates or [])]
-        self.selected_dates = set(self.scheduled_dates)
+        self.scheduled_dates = [
+            qd for qd in (QDate.fromString(d, "dd/MM/yyyy") for d in (scheduled_dates or []))
+            if qd.isValid()
+        ]
+        self.selected_dates = set(self.scheduled_dates)  # Only scheduled dates are selected
 
         # Convert protected dates to QDate objects
         self.protected_dates = [QDate.fromString(d, "dd/MM/yyyy") for d in (protected_dates or [])]
@@ -31,16 +34,28 @@ class CalendarView(QDialog):
         # Highlight already scheduled dates
         self.highlight_dates(self.selected_dates)
 
+        # Remove blue highlight from today if today is not in scheduled_dates
+        today = QDate.currentDate()
+        if today not in self.selected_dates:
+            self.clear_highlight(today)
+        self.highlight_today()  # Always highlight today in red
+
         # Highlight protected dates in gray
         self.highlight_protected_dates(self.protected_dates)
 
-        # Highlight today's date in red
-        self.highlight_today()
-
-        # Save button
+        # Save and Close buttons in a row
+        button_row = QVBoxLayout()
+        button_layout = QHBoxLayout()
         save_button = QPushButton("Save Changes")
         save_button.clicked.connect(self.save_changes)
-        layout.addWidget(save_button)
+        button_layout.addWidget(save_button)
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.reject)
+        button_layout.addWidget(close_button)
+
+        button_row.addLayout(button_layout)
+        layout.addLayout(button_row)
 
     def highlight_today(self):
         """Highlight today's date in red without showing the blue selection box."""
@@ -74,8 +89,8 @@ class CalendarView(QDialog):
 
     def toggle_date_selection(self, date):
         """Toggle the selection of a date."""
+        print("Before toggle:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
         if date in self.protected_dates:
-            # Prevent changes to protected dates
             QMessageBox.warning(self, "Protected Date", "This date cannot be changed because it has attendance data.")
             return
 
@@ -83,14 +98,16 @@ class CalendarView(QDialog):
             self.selected_dates.remove(date)
             self.clear_highlight(date)
         else:
-            if len(self.selected_dates) < self.max_dates:
-                self.selected_dates.add(date)
-                self.highlight_dates([date])
-            else:
+            if len(self.selected_dates) == self.max_dates:
                 QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
+                return  # Only block when trying to add one more than allowed
+            self.selected_dates.add(date)
+            self.highlight_dates([date])
+        print("After toggle:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
 
     def save_changes(self):
         """Save the selected dates."""
+        print("Saving selected dates:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
         if len(self.selected_dates) > self.max_dates:
             QMessageBox.warning(self, "Too Many Dates", f"Please select up to {self.max_dates} dates.")
             return
