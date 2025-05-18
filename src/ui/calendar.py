@@ -91,7 +91,12 @@ class CalendarView(QDialog):
         """Toggle the selection of a date."""
         print("Before toggle:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
         if date in self.protected_dates:
-            QMessageBox.warning(self, "Protected Date", "This date cannot be changed because it has attendance data.")
+            QMessageBox.warning(
+                self,
+                "Protected Date",
+                "This date cannot be changed because it has attendance data.\n"
+                "Click column header date on the Bluecard tabel and clear data to be able to change the date of a grey protected field on the calendar."
+            )
             return
 
         if date in self.selected_dates:

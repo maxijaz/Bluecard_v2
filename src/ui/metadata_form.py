@@ -237,26 +237,41 @@ class MetadataForm(QDialog):
         self.accept()  # Close the dialog
 
     def pick_start_date(self):
-        """Open the calendar to pick a Start Date."""
-        # Retrieve the existing dates from the metadata if editing, otherwise use an empty list
+        """Open the calendar to pick a Start Date, protecting dates with attendance data."""
+        # Get scheduled dates from metadata
         scheduled_dates = []
+        protected_dates = set()
+        max_dates = 1  # Default fallback
+
         if self.is_edit and self.class_id:
-            scheduled_dates = self.data["classes"][self.class_id]["metadata"].get("Dates", [])
+            class_data = self.data["classes"][self.class_id]
+            scheduled_dates = class_data["metadata"].get("Dates", [])
+            students = class_data["students"]
+            # Collect protected dates: any date with P, A, L, CIA, COD, or HOL for any student
+            for student in students.values():
+                attendance = student.get("attendance", {})
+                for date, value in attendance.items():
+                    if value in ["P", "A", "L", "CIA", "COD", "HOL"]:
+                        protected_dates.add(date)
+            # --- Get MaxClasses from metadata ---
+            max_classes_str = class_data["metadata"].get("MaxClasses", "1")
+            try:
+                max_dates = int(str(max_classes_str).split()[0])
+            except Exception:
+                max_dates = 1
 
         def on_save_callback(selected_dates):
-            if self.single_date_mode:
-                # Single-date mode: Set the first selected date as StartDate
-                if selected_dates:
-                    self.fields["StartDate"].setText(selected_dates[0])
-            else:
-                # Multi-date mode: Update the Dates metadata
-                if selected_dates:
-                    self.data["classes"][self.class_id]["metadata"]["Dates"] = selected_dates
-                    self.fields["StartDate"].setText(selected_dates[0])  # Update StartDate to the earliest date
+            if selected_dates:
+                self.fields["StartDate"].setText(selected_dates[0])
 
-        # Open the CalendarView with the appropriate max_dates
-        max_dates = 1 if self.single_date_mode else 20  # Allow only 1 date in single-date mode
-        calendar_view = CalendarView(self, scheduled_dates=scheduled_dates, on_save_callback=on_save_callback, max_dates=max_dates)
+        # Open the CalendarView with protected_dates and max_dates
+        calendar_view = CalendarView(
+            self,
+            scheduled_dates=scheduled_dates,
+            on_save_callback=on_save_callback,
+            max_dates=max_dates,
+            protected_dates=list(protected_dates)
+        )
         calendar_view.exec_()
 
     def closeEvent(self, event):
