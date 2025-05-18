@@ -837,12 +837,12 @@ class Mainform(QMainWindow):
         scheduled_dates = self.get_attendance_dates()
         print(f"Scheduled dates before calendar: {scheduled_dates}")  # Debugging: Check current dates
 
-        # Identify protected dates (dates with attendance values like "P", "A", "L")
+        # Identify protected dates (dates with attendance values like "P", "A", "L", "CIA", "COD", "HOL")
         protected_dates = set()
         for student in self.students.values():
             attendance = student.get("attendance", {})
             for date, value in attendance.items():
-                if value in ["P", "A", "L"]:
+                if value in ["P", "A", "L", "CIA", "COD", "HOL"]:
                     protected_dates.add(date)
 
         print(f"Protected dates: {protected_dates}")  # Debugging: Check protected dates
