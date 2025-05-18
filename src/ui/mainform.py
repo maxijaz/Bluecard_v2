@@ -576,12 +576,12 @@ class Mainform(QMainWindow):
         cumulative_total = 0
 
         for date in attendance_dates:
-            # Check if any student has "CIA" or "COD" for this date
-            has_cia_or_cod = any(
-                student.get("attendance", {}).get(date) in ["CIA", "COD"]
+            # Check if any student has "CIA" or "COD" or "HOL" for this date
+            has_cia_cod_hol = any(
+                student.get("attendance", {}).get(date) in ["CIA", "COD", "HOL"]
                 for student in self.students.values()
             )
-            if has_cia_or_cod:
+            if has_cia_cod_hol:
                 running_total.append("-")  # Exclude this date from the running total
             else:
                 cumulative_total += class_time
@@ -929,7 +929,46 @@ class Mainform(QMainWindow):
         for student in self.students.values():
             student["attendance"][date] = value
 
-        # Save the updated data
+        # --- Ensure there are always MaxClasses teaching dates (excluding CIA/COD/HOL) ---
+        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])
+        # Count teaching dates (dates where NO student has CIA, COD, or HOL)
+        def is_teaching_date(d):
+            return not any(
+                student.get("attendance", {}).get(d) in ["CIA", "COD", "HOL"]
+                for student in self.students.values()
+            )
+        teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
+        while len(teaching_dates) < max_classes:
+            # Add a new date after the last date
+            if attendance_dates:
+                last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
+                # Find the next weekday from the original schedule (if available)
+                days_str = self.metadata.get("Days", "")
+                weekdays = []
+                if days_str:
+                    day_map = {
+                        "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+                        "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+                    }
+                    weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
+                # Find the next valid date
+                next_date = last_date
+                while True:
+                    next_date += timedelta(days=1)
+                    if not weekdays or next_date.weekday() in weekdays:
+                        break
+                new_date_str = next_date.strftime("%d/%m/%Y")
+            else:
+                # Fallback if no dates exist
+                new_date_str = f"Extra-{len(attendance_dates)+1}"
+            attendance_dates.append(new_date_str)
+            # Set attendance for all students to "-"
+            for student in self.students.values():
+                student["attendance"][new_date_str] = "-"
+            teaching_dates.append(new_date_str)
+
+        # Save the updated dates and data
+        self.metadata["Dates"] = attendance_dates
         save_data(self.data)
 
         # Refresh the frozen table and scrollable table
@@ -1011,11 +1050,11 @@ class Mainform(QMainWindow):
 
         # Check if the column contains "CIA" or "COD"
         column_values = [self.students[sid]["attendance"].get(date, "-") for sid in self.students]
-        if "CIA" in column_values or "COD" in column_values:
+        if "CIA" in column_values or "COD" in column_values or "HOL" in column_values:
             QMessageBox.warning(
                 self,
                 "Edit Blocked",
-                "Press header [date] to clear CIA or COD before \nchanging any individual attendance data (P,A,L)....",
+                "Press header [date] to clear CIA, COD, or HOL before \nchanging any individual attendance data (P,A,L)....",
                 QMessageBox.Cancel,
             )
             return  # Do not proceed with editing

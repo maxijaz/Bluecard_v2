@@ -50,6 +50,19 @@ class PALCODForm(QDialog):
             button.clicked.connect(lambda _, v=value: self.update_column(v))
             layout.addWidget(button)
 
+        if show_cod_cia:
+            cod_button = QPushButton("COD")
+            cod_button.clicked.connect(lambda: self.select_value("COD"))
+            layout.addWidget(cod_button)
+
+            cia_button = QPushButton("CIA")
+            cia_button.clicked.connect(lambda: self.select_value("CIA"))
+            layout.addWidget(cia_button)
+
+            hol_button = QPushButton("HOL")  # <-- Add this
+            hol_button.clicked.connect(lambda: self.select_value("HOL"))
+            layout.addWidget(hol_button)
+
     def update_column(self, value):
         """Update the selected column with the given value."""
         confirm = QMessageBox.question(
@@ -61,3 +74,7 @@ class PALCODForm(QDialog):
         if confirm == QMessageBox.Yes:
             self.selected_value = value  # Set the selected value
             self.accept()  # Close the form
+
+    def select_value(self, value):
+        self.selected_value = value
+        self.accept()
