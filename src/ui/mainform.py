@@ -576,12 +576,12 @@ class Mainform(QMainWindow):
         cumulative_total = 0
 
         for date in attendance_dates:
-            # Check if any student has "CIA" or "COD" or "HOL" for this date
-            has_cia_cod_hol = any(
-                student.get("attendance", {}).get(date) in ["CIA", "COD", "HOL"]
+            # Check if any student has "CIA" or "HOL" for this date (COD now counts as a class)
+            has_cia_hol = any(
+                student.get("attendance", {}).get(date) in ["CIA", "HOL"]
                 for student in self.students.values()
             )
-            if has_cia_cod_hol:
+            if has_cia_hol:
                 running_total.append("-")  # Exclude this date from the running total
             else:
                 cumulative_total += class_time
@@ -934,7 +934,7 @@ class Mainform(QMainWindow):
         # Count teaching dates (dates where NO student has CIA, COD, or HOL)
         def is_teaching_date(d):
             return not any(
-                student.get("attendance", {}).get(d) in ["CIA", "COD", "HOL"]
+                student.get("attendance", {}).get(d) in ["CIA", "HOL"]
                 for student in self.students.values()
             )
         teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
