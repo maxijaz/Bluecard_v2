@@ -9,6 +9,7 @@ from logic.parser import save_data
 from .calendar import CalendarView  # Import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 from datetime import datetime, timedelta
+from ui.calendar import launch_calendar  # Import the shared function
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -237,42 +238,24 @@ class MetadataForm(QDialog):
         self.accept()  # Close the dialog
 
     def pick_start_date(self):
-        """Open the calendar to pick a Start Date, protecting dates with attendance data."""
-        # Get scheduled dates from metadata
-        scheduled_dates = []
-        protected_dates = set()
-        max_dates = 1  # Default fallback
-
         if self.is_edit and self.class_id:
             class_data = self.data["classes"][self.class_id]
             scheduled_dates = class_data["metadata"].get("Dates", [])
             students = class_data["students"]
-            # Collect protected dates: any date with P, A, L, CIA, COD, or HOL for any student
-            for student in students.values():
-                attendance = student.get("attendance", {})
-                for date, value in attendance.items():
-                    if value in ["P", "A", "L", "CIA", "COD", "HOL"]:
-                        protected_dates.add(date)
-            # --- Get MaxClasses from metadata ---
             max_classes_str = class_data["metadata"].get("MaxClasses", "1")
             try:
                 max_dates = int(str(max_classes_str).split()[0])
             except Exception:
                 max_dates = 1
 
-        def on_save_callback(selected_dates):
-            if selected_dates:
-                self.fields["StartDate"].setText(selected_dates[0])
-
-        # Open the CalendarView with protected_dates and max_dates
-        calendar_view = CalendarView(
-            self,
-            scheduled_dates=scheduled_dates,
-            on_save_callback=on_save_callback,
-            max_dates=max_dates,
-            protected_dates=list(protected_dates)
-        )
-        calendar_view.exec_()
+            def on_save_callback(selected_dates):
+                if selected_dates:
+                    self.fields["StartDate"].setText(selected_dates[0])
+                    self.data["classes"][self.class_id]["metadata"]["Dates"] = selected_dates
+            launch_calendar(self, scheduled_dates, students, max_dates, on_save_callback)
+        else:
+            # Handle new class creation as before
+            pass
 
     def closeEvent(self, event):
         """Restore the initial size when the form is reopened."""

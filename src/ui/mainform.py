@@ -17,7 +17,7 @@ import json  # Import json for reading and writing JSON files
 import subprocess  # Import subprocess to run external scripts
 import sys
 import os # Import sys and os for path manipulation
-from .calendar import CalendarView
+from .calendar import CalendarView, launch_calendar  # Make sure to import the new function
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 from PyQt5.QtCore import QItemSelection, QItemSelectionModel
 from .pal_cod_form import PALCODForm
@@ -830,43 +830,23 @@ class Mainform(QMainWindow):
                 metadata_layout.addWidget(value2_widget, row, 3)
 
     def open_calendar_view(self):
-        """Open the calendar view to display and manage the schedule."""
         print("Opening Calendar View...")  # Debugging: Method entry
 
-        # Get the current attendance dates
         scheduled_dates = self.get_attendance_dates()
         print(f"Scheduled dates before calendar: {scheduled_dates}")  # Debugging: Check current dates
 
-        # Identify protected dates (dates with attendance values like "P", "A", "L", "CIA", "COD", "HOL")
-        protected_dates = set()
-        for student in self.students.values():
-            attendance = student.get("attendance", {})
-            for date, value in attendance.items():
-                if value in ["P", "A", "L", "CIA", "COD", "HOL"]:
-                    protected_dates.add(date)
+        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])
+        students = self.students
 
-        print(f"Protected dates: {protected_dates}")  # Debugging: Check protected dates
-
-        # Define a callback to handle saving changes from the calendar
         def on_save_callback(selected_dates):
             print(f"Selected dates from calendar: {selected_dates}")  # Debugging: Check selected dates
-
-            # Update metadata and students using update_dates
             self.metadata["Dates"] = selected_dates
             self.metadata, self.students = update_dates(self.metadata, self.students)
-
-            # Save the updated data
             save_data(self.data)
-
-            # Refresh the metadata and table to reflect the changes
             self.refresh_metadata()
             self.refresh_student_table()
 
-        # Open the CalendarView
-        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])  # Extract the numeric part of MaxClasses
-        print(f"Max classes allowed: {max_classes}")  # Debugging: Check max classes
-        calendar_view = CalendarView(self, scheduled_dates, on_save_callback, max_dates=max_classes, protected_dates=protected_dates)
-        calendar_view.exec_()
+        launch_calendar(self, scheduled_dates, students, max_classes, on_save_callback)
 
     def highlight_column(self, column_index):
         """Highlight the entire column when a header is clicked."""

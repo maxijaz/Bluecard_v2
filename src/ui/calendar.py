@@ -130,3 +130,25 @@ class CalendarView(QDialog):
             self.on_save_callback(formatted_dates)
 
         self.accept()
+
+
+def launch_calendar(parent, scheduled_dates, students, max_classes, on_save_callback):
+    """
+    Shared function to open the CalendarView with correct protected dates and max_classes.
+    """
+    # Collect protected dates: any date with P, A, L, CIA, COD, or HOL for any student
+    protected_dates = set()
+    for student in students.values():
+        attendance = student.get("attendance", {})
+        for date, value in attendance.items():
+            if value in ["P", "A", "L", "CIA", "COD", "HOL"]:
+                protected_dates.add(date)
+
+    calendar_view = CalendarView(
+        parent,
+        scheduled_dates=scheduled_dates,
+        on_save_callback=on_save_callback,
+        max_dates=max_classes,
+        protected_dates=list(protected_dates)
+    )
+    calendar_view.exec_()
