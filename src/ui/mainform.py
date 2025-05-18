@@ -929,20 +929,22 @@ class Mainform(QMainWindow):
         for student in self.students.values():
             student["attendance"][date] = value
 
-        # --- Ensure there are always MaxClasses teaching dates (excluding CIA/COD/HOL) ---
+        # --- Ensure there are always MaxClasses teaching dates (excluding CIA/HOL) ---
         max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])
-        # Count teaching dates (dates where NO student has CIA, COD, or HOL)
+
         def is_teaching_date(d):
             return not any(
                 student.get("attendance", {}).get(d) in ["CIA", "HOL"]
                 for student in self.students.values()
             )
+
+        attendance_dates = self.metadata["Dates"]  # Make sure to use the updated list
         teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
+
+        # Add new dates if needed
         while len(teaching_dates) < max_classes:
-            # Add a new date after the last date
             if attendance_dates:
                 last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
-                # Find the next weekday from the original schedule (if available)
                 days_str = self.metadata.get("Days", "")
                 weekdays = []
                 if days_str:
@@ -951,7 +953,6 @@ class Mainform(QMainWindow):
                         "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
                     }
                     weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
-                # Find the next valid date
                 next_date = last_date
                 while True:
                     next_date += timedelta(days=1)
@@ -959,13 +960,25 @@ class Mainform(QMainWindow):
                         break
                 new_date_str = next_date.strftime("%d/%m/%Y")
             else:
-                # Fallback if no dates exist
                 new_date_str = f"Extra-{len(attendance_dates)+1}"
             attendance_dates.append(new_date_str)
-            # Set attendance for all students to "-"
             for student in self.students.values():
                 student["attendance"][new_date_str] = "-"
             teaching_dates.append(new_date_str)
+
+        # --- Remove extra dates if there are too many teaching dates ---
+        while len(teaching_dates) > max_classes:
+            # Remove the last date in attendance_dates that is a teaching date
+            for i in range(len(attendance_dates) - 1, -1, -1):
+                d = attendance_dates[i]
+                if is_teaching_date(d):
+                    # Remove this date from attendance_dates and all students' attendance
+                    del attendance_dates[i]
+                    for student in self.students.values():
+                        if d in student["attendance"]:
+                            del student["attendance"][d]
+                    teaching_dates.remove(d)
+                    break  # Remove one at a time
 
         # Save the updated dates and data
         self.metadata["Dates"] = attendance_dates
