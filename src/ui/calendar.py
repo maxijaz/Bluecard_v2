@@ -95,7 +95,7 @@ class CalendarView(QDialog):
                 self,
                 "Protected Date",
                 "This date cannot be changed because it has attendance data.\n"
-                "Click column header date on the Bluecard tabel and clear data to be able to change the date of a grey protected field on the calendar."
+                "Click column header date on the Bluecard table and clear data to be able to change the date of a grey protected field on the calendar."
             )
             return
 
