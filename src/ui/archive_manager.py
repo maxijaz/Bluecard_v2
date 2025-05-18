@@ -90,7 +90,7 @@ class ArchiveManager(QDialog):
         class_id = self.table.item(selected_row, 0).text()
         confirm = QMessageBox.warning(
             self, "Delete Class",
-            f"Are you sure you want to delete class {class_id}? This action will delete all associated data and cannot be undone.",
+            f"Are you sure you want to delete class {class_id}? \nThis action will delete all associated data and cannot be undone.",
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
