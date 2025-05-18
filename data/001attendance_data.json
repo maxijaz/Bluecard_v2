@@ -17,33 +17,17 @@
                 "ccp": "120",
                 "travel": "200",
                 "bonus": "1000",
-                "CourseHours": "40",
+                "CourseHours": "10",
                 "ClassTime": "2",
-                "MaxClasses": "20 x 2.0 = 40.0",
+                "MaxClasses": "5 x 2.0 = 10.0",
                 "Days": "",
                 "Dates": [
                     "Date1",
                     "Date2",
                     "Date3",
                     "Date4",
-                    "Date5",
-                    "Date6",
-                    "Date7",
-                    "Date8",
-                    "Date9",
-                    "Date10",
-                    "Date11",
-                    "Date12",
-                    "Date13",
-                    "Date14",
-                    "Date15",
-                    "Date16",
-                    "Date17",
-                    "Date18",
-                    "Date19",
-                    "Date20"
-                ],
-                "COD_CIA": "0 COD / 0 CIA"
+                    "Date5"
+                ]
             },
             "students": {
                 "S001": {
@@ -55,7 +39,13 @@
                     "post_test": "",
                     "note": "",
                     "active": "Yes",
-                    "attendance": {}
+                    "attendance": {
+                        "Date1": "-",
+                        "Date2": "-",
+                        "Date3": "-",
+                        "Date4": "-",
+                        "Date5": "-"
+                    }
                 }
             },
             "archive": "No"
