@@ -287,6 +287,48 @@
                 }
             },
             "archive": "No"
+        },
+        "OLO1300": {
+            "metadata": {
+                "class_no": "OLO1300",
+                "Company": "Coke",
+                "Consultant": "",
+                "Teacher": "Paul R",
+                "TeacherNo": "A20049",
+                "Room": "",
+                "CourseBook": "",
+                "StartDate": "",
+                "FinishDate": "",
+                "Time": "",
+                "Notes": "",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000",
+                "CourseHours": "30",
+                "ClassTime": "2",
+                "MaxClasses": "15 x 2.0 = 30.0",
+                "Days": "",
+                "Dates": [
+                    "Date1",
+                    "Date2",
+                    "Date3",
+                    "Date4",
+                    "Date5",
+                    "Date6",
+                    "Date7",
+                    "Date8",
+                    "Date9",
+                    "Date10",
+                    "Date11",
+                    "Date12",
+                    "Date13",
+                    "Date14",
+                    "Date15"
+                ]
+            },
+            "students": {},
+            "archive": "No"
         }
     }
 }

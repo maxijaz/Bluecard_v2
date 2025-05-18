@@ -110,19 +110,31 @@ class MetadataForm(QDialog):
         # CourseHours
         self.class_hours_label = QLabel("Course Hours:")
         self.class_hours_input = QLineEdit()
-        self.class_hours_input.setText(self.defaults.get("def_coursehours", "40"))
+        if self.is_edit and metadata.get("CourseHours"):
+            self.class_hours_input.setText(str(metadata.get("CourseHours")))
+        else:
+            self.class_hours_input.setText(self.defaults.get("def_coursehours", "40"))
         scroll_layout.addRow(self.class_hours_label, self.class_hours_input)
 
         # ClassTime
         self.class_time_label = QLabel("Class Time:")
         self.class_time_input = QLineEdit()
-        self.class_time_input.setText(self.defaults.get("def_classtime", "2"))
+        if self.is_edit and metadata.get("ClassTime"):
+            self.class_time_input.setText(str(metadata.get("ClassTime")))
+        else:
+            self.class_time_input.setText(self.defaults.get("def_classtime", "2"))
         scroll_layout.addRow(self.class_time_label, self.class_time_input)
 
         # MaxClasses
         self.max_classes_label = QLabel("Max Classes:")
         self.max_classes_input = QLineEdit()
         self.max_classes_input.setReadOnly(True)
+        if self.is_edit and metadata.get("MaxClasses"):
+            self.max_classes_input.setText(str(metadata.get("MaxClasses")))
+        elif self.is_edit and "Dates" in metadata:
+            self.max_classes_input.setText(str(len(metadata["Dates"])))
+        else:
+            self.update_max_classes()
         scroll_layout.addRow(self.max_classes_label, self.max_classes_input)
 
         scroll_area.setWidget(scroll_content)
