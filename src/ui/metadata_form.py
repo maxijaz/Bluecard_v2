@@ -156,6 +156,7 @@ class MetadataForm(QDialog):
         # Connect signals
         self.class_hours_input.textChanged.connect(self.update_max_classes)
         self.class_time_input.textChanged.connect(self.update_max_classes)
+        self.fields["StartDate"].editingFinished.connect(self.validate_start_date)
 
         # Initialize MaxClasses
         self.update_max_classes()
@@ -192,6 +193,29 @@ class MetadataForm(QDialog):
             return
 
         metadata = {key: field.text().strip() for key, field in self.fields.items()}
+
+        # --- Block save if Start Date is invalid ---
+        start_date = metadata.get("StartDate", "")
+        if not start_date:
+            QMessageBox.warning(
+                self,
+                "Missing Start Date",
+                "Start Date is required. Please enter a valid date or click [Pick] to select from the calendar."
+            )
+            self.fields["StartDate"].setFocus()
+            return
+        try:
+            datetime.strptime(start_date, "%d/%m/%Y")
+        except ValueError:
+            QMessageBox.warning(
+                self,
+                "Invalid Start Date",
+                "Start Date must be in DD/MM/YYYY format and be a real date.\n"
+                "Please enter a valid date or click [Pick] to select from the calendar."
+            )
+            self.fields["StartDate"].setFocus()
+            self.fields["StartDate"].selectAll()
+            return
 
         # --- Apply formatting rules ---
         metadata["class_no"] = class_no  # Always uppercase
@@ -319,6 +343,23 @@ class MetadataForm(QDialog):
         """Restore the initial size when the form is reopened."""
         self.resize(500, 600)
         super().closeEvent(event)
+
+    def validate_start_date(self):
+        """Validate Start Date as soon as the user finishes editing the field."""
+        start_date = self.fields["StartDate"].text().strip()
+        if not start_date:
+            return  # Allow empty, will be caught on save
+        try:
+            datetime.strptime(start_date, "%d/%m/%Y")
+        except ValueError:
+            QMessageBox.warning(
+                self,
+                "Invalid Start Date",
+                "Start Date must be in DD/MM/YYYY format and be a real date.\n"
+                "Please enter a valid date or click [Pick] to select from the calendar."
+            )
+            self.fields["StartDate"].setFocus()
+            self.fields["StartDate"].selectAll()
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""
