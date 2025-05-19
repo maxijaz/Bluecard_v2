@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QCheckBox, QGridLayout, QSpacerItem, QSizePolicy, QTableView
 )
 from PyQt5.QtCore import Qt
+from PyQt5 import QtGui
 import json
 import os
 
@@ -83,6 +84,13 @@ class SettingsForm(QDialog):
             entry = QLineEdit(value)
             self.entries[key] = entry
             form_layout.addRow(key.replace("def_", "").capitalize() + ":", entry)
+
+        # Add this after the last entry in fields_to_include
+        columns_before_today = int(self.default_settings.get("columns_before_today", 3))
+        self.columns_before_today_entry = QLineEdit(str(columns_before_today))
+        self.columns_before_today_entry.setValidator(QtGui.QIntValidator(0, 10))
+        form_layout.addRow("Columns before today (0-10):", self.columns_before_today_entry)
+
         layout.addLayout(form_layout, stretch=0)
 
         layout.addSpacerItem(QSpacerItem(0, 8, QSizePolicy.Minimum, QSizePolicy.Fixed))  # 8 pixels high spacer
@@ -177,6 +185,7 @@ class SettingsForm(QDialog):
 
         # Save default settings to default.json
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
+        updated_settings["columns_before_today"] = self.columns_before_today_entry.text()
         updated_settings.update({
             key: "Yes" if checkbox.isChecked() else "No"
             for key, checkbox in self.column_visibility.items()

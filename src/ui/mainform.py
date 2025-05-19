@@ -122,6 +122,7 @@ class Mainform(QMainWindow):
         self.scrollable_column_visibility = {
             "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
         }
+        self.columns_before_today = int(self.default_settings.get("columns_before_today", 3))
 
         self.frozen_table_width = 0
         self.init_ui()
@@ -677,6 +678,16 @@ class Mainform(QMainWindow):
         # Adjust column widths
         self.reset_column_widths()
         self.reset_scrollable_column_widths()
+
+        # --- Scroll to today's date if present ---
+        today_str = datetime.now().strftime("%d/%m/%Y")
+        if today_str in scrollable_headers:
+            today_col_index = scrollable_headers.index(today_str)
+            col_to_scroll = max(0, today_col_index - self.columns_before_today)
+            self.scrollable_table.scrollTo(
+                self.scrollable_table.model().index(0, col_to_scroll),
+                QTableView.PositionAtCenter
+            )
 
         print("Frozen Data:", frozen_data)
         print("Scrollable Data:", scrollable_data)
