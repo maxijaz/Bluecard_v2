@@ -58,8 +58,8 @@ class MetadataForm(QDialog):
             ("Teacher No", "TeacherNo"),
             ("Room", "Room"),
             ("CourseBook", "CourseBook"),
-            ("Start Date", "StartDate"),  # Remove mask for Start Date
-            ("Finish Date", "FinishDate"),  # Remove mask for Finish Date
+            ("Start Date", "StartDate"),  
+            ("Finish Date", "FinishDate"), 
             ("Time", "Time"),
             ("Notes", "Notes"),
             ("Rate", "rate"),
