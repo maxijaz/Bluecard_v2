@@ -254,8 +254,19 @@ class MetadataForm(QDialog):
                     self.data["classes"][self.class_id]["metadata"]["Dates"] = selected_dates
             launch_calendar(self, scheduled_dates, students, max_dates, on_save_callback)
         else:
-            # Handle new class creation as before
-            pass
+            # Handle new class creation
+            # Use defaults or current field values
+            scheduled_dates = []
+            students = {}
+            try:
+                max_dates = int(self.max_classes_input.text().split()[0])
+            except Exception:
+                max_dates = 1
+
+            def on_save_callback(selected_dates):
+                if selected_dates:
+                    self.fields["StartDate"].setText(selected_dates[0])
+            launch_calendar(self, scheduled_dates, students, max_dates, on_save_callback)
 
     def closeEvent(self, event):
         """Restore the initial size when the form is reopened."""
