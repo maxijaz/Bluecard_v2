@@ -126,6 +126,14 @@ class CalendarView(QDialog):
         formatted_dates = [d.toString("dd/MM/yyyy") for d in sorted_dates if d.isValid()]
         print(f"Formatted dates to save: {formatted_dates}")  # Debugging: Check formatted dates
 
+        # Fill up to max_dates with placeholders if needed
+        num_dates = len(formatted_dates)
+        if num_dates < self.max_dates:
+            placeholders = [f"Date{i+1}" for i in range(num_dates, self.max_dates)]
+            formatted_dates += placeholders
+        elif num_dates > self.max_dates:
+            formatted_dates = formatted_dates[:self.max_dates]
+
         if self.on_save_callback:
             self.on_save_callback(formatted_dates)
 

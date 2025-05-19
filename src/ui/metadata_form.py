@@ -213,14 +213,61 @@ class MetadataForm(QDialog):
         selected_days = [day for day, checkbox in self.days_checkboxes.items() if checkbox.isChecked()]
         metadata["Days"] = ", ".join(selected_days)
 
-        # Generate dates dynamically
-        max_classes = int(metadata["MaxClasses"].split()[0])  # Extract the numeric part of MaxClasses
+        # --- PROTECT EXISTING DATES AND ATTENDANCE ---
+        students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
+
+        # Only regenerate dates if there are no real dates or user confirms
+        old_dates = []
+        if self.is_edit:
+            old_dates = self.data["classes"][self.class_id]["metadata"].get("Dates", [])
+        else:
+            old_dates = []
+
+        # Always use the max_classes from the input (e.g., 20)
+        try:
+            max_classes = int(metadata["MaxClasses"].split()[0])
+        except Exception:
+            max_classes = 20  # fallback
+
         start_date_str = metadata.get("StartDate", "")
         days_str = metadata.get("Days", "")
-        metadata["Dates"] = generate_dates(start_date_str, days_str, max_classes)
+
+        # Check for protected dates (dates with real attendance)
+        def is_real_date(d):
+            return len(d) == 10 and d[2] == "/" and d[5] == "/"
+
+        protected_dates = set()
+        for student in students.values():
+            attendance = student.get("attendance", {})
+            for date, value in attendance.items():
+                if value in ["P", "A", "L", "CIA", "COD", "HOL"] and is_real_date(date):
+                    protected_dates.add(date)
+
+        # Generate the rest of the dates (excluding protected)
+        protected_dates = sorted(protected_dates, key=lambda d: datetime.strptime(d, "%d/%m/%Y"))
+
+        # Always include protected dates, and fill up to max_classes with generated dates
+        # Generate more dates than needed, then remove protected dates from generated
+        generated_dates = generate_dates(start_date_str, days_str, max_classes * 2)
+        generated_dates = [d for d in generated_dates if d not in protected_dates]
+        # Fill up to max_classes
+        final_dates = sorted(
+            list(protected_dates) + generated_dates[:max_classes - len(protected_dates)],
+            key=lambda d: datetime.strptime(d, "%d/%m/%Y") if is_real_date(d) else datetime(9999, 12, 31)
+        )
+
+        # Always fill up to max_classes with placeholders if needed
+        num_dates = len(final_dates)
+        if num_dates < max_classes:
+            placeholders = [f"Date{i+1}" for i in range(num_dates, max_classes)]
+            final_dates += placeholders
+        elif num_dates > max_classes:
+            final_dates = final_dates[:max_classes]
+
+        metadata["Dates"] = final_dates
+        metadata["MaxClasses"] = f"{max_classes} x {metadata['ClassTime']} = {max_classes * float(metadata['ClassTime']):.1f}"
 
         # Update metadata and students using update_dates
-        students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
         metadata, students = update_dates(metadata, students)
 
         if not self.is_edit:
