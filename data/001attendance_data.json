@@ -45,7 +45,24 @@
                 ],
                 "COD_CIA": "0 COD / 0 CIA"
             },
-            "students": {},
+            "students": {
+                "S001": {
+                    "name": "Paul",
+                    "nickname": "Monkey",
+                    "gender": "Female",
+                    "score": "",
+                    "pre_test": "",
+                    "post_test": "",
+                    "note": "",
+                    "active": "Yes",
+                    "attendance": {
+                        "14/05/2025": "P",
+                        "15/05/2025": "A",
+                        "16/05/2025": "P",
+                        "17/05/2025": "L"
+                    }
+                }
+            },
             "archive": "No"
         }
     }

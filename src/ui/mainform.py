@@ -67,6 +67,7 @@ class AttendanceDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
         value = index.data()
+        option.displayAlignment = Qt.AlignCenter  # Center-align the content
         if value == "P":
             option.backgroundBrush = QColor("#c8e6c9")  # Light green for Present
         elif value == "A":
@@ -338,7 +339,7 @@ class Mainform(QMainWindow):
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
 
         # Set the CenterAlignDelegate for the scrollable table
-        self.scrollable_table.setItemDelegate(CenterAlignDelegate(self.scrollable_table))
+        # self.scrollable_table.setItemDelegate(CenterAlignDelegate(self.scrollable_table))
 
         self.scrollable_table.horizontalHeader().setStyleSheet("font-weight: bold; text-align: center;")
 
