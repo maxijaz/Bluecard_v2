@@ -310,6 +310,26 @@ class Mainform(QMainWindow):
         # **Connect the sectionDoubleClicked signal to open_pal_cod_form**
         self.scrollable_table.horizontalHeader().sectionDoubleClicked.connect(self.open_pal_cod_form)
 
+        # Set a 1px solid right border for the frozen table
+        self.frozen_table.setStyleSheet("""
+            QTableView {
+                border-right: 1px solid #ccc;
+                border-top: none;
+                border-bottom: none;
+                border-left: none;
+            }
+        """)
+
+        # Set a 1px solid left border for the scrollable table (optional, for contrast)
+        self.scrollable_table.setStyleSheet("""
+            QTableView {
+                border-left: 0px solid #ccc;
+                border-top: none;
+                border-bottom: none;
+                border-right: none;
+            }
+        """)
+
         # Set the minimum section size for the horizontal header
         self.scrollable_table.horizontalHeader().setMinimumSectionSize(5)  # Set minimum width to 5 pixels
 
@@ -663,6 +683,7 @@ class Mainform(QMainWindow):
 
         # Refresh the metadata section to include COD/CIA totals
         self.refresh_metadata()
+        self.debug_table_positions("after refresh_student_table")
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -726,7 +747,9 @@ class Mainform(QMainWindow):
 
     def adjust_frozen_table_width(self):
         """Adjust the frozen table's frame width to match the total column widths."""
+        print("Frozen Table column widths:", [self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount())])
         total_width = sum(self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount()))
+        print("Calculated total frozen table width:", total_width)
         self.frozen_table.setFixedWidth(total_width)
         self.frozen_table_width = total_width  # Update the frozen table width
         self.update_scrollable_table_position()  # Ensure the scrollable table is updated
@@ -734,7 +757,7 @@ class Mainform(QMainWindow):
     def update_scrollable_table_position(self):
         """Update the position and width of the scrollable table."""
         # Get the right edge of the frozen table using geometry for accurate positioning
-        frozen_table_right = self.frozen_table.geometry().right()
+        frozen_table_right = self.frozen_table.geometry().right() + 1  # <-- Fix: add +1
 
         # Calculate the available width for the scrollable table
         available_width = self.width() - frozen_table_right
@@ -747,6 +770,7 @@ class Mainform(QMainWindow):
 
         # Align the scrollable table to the right of the frozen table and match its y-coordinate
         self.scrollable_table.move(frozen_table_right, self.frozen_table.geometry().top())
+        self.debug_table_positions("after update_scrollable_table_position")
 
     def load_default_settings(self):
         """Load default settings from default.json."""
@@ -1094,6 +1118,18 @@ class Mainform(QMainWindow):
 
         self.refresh_student_table()
         # Optionally, refresh other UI elements if needed
+
+    def debug_table_positions(self, context=""):
+        print(f"\n--- DEBUG [{context}] ---")
+        print("Frozen Table geometry:", self.frozen_table.geometry())
+        print("Frozen Table pos:", self.frozen_table.pos())
+        print("Frozen Table width:", self.frozen_table.width())
+        print("Scrollable Table geometry:", self.scrollable_table.geometry())
+        print("Scrollable Table pos:", self.scrollable_table.pos())
+        print("Scrollable Table width:", self.scrollable_table.width())
+        print("Scrollable Table vertical scrollbar visible:", self.scrollable_table.verticalScrollBar().isVisible())
+        print("Scrollable Table horizontal scrollbar visible:", self.scrollable_table.horizontalScrollBar().isVisible())
+        print("--- END DEBUG ---\n")
 
 
 class EditAttendanceDialog(QDialog):
