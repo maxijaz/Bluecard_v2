@@ -92,6 +92,18 @@ class FrozenTableDelegate(QStyledItemDelegate):
             option.displayAlignment = Qt.AlignCenter
 
 
+class DebugTableView(QTableView):
+    def mousePressEvent(self, event):
+        index = self.indexAt(event.pos())
+        if index.isValid():
+            mainform = self.parent()
+            while mainform and not hasattr(mainform, "select_row_in_both_tables"):
+                mainform = mainform.parent()
+            if mainform:
+                mainform.select_row_in_both_tables(index.row())
+        super().mousePressEvent(event)
+
+
 class Mainform(QMainWindow):
     closed = pyqtSignal()  # Signal to notify when the Mainform is closed
 
@@ -126,6 +138,7 @@ class Mainform(QMainWindow):
         self.columns_before_today = int(self.default_settings.get("columns_before_today", 3))
 
         self.frozen_table_width = 0
+        self._syncing_selection = False  # <-- Add this line
         self.init_ui()
 
     def reset_scrollable_column_widths(self):
@@ -256,7 +269,8 @@ class Mainform(QMainWindow):
             for idx, student in enumerate(self.students.values())
         ]
 
-        self.frozen_table = QTableView()
+        self.frozen_table = DebugTableView()
+        self.frozen_table.setObjectName("FROZEN")
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
         self.frozen_table.verticalHeader().hide()
         self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
@@ -264,6 +278,7 @@ class Mainform(QMainWindow):
         self.frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.frozen_table.setSelectionMode(QAbstractItemView.SingleSelection)
 
         # Set the minimum section size for the horizontal header
         self.frozen_table.horizontalHeader().setMinimumSectionSize(5)
@@ -299,12 +314,14 @@ class Mainform(QMainWindow):
             for student in self.students.values()
         ]
 
-        self.scrollable_table = QTableView()
+        self.scrollable_table = DebugTableView()
+        self.scrollable_table.setObjectName("SCROLLABLE")
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
         self.scrollable_table.verticalHeader().hide()
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.scrollable_table.setSelectionMode(QAbstractItemView.SingleSelection)
 
         # Connect the sectionClicked signal to highlight the column
         self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
@@ -351,10 +368,6 @@ class Mainform(QMainWindow):
         # Reset column widths for the scrollable table
         self.reset_scrollable_column_widths()
 
-        # Connect selection models for synchronization
-        self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
-        self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
-
         # Synchronize vertical scrollbars
         self.frozen_table.verticalScrollBar().valueChanged.connect(
             self.scrollable_table.verticalScrollBar().setValue
@@ -373,6 +386,17 @@ class Mainform(QMainWindow):
         self.reset_scrollable_column_widths()
 
         self.scrollable_table.doubleClicked.connect(self.edit_attendance_field)
+
+        highlight_style = """
+QTableView::item:selected {
+    background: #b3d7ff;  /* Light blue highlight */
+}
+"""
+        self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + highlight_style)
+        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + highlight_style)
+
+        self.frozen_table.selectionModel().selectionChanged.connect(self.debug_frozen_selection)
+        self.scrollable_table.selectionModel().selectionChanged.connect(self.debug_scrollable_selection)
 
     # Button Methods
     def add_edit_student(self):
@@ -516,24 +540,17 @@ class Mainform(QMainWindow):
             dates = [f"Empty-{i + 1}" for i in range(max_classes)]
 
         return dates
-
-    def sync_selection_to_scrollable(self, selected, deselected):
-        """Synchronize selection from the frozen table to the scrollable table."""
-        selected_rows = {index.row() for index in selected.indexes()}
-        self.scrollable_table.selectionModel().blockSignals(True)  # Block signals temporarily
-        self.scrollable_table.selectionModel().clearSelection()
-        for row in selected_rows:
-            self.scrollable_table.selectRow(row)
-        self.scrollable_table.selectionModel().blockSignals(False)  # Unblock signals
-
-    def sync_selection_to_frozen(self, selected, deselected):
-        """Synchronize selection from the scrollable table to the frozen table."""
-        selected_rows = {index.row() for index in selected.indexes()}
-        self.frozen_table.selectionModel().blockSignals(True)  # Block signals temporarily
-        self.frozen_table.selectionModel().clearSelection()
-        for row in selected_rows:
-            self.frozen_table.selectRow(row)
-        self.frozen_table.selectionModel().blockSignals(False)  # Unblock signals
+    
+    def select_row_in_both_tables(self, row):
+        self._syncing_selection = True
+        try:
+            self.frozen_table.selectionModel().clearSelection()
+            self.scrollable_table.selectionModel().clearSelection()
+            if row is not None and row >= 0:
+                self.frozen_table.selectRow(row)
+                self.scrollable_table.selectRow(row)
+        finally:
+            self._syncing_selection = False
 
     def closeEvent(self, event):
         """Handle the close event to reopen the Launcher."""
@@ -647,11 +664,13 @@ class Mainform(QMainWindow):
             frozen_data.append(row)
 
         # Debugging: Check frozen_data dimensions
-        print("Frozen Data Dimensions:", len(frozen_data), len(frozen_headers))
-        for row in frozen_data:
-            print("Row Length:", len(row))
+        # print("Frozen Data Dimensions:", len(frozen_data), len(frozen_headers))
+        # for row in frozen_data:
+          #  print("Row Length:", len(row))
 
         self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+        # Reconnect selection sync after setModel (Qt gotcha)
+        # self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
 
         # Center-align all headers in the frozen table
         header = self.frozen_table.horizontalHeader()
@@ -670,11 +689,13 @@ class Mainform(QMainWindow):
             scrollable_data.append(row_data)
 
         # Debugging: Check scrollable_data dimensions
-        print("Scrollable Data Dimensions:", len(scrollable_data), len(scrollable_headers))
-        for row in scrollable_data:
-            print("Row Length:", len(row))
+        # print("Scrollable Data Dimensions:", len(scrollable_data), len(scrollable_headers))
+        # for row in scrollable_data:
+          #  print("Row Length:", len(row))
 
         self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+        # Reconnect selection sync after setModel (Qt gotcha)
+        # self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
 
         # Adjust column widths
         self.reset_column_widths()
@@ -690,8 +711,8 @@ class Mainform(QMainWindow):
                 QTableView.PositionAtCenter
             )
 
-        print("Frozen Data:", frozen_data)
-        print("Scrollable Data:", scrollable_data)
+        # print("Frozen Data:", frozen_data)
+        # print("Scrollable Data:", scrollable_data)
 
         # Refresh the metadata section to include COD/CIA totals
         self.refresh_metadata()
@@ -1133,15 +1154,21 @@ class Mainform(QMainWindow):
 
     def debug_table_positions(self, context=""):
         print(f"\n--- DEBUG [{context}] ---")
-        print("Frozen Table geometry:", self.frozen_table.geometry())
-        print("Frozen Table pos:", self.frozen_table.pos())
-        print("Frozen Table width:", self.frozen_table.width())
-        print("Scrollable Table geometry:", self.scrollable_table.geometry())
-        print("Scrollable Table pos:", self.scrollable_table.pos())
-        print("Scrollable Table width:", self.scrollable_table.width())
-        print("Scrollable Table vertical scrollbar visible:", self.scrollable_table.verticalScrollBar().isVisible())
-        print("Scrollable Table horizontal scrollbar visible:", self.scrollable_table.horizontalScrollBar().isVisible())
+        # print("Frozen Table geometry:", self.frozen_table.geometry())
+        # print("Frozen Table pos:", self.frozen_table.pos())
+        # print("Frozen Table width:", self.frozen_table.width())
+        # print("Scrollable Table geometry:", self.scrollable_table.geometry())
+        # print("Scrollable Table pos:", self.scrollable_table.pos())
+        # print("Scrollable Table width:", self.scrollable_table.width())
+        # print("Scrollable Table vertical scrollbar visible:", self.scrollable_table.verticalScrollBar().isVisible())
+        # print("Scrollable Table horizontal scrollbar visible:", self.scrollable_table.horizontalScrollBar().isVisible())
         print("--- END DEBUG ---\n")
+
+    def debug_frozen_selection(self, selected, deselected):
+        print(f"[DEBUG] FROZEN selection changed: {[i.row() for i in self.frozen_table.selectionModel().selectedRows()]}")
+
+    def debug_scrollable_selection(self, selected, deselected):
+        print(f"[DEBUG] SCROLLABLE selection changed: {[i.row() for i in self.scrollable_table.selectionModel().selectedRows()]}")
 
 
 class EditAttendanceDialog(QDialog):
