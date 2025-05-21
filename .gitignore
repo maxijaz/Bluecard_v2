@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-# Virtual environment (you might name it .venv, venv, env, etc.)
+# Virtual environments
 .venv/
 env/
 venv/
@@ -11,12 +11,18 @@ venv/
 # VSCode settings (optional)
 .vscode/
 
+# Distribution / packaging (optional if you're not packaging yet)
+*.egg
+*.egg-info/
+dist/
+build/
+
 # Backup / log / temp files / AHK
 *.log
 *.bak
 *.tmp
 # *.ahk
 
-# OS stuff
+# OS junk
 .DS_Store
 Thumbs.db
