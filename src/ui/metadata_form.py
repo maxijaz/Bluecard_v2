@@ -183,6 +183,11 @@ class MetadataForm(QDialog):
 
     def save_metadata(self):
         """Save metadata for the class."""
+
+        # --- Warn if start date does not match selected days ---
+        if not self.warn_if_start_date_not_in_days():
+            return  # User chose to cancel save
+
         class_no = self.fields["class_no"].text().strip().upper()
         if not class_no:
             QMessageBox.warning(self, "Validation Error", "Class No is required.")
@@ -361,13 +366,49 @@ class MetadataForm(QDialog):
             self.fields["StartDate"].setFocus()
             self.fields["StartDate"].selectAll()
 
+    def warn_if_start_date_not_in_days(self):
+        start_date_str = self.fields["StartDate"].text().strip()
+        if not start_date_str:
+            return True  # Allow save, will be caught by other validation
+        try:
+            start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+        except ValueError:
+            return True  # Allow save, will be caught by other validation
+
+        selected_days = [day for day, cb in self.days_checkboxes.items() if cb.isChecked()]
+        day_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+            "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        selected_indices = [day_map[day] for day in selected_days if day in day_map]
+        if not selected_indices:
+            return True  # No days selected, allow save
+
+        if start_date.weekday() not in selected_indices:
+            day_name = start_date.strftime("%A")
+            days_str = ", ".join(selected_days)
+            reply = QMessageBox.warning(
+                self,
+                "Start Date Warning",
+                f"Warning: The selected start date ({start_date_str}) is a {day_name}, "
+                f"but you have only selected {days_str}.\n\n"
+                "The first class will be on this date, but subsequent classes will be on your selected days.\n"
+                "Do you want to continue with this start date?",
+                QMessageBox.Yes | QMessageBox.Cancel,
+                QMessageBox.Cancel
+            )
+            if reply == QMessageBox.Cancel:
+                return False  # Cancel save
+        return True  # Allow save
+
 def generate_dates(start_date_str, days_str, max_classes):
-    """Generate a list of dates based on StartDate, Days, and MaxClasses."""
-    # Parse StartDate
+    """Generate a list of dates based on StartDate, Days, and MaxClasses.
+    The first date is always StartDate, even if it doesn't match the selected days.
+    """
     try:
         start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
     except ValueError:
-        start_date = None  # If StartDate is invalid or missing
+        start_date = None
 
     # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
     weekdays = []
@@ -378,17 +419,24 @@ def generate_dates(start_date_str, days_str, max_classes):
         }
         weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
 
-    # Generate dates dynamically
     dates = []
-    if start_date and weekdays:
-        current_date = start_date
-        while len(dates) < max_classes:
+    if start_date:
+        # Always add the start date as the first date
+        dates.append(start_date.strftime("%d/%m/%Y"))
+        current_date = start_date + timedelta(days=1)
+        while len(dates) < max_classes and weekdays:
             if current_date.weekday() in weekdays:
                 dates.append(current_date.strftime("%d/%m/%Y"))
-            current_date += timedelta(days=1)  # Move to the next day
+            current_date += timedelta(days=1)
 
     # Fallback to placeholders if no valid dates are generated
     if not dates:
         dates = [f"Date{i + 1}" for i in range(max_classes)]
+
+    # Ensure the list is exactly max_classes long
+    if len(dates) < max_classes:
+        dates += [f"Date{i + 1}" for i in range(len(dates), max_classes)]
+    elif len(dates) > max_classes:
+        dates = dates[:max_classes]
 
     return dates
