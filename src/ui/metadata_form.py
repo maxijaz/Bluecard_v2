@@ -10,6 +10,7 @@ from .calendar import CalendarView  # Import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
+from logic.date_utils import warn_if_start_date_not_in_days
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -368,38 +369,8 @@ class MetadataForm(QDialog):
 
     def warn_if_start_date_not_in_days(self):
         start_date_str = self.fields["StartDate"].text().strip()
-        if not start_date_str:
-            return True  # Allow save, will be caught by other validation
-        try:
-            start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
-        except ValueError:
-            return True  # Allow save, will be caught by other validation
-
-        selected_days = [day for day, cb in self.days_checkboxes.items() if cb.isChecked()]
-        day_map = {
-            "Monday": 0, "Tuesday": 1, "Wednesday": 2,
-            "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
-        }
-        selected_indices = [day_map[day] for day in selected_days if day in day_map]
-        if not selected_indices:
-            return True  # No days selected, allow save
-
-        if start_date.weekday() not in selected_indices:
-            day_name = start_date.strftime("%A")
-            days_str = ", ".join(selected_days)
-            reply = QMessageBox.warning(
-                self,
-                "Start Date Warning",
-                f"Warning: The selected start date ({start_date_str}) is a {day_name}, "
-                f"\nbut you selected {days_str}.\n\n"
-                "Click [Yes] to accept this as the first class, subsequent classes will be on your selected days.\n"
-                "Do you want to continue with this start date?",
-                QMessageBox.Yes | QMessageBox.Cancel,
-                QMessageBox.Cancel
-            )
-            if reply == QMessageBox.Cancel:
-                return False  # Cancel save
-        return True  # Allow save
+        days_str = ", ".join([day for day, cb in self.days_checkboxes.items() if cb.isChecked()])
+        return warn_if_start_date_not_in_days(self, start_date_str, days_str)
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses.

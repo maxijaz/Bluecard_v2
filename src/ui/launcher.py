@@ -10,6 +10,7 @@ from ui.archive_manager import ArchiveManager
 from ui.settings import SettingsForm
 from .calendar import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date
+from logic.date_utils import warn_if_start_date_not_in_days
 import sys
 import json
 import os
@@ -161,7 +162,6 @@ class Launcher(QMainWindow):
         metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True)
 
         def handle_class_saved(class_id):
-            """Handle the class_saved signal."""
             metadata = self.data["classes"][class_id]["metadata"]
             start_date = metadata.get("StartDate", "").strip()
             days = metadata.get("Days", "").strip()
