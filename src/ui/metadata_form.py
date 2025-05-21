@@ -391,8 +391,8 @@ class MetadataForm(QDialog):
                 self,
                 "Start Date Warning",
                 f"Warning: The selected start date ({start_date_str}) is a {day_name}, "
-                f"but you have only selected {days_str}.\n\n"
-                "The first class will be on this date, but subsequent classes will be on your selected days.\n"
+                f"\nbut you selected {days_str}.\n\n"
+                "Click [Yes] to accept this as the first class, subsequent classes will be on your selected days.\n"
                 "Do you want to continue with this start date?",
                 QMessageBox.Yes | QMessageBox.Cancel,
                 QMessageBox.Cancel
