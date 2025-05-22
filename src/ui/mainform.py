@@ -99,7 +99,7 @@ class DebugTableView(QTableView):
             mainform = self.parent()
             while mainform and not hasattr(mainform, "select_row_in_both_tables"):
                 mainform = mainform.parent()
-            if mainform:
+            if (mainform):
                 mainform.select_row_in_both_tables(index.row())
         super().mousePressEvent(event)
 
@@ -703,13 +703,29 @@ QTableView::item:selected {
 
         # --- Scroll to today's date if present ---
         today_str = datetime.now().strftime("%d/%m/%Y")
-        if today_str in scrollable_headers:
-            today_col_index = scrollable_headers.index(today_str)
-            col_to_scroll = max(0, today_col_index - self.columns_before_today)
-            self.scrollable_table.scrollTo(
-                self.scrollable_table.model().index(0, col_to_scroll),
-                QTableView.PositionAtCenter
-            )
+        print("DEBUG: scrollable_headers =", scrollable_headers)
+        print("DEBUG: today_str =", today_str)
+
+        # Find the first date >= today, or the last date if all are in the past
+        col_to_scroll = 0
+        for i, date_str in enumerate(scrollable_headers):
+            try:
+                date_obj = datetime.strptime(date_str, "%d/%m/%Y")
+                today_obj = datetime.strptime(today_str, "%d/%m/%Y")
+                if date_obj >= today_obj:
+                    col_to_scroll = max(0, i - self.columns_before_today)
+                    break
+            except Exception:
+                continue
+        else:
+            # If all dates are before today, scroll to the last possible column
+            col_to_scroll = max(0, len(scrollable_headers) - self.columns_before_today)
+
+        print(f"Auto-scroll to column: {col_to_scroll} (Columns before today: {self.columns_before_today})")
+        self.scrollable_table.scrollTo(
+            self.scrollable_table.model().index(0, col_to_scroll),
+            QTableView.PositionAtTop
+        )
 
         # print("Frozen Data:", frozen_data)
         # print("Scrollable Data:", scrollable_data)
