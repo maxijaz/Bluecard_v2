@@ -706,26 +706,32 @@ QTableView::item:selected {
         print("DEBUG: scrollable_headers =", scrollable_headers)
         print("DEBUG: today_str =", today_str)
 
-        # Find the first date >= today, or the last date if all are in the past
-        col_to_scroll = 0
+        # Find the first date >= today
+        today_index = None
         for i, date_str in enumerate(scrollable_headers):
             try:
                 date_obj = datetime.strptime(date_str, "%d/%m/%Y")
                 today_obj = datetime.strptime(today_str, "%d/%m/%Y")
                 if date_obj >= today_obj:
-                    col_to_scroll = max(0, i - self.columns_before_today)
+                    today_index = i
                     break
             except Exception:
                 continue
+
+        if today_index is not None:
+            print(f"Auto-scroll to column: {today_index} (Centering today)")
+            self.scrollable_table.scrollTo(
+                self.scrollable_table.model().index(0, today_index),
+                QTableView.PositionAtCenter
+            )
         else:
             # If all dates are before today, scroll to the last possible column
-            col_to_scroll = max(0, len(scrollable_headers) - self.columns_before_today)
-
-        print(f"Auto-scroll to column: {col_to_scroll} (Columns before today: {self.columns_before_today})")
-        self.scrollable_table.scrollTo(
-            self.scrollable_table.model().index(0, col_to_scroll),
-            QTableView.PositionAtTop
-        )
+            last_col = len(scrollable_headers) - 1
+            print(f"Auto-scroll to column: {last_col} (End of table)")
+            self.scrollable_table.scrollTo(
+                self.scrollable_table.model().index(0, last_col),
+                QTableView.PositionAtCenter
+            )
 
         # print("Frozen Data:", frozen_data)
         # print("Scrollable Data:", scrollable_data)
