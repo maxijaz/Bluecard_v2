@@ -706,32 +706,7 @@ QTableView::item:selected {
         print("DEBUG: scrollable_headers =", scrollable_headers)
         print("DEBUG: today_str =", today_str)
 
-        # Find the first date >= today
-        today_index = None
-        for i, date_str in enumerate(scrollable_headers):
-            try:
-                date_obj = datetime.strptime(date_str, "%d/%m/%Y")
-                today_obj = datetime.strptime(today_str, "%d/%m/%Y")
-                if date_obj >= today_obj:
-                    today_index = i
-                    break
-            except Exception:
-                continue
-
-        if today_index is not None:
-            print(f"Auto-scroll to column: {today_index} (Centering today)")
-            self.scrollable_table.scrollTo(
-                self.scrollable_table.model().index(0, today_index),
-                QTableView.PositionAtCenter
-            )
-        else:
-            # If all dates are before today, scroll to the last possible column
-            last_col = len(scrollable_headers) - 1
-            print(f"Auto-scroll to column: {last_col} (End of table)")
-            self.scrollable_table.scrollTo(
-                self.scrollable_table.model().index(0, last_col),
-                QTableView.PositionAtCenter
-            )
+        QTimer.singleShot(0, lambda: self.scroll_to_today(scrollable_headers, today_str))
 
         # print("Frozen Data:", frozen_data)
         # print("Scrollable Data:", scrollable_data)
@@ -1192,6 +1167,31 @@ QTableView::item:selected {
     def debug_scrollable_selection(self, selected, deselected):
         print(f"[DEBUG] SCROLLABLE selection changed: {[i.row() for i in self.scrollable_table.selectionModel().selectedRows()]}")
 
+    def scroll_to_today(self, scrollable_headers, today_str):
+        today_index = None
+        for i, date_str in enumerate(scrollable_headers):
+            try:
+                date_obj = datetime.strptime(date_str, "%d/%m/%Y")
+                today_obj = datetime.strptime(today_str, "%d/%m/%Y")
+                if date_obj >= today_obj:
+                    today_index = i
+                    break
+            except Exception:
+                continue
+
+        if today_index is not None:
+            print(f"Auto-scroll to column: {today_index} (Centering today)")
+            self.scrollable_table.scrollTo(
+                self.scrollable_table.model().index(0, today_index),
+                QTableView.PositionAtCenter
+            )
+        else:
+            last_col = len(scrollable_headers) - 1
+            print(f"Auto-scroll to column: {last_col} (End of table)")
+            self.scrollable_table.scrollTo(
+                self.scrollable_table.model().index(0, last_col),
+                QTableView.PositionAtCenter
+            )
 
 class EditAttendanceDialog(QDialog):
     def __init__(self, parent, current_value):
