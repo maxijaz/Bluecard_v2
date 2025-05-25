@@ -5,13 +5,14 @@ from PyQt5.QtCore import Qt
 from logic.parser import save_data
 
 class StudentForm(QDialog):
-    def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None):
+    def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
         super().__init__(parent)
         self.class_id = class_id
         self.data = data
         self.refresh_callback = refresh_callback
         self.student_id = student_id
-        self.student_data = student_data
+        self.student_data = student_data or {}
+        self.default_attendance = default_attendance
 
         self.setWindowTitle("Edit Student" if student_id else "Add Student")
         self.setFixedSize(300, 350)
@@ -118,6 +119,10 @@ class StudentForm(QDialog):
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setSizeGripEnabled(False)
 
+        # If adding a new student and default_attendance is provided, set it
+        if self.student_id is None and self.default_attendance is not None:
+            self.student_data["attendance"] = dict(self.default_attendance)
+
     def bold_label(self, text):
         label = QLabel(text)
         font = label.font()
@@ -129,6 +134,7 @@ class StudentForm(QDialog):
         """Save the student data."""
         name = self.capitalize_words(self.name_entry.text().strip())
         nickname = self.capitalize_words(self.nickname_entry.text().strip())
+        company_no = self.company_no_entry.text().strip()  # <-- Ensure this is captured
         gender = "Male" if self.male_radio.isChecked() else "Female"
         score = self.score_entry.text().strip()
         pre_test = self.pre_test_entry.text().strip()
@@ -145,6 +151,7 @@ class StudentForm(QDialog):
             self.data["classes"][self.class_id]["students"][self.student_id] = {
                 "name": name,
                 "nickname": nickname,
+                "company_no": company_no,  # <-- Add this line
                 "gender": gender,
                 "score": score,
                 "pre_test": pre_test,
@@ -159,13 +166,14 @@ class StudentForm(QDialog):
             self.data["classes"][self.class_id]["students"][student_id] = {
                 "name": name,
                 "nickname": nickname,
+                "company_no": company_no,  # <-- Add this line
                 "gender": gender,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
                 "note": note,
                 "active": active,
-                "attendance": {},
+                "attendance": dict(self.default_attendance) if self.default_attendance else {},
             }
 
         save_data(self.data)  # Save changes to the file

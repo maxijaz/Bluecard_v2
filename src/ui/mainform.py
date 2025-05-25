@@ -402,8 +402,6 @@ QTableView::item:selected {
     def add_edit_student(self):
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
-
-        # Adjust for the "Running Total" row
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
 
         if adjusted_row < 0:
@@ -414,7 +412,11 @@ QTableView::item:selected {
                 self.refresh_student_table()
                 self.frozen_table.selectionModel().clearSelection()  # Clear selection after adding
 
-            student_form = StudentForm(self, self.class_id, self.data, refresh_callback)
+            # --- PATCH: Set default attendance for new student ---
+            default_attendance = self.get_default_attendance_for_new_student()
+
+            # Pass default_attendance to StudentForm (if your StudentForm supports it)
+            student_form = StudentForm(self, self.class_id, self.data, refresh_callback, default_attendance=default_attendance)
             student_form.exec_()
         else:
             # A valid student row is selected, edit the student
@@ -919,7 +921,7 @@ QTableView::item:selected {
         column_index = selected_columns[0].column()  # Get the first selected column
 
         # Validate the column index
-        attendance_dates = self.metadata.get("Dates", [])
+        attendance_dates = self.metadata.get("dates", [])
         if column_index < 0 or column_index >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
             return
@@ -1064,7 +1066,7 @@ QTableView::item:selected {
             return
 
         # Get the corresponding date and column data
-        attendance_dates = self.metadata.get("Dates", [])
+        attendance_dates = self.metadata.get("dates", [])
         if column < 0 or column >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
             return
@@ -1188,6 +1190,22 @@ QTableView::item:selected {
                 self.scrollable_table.model().index(0, last_col),
                 QTableView.PositionAtCenter
             )
+
+    def get_default_attendance_for_new_student(self):
+        """Return a dict of {date: value} for a new student, matching CIA/COD/HOL if all others have it."""
+        attendance_dates = self.metadata.get("dates", [])
+        special_values = {"CIA", "COD", "HOL"}
+        attendance = {}
+        for date in attendance_dates:
+            values = [student.get("attendance", {}).get(date, "-") for student in self.students.values()]
+            unique_specials = set(v for v in values if v in special_values)
+            # If all students have the same special value (and no other values), use it
+            if len(values) > 0 and len(unique_specials) == 1 and all(v in unique_specials or v == "-" for v in values):
+                attendance[date] = unique_specials.pop()
+            else:
+                attendance[date] = "-"
+        return attendance
+
 
 class EditAttendanceDialog(QDialog):
     def __init__(self, parent, current_value):
