@@ -44,16 +44,16 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
 
     for class_id, class_data in data["classes"].items():
         meta = class_data["metadata"]
-        if meta.get("Teacher") != teacher_name:
+        if meta.get("teacher") != teacher_name:
             continue
 
-        class_time = float(meta.get("ClassTime", "2"))
+        class_time = float(meta.get("class_time", "2"))
         rate = float(meta.get("rate", "0"))
         travel_rate = float(meta.get("travel", "0"))
         bonus_amount = float(meta.get("bonus", "0"))
-        dates = meta.get("Dates", [])
+        dates = meta.get("dates", [])
         students = class_data.get("students", {})
-        class_name = meta.get("Company", class_id)
+        class_name = meta.get("company", class_id)
 
         # Count actual held sessions per date
         class_dates_by_month = defaultdict(int)
@@ -79,7 +79,8 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
         for month, count in class_dates_by_month.items():
             hours = count * class_time
             travel = count * travel_rate
-            bonus = bonus_amount if meta.get("BonusClaimed", "") == month else 0
+            # If you have a lowercase "bonus_claimed" field, use that; otherwise, remove this logic or adapt as needed
+            bonus = bonus_amount if meta.get("bonus_claimed", "") == month else 0
             pay = hours * rate + travel + bonus
 
             summary[month]["total_hours"] += hours

@@ -81,7 +81,7 @@ class StudentManager(QDialog):
             item_nick.setFlags(item_nick.flags() & ~Qt.ItemIsEditable)
             self.table.setItem(row_position, 1, item_nick)
             # Company No
-            item_company = QTableWidgetItem(student_data.get("company_no", ""))
+            item_company = QTableWidgetItem(student_data.get("company_no", ""))  # <-- lowercase
             item_company.setFlags(item_company.flags() & ~Qt.ItemIsEditable)
             self.table.setItem(row_position, 2, item_company)
             # Note
