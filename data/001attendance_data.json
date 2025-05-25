@@ -3,25 +3,25 @@
         "OLO123": {
             "metadata": {
                 "class_no": "OLO123",
-                "Company": "Acer",
-                "Consultant": "",
-                "Teacher": "Paul R",
-                "TeacherNo": "A20049",
-                "Room": "",
-                "CourseBook": "",
-                "StartDate": "01/05/2025",
-                "FinishDate": "",
-                "Time": "",
-                "Notes": "",
+                "company": "Acer",
+                "consultant": "",
+                "teacher": "Paul R",
+                "teacher_no": "A20049",
+                "room": "",
+                "course_book": "",
+                "start_date": "01/05/2025",
+                "finish_date": "",
+                "time": "",
+                "notes": "",
                 "rate": "520",
                 "ccp": "120",
                 "travel": "200",
                 "bonus": "1000",
-                "CourseHours": "40",
-                "ClassTime": "2",
-                "MaxClasses": "20 x 2 = 40.0",
-                "Days": "Monday, Tuesday",
-                "Dates": [
+                "course_hours": "40",
+                "class_time": "2",
+                "max_classes": "20 x 2 = 40.0",
+                "days": "Monday, Tuesday",
+                "dates": [
                     "05/05/2025",
                     "12/05/2025",
                     "13/05/2025",
@@ -45,7 +45,7 @@
                     "07/07/2025",
                     "08/07/2025"
                 ],
-                "COD_CIA": "1 COD / 2 CIA"
+                "cod_cia": "1 COD / 2 CIA"
             },
             "students": {
                 "S001": {
