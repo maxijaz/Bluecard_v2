@@ -59,7 +59,7 @@ class ArchiveManager(QDialog):
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
             self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
-            self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("Company", "Unknown")))
+            self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("company", "Unknown")))  # <-- lowercase
             self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "Yes")))
 
     def restore_class(self):

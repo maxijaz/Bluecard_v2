@@ -169,13 +169,13 @@ class Mainform(QMainWindow):
         metadata_widget.setFixedWidth(600)  # Total width: 100 + 150 + 100 + 150 + spacing
 
         metadata_fields = [
-            ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
-             f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
-            ("Room:", self.metadata.get("Room", ""), "Start Date:", self.metadata.get("StartDate", "")),
-            ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
-            ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
-            ("CourseBook:", self.metadata.get("CourseBook", ""), "Time:", self.metadata.get("Time", "")),
-            ("Notes:", self.metadata.get("Notes", ""), "COD/CIA:", self.metadata.get("COD_CIA", "")),  # Combine Notes and COD/CIA
+            ("Company:", self.metadata.get("company", ""), "Course Hours:", 
+             f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
+            ("Room:", self.metadata.get("room", ""), "Start Date:", self.metadata.get("start_date", "")),
+            ("Consultant:", self.metadata.get("consultant", ""), "Finish Date:", self.metadata.get("finish_date", "")),
+            ("Teacher:", self.metadata.get("teacher", ""), "Days:", self.metadata.get("days", "")),
+            ("CourseBook:", self.metadata.get("course_book", ""), "Time:", self.metadata.get("time", "")),
+            ("Notes:", self.metadata.get("notes", ""), "COD/CIA:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
@@ -501,15 +501,15 @@ QTableView::item:selected {
         super().resizeEvent(event)  # Call the base class implementation
 
     def get_attendance_dates(self):
-        """Get all unique attendance dates dynamically based on StartDate, Days, and MaxClasses."""
-        if "Dates" in self.metadata:
-            return self.metadata["Dates"]
+        """Get all unique attendance dates dynamically based on start_date, days, and max_classes."""
+        if "dates" in self.metadata:
+            return self.metadata["dates"]
 
-        max_classes_str = self.metadata.get("MaxClasses", "10")
-        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part (e.g., "10" from "10 (1 hour remains)")
+        max_classes_str = self.metadata.get("max_classes", "10")
+        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part
 
-        start_date_str = self.metadata.get("StartDate", "")
-        days_str = self.metadata.get("Days", "")
+        start_date_str = self.metadata.get("start_date", "")
+        days_str = self.metadata.get("days", "")
 
         # Parse StartDate
         try:
@@ -570,7 +570,7 @@ QTableView::item:selected {
         total_cod = 0
 
         # Calculate CIA and COD totals by searching scrollable_data
-        attendance_dates = self.metadata.get("Dates", [])
+        attendance_dates = self.metadata.get("dates", [])
         scrollable_data = [
             [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
             for student in self.students.values()
@@ -584,7 +584,7 @@ QTableView::item:selected {
                 total_cod += 1
 
         # Update the metadata with COD/CIA totals
-        self.metadata["COD_CIA"] = f"{total_cod} COD / {total_cia} CIA"
+        self.metadata["cod_cia"] = f"{total_cod} COD / {total_cia} CIA"
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name"]
@@ -610,7 +610,7 @@ QTableView::item:selected {
         frozen_data = []
 
         # Add "Running Total" row to the frozen table
-        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+        class_time = int(self.metadata.get("class_time", "2"))  # Default to 2 if not provided
         running_total = []
         cumulative_total = 0
 
@@ -847,13 +847,13 @@ QTableView::item:selected {
 
         # Rebuild the metadata fields
         metadata_fields = [
-            ("Company:", self.metadata.get("Company", ""), "Course Hours:", 
-             f"{self.metadata.get('CourseHours', '')} / {self.metadata.get('ClassTime', '')} / {self.metadata.get('MaxClasses', '')}"),
-            ("Room:", self.metadata.get("Room", ""), "Start Date:", self.metadata.get("StartDate", "")),
-            ("Consultant:", self.metadata.get("Consultant", ""), "Finish Date:", self.metadata.get("FinishDate", "")),
-            ("Teacher:", self.metadata.get("Teacher", ""), "Days:", self.metadata.get("Days", "")),
-            ("CourseBook:", self.metadata.get("CourseBook", ""), "Time:", self.metadata.get("Time", "")),
-            ("Notes:", self.metadata.get("Notes", ""), "COD/CIA:", self.metadata.get("COD_CIA", "")),  # Combine Notes and COD/CIA
+            ("Company:", self.metadata.get("company", ""), "Course Hours:", 
+             f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
+            ("Room:", self.metadata.get("room", ""), "Start Date:", self.metadata.get("start_date", "")),
+            ("Consultant:", self.metadata.get("consultant", ""), "Finish Date:", self.metadata.get("finish_date", "")),
+            ("Teacher:", self.metadata.get("teacher", ""), "Days:", self.metadata.get("days", "")),
+            ("CourseBook:", self.metadata.get("course_book", ""), "Time:", self.metadata.get("time", "")),
+            ("Notes:", self.metadata.get("notes", ""), "COD/CIA:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
@@ -889,12 +889,12 @@ QTableView::item:selected {
         scheduled_dates = self.get_attendance_dates()
         print(f"Scheduled dates before calendar: {scheduled_dates}")  # Debugging: Check current dates
 
-        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])
+        max_classes = int(self.metadata.get("max_classes", "20").split()[0])
         students = self.students
 
         def on_save_callback(selected_dates):
             print(f"Selected dates from calendar: {selected_dates}")  # Debugging: Check selected dates
-            self.metadata["Dates"] = selected_dates
+            self.metadata["dates"] = selected_dates
             self.metadata, self.students = update_dates(self.metadata, self.students)
             save_data(self.data)
             self.refresh_metadata()
@@ -950,7 +950,7 @@ QTableView::item:selected {
 
     def update_column_values(self, column_index, value):
         """Update the selected column with the given value for all students."""
-        attendance_dates = self.metadata.get("Dates", [])
+        attendance_dates = self.metadata.get("dates", [])
 
         # Validate the column index
         if (column_index < 0 or column_index >= len(attendance_dates)):
@@ -964,7 +964,7 @@ QTableView::item:selected {
             student["attendance"][date] = value
 
         # --- Ensure there are always MaxClasses teaching dates (excluding CIA/HOL) ---
-        max_classes = int(self.metadata.get("MaxClasses", "20").split()[0])
+        max_classes = int(self.metadata.get("max_classes", "20").split()[0])
 
         def is_teaching_date(d):
             return not any(
@@ -972,14 +972,14 @@ QTableView::item:selected {
                 for student in self.students.values()
             )
 
-        attendance_dates = self.metadata["Dates"]  # Make sure to use the updated list
+        attendance_dates = self.metadata["dates"]  # Make sure to use the updated list
         teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
 
         # Add new dates if needed
         while len(teaching_dates) < max_classes:
             if attendance_dates:
                 last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
-                days_str = self.metadata.get("Days", "")
+                days_str = self.metadata.get("days", "")
                 weekdays = []
                 if days_str:
                     day_map = {
@@ -1015,7 +1015,7 @@ QTableView::item:selected {
                     break  # Remove one at a time
 
         # Save the updated dates and data
-        self.metadata["Dates"] = attendance_dates
+        self.metadata["dates"] = attendance_dates
         save_data(self.data)
 
         # Refresh the frozen table and scrollable table
@@ -1036,12 +1036,12 @@ QTableView::item:selected {
 
     def refresh_scrollable_table(self):
         """Rebuild the scrollable table model to reflect updated data."""
-        attendance_dates = self.metadata.get("Dates", [])
+        attendance_dates = self.metadata.get("dates", [])
         scrollable_headers = attendance_dates  # Only include date columns
         scrollable_data = []
 
         # Add "Running Total" row
-        class_time = int(self.metadata.get("ClassTime", "2"))  # Default to 2 if not provided
+        class_time = int(self.metadata.get("class_time", "2"))  # Default to 2 if not provided
         running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
         scrollable_data.append(running_total)  # Add the "Running Total" row as the first row
 

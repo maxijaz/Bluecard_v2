@@ -104,11 +104,11 @@ class Launcher(QMainWindow):
         self.layout.addLayout(button_layout_row2)
 
     def populate_table(self):
-        """Populate the table with class data where archive = 'No', sorted by Company (A-Z)."""
+        """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
         self.table.setRowCount(0)  # Clear the table before repopulating
         sorted_classes = sorted(
             self.classes.items(),
-            key=lambda item: item[1].get("metadata", {}).get("Company", "Unknown")
+            key=lambda item: item[1].get("metadata", {}).get("company", "Unknown")
         )
         for class_id, class_data in sorted_classes:
             metadata = class_data.get("metadata", {})
@@ -116,7 +116,7 @@ class Launcher(QMainWindow):
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
                 self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
-                self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("Company", "Unknown")))
+                self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("company", "Unknown")))
                 self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "No")))
 
     def open_class(self):
@@ -165,17 +165,11 @@ class Launcher(QMainWindow):
 
         def handle_class_saved(class_id):
             metadata = self.data["classes"][class_id]["metadata"]
-            start_date = metadata.get("StartDate", "").strip()
-            days = metadata.get("Days", "").strip()
-            max_classes = int(metadata.get("MaxClasses", "20").split()[0])  # Extract numeric part of MaxClasses
-
-            # Generate dates and update metadata
-            metadata["Dates"] = generate_dates(start_date, days, max_classes)
-
-            # Save the updated data
+            start_date = metadata.get("start_date", "").strip()
+            days = metadata.get("days", "").strip()
+            max_classes = int(metadata.get("max_classes", "20").split()[0])
+            metadata["dates"] = generate_dates(start_date, days, max_classes)
             save_data(self.data)
-
-            # Open the Mainform window with the correct data
             self.open_mainform_after_save(class_id)
 
         metadata_form.class_saved.connect(handle_class_saved)  # Connect the signal
@@ -263,22 +257,16 @@ class Launcher(QMainWindow):
     def open_mainform_after_save(self, class_id):
         """Open the Mainform after saving a new class."""
         metadata = self.data["classes"][class_id]["metadata"]
-        start_date = metadata.get("StartDate", "").strip()
-        days = metadata.get("Days", "").strip()
-        max_classes = int(metadata.get("MaxClasses", "20").split()[0])  # Extract numeric part of MaxClasses
-
-        # Generate dates if not already present
-        if not metadata.get("Dates"):
-            metadata["Dates"] = generate_dates(start_date, days, max_classes)
-
-        # Save the updated data
+        start_date = metadata.get("start_date", "").strip()
+        days = metadata.get("days", "").strip()
+        max_classes = int(metadata.get("max_classes", "20").split()[0])
+        if not metadata.get("dates"):
+            metadata["dates"] = generate_dates(start_date, days, max_classes)
         save_data(self.data)
-
-        # Open the Mainform window with the correct data
         self.mainform = Mainform(class_id, self.data, self.theme)
-        self.mainform.showMaximized()  # Open the Mainform maximized
-        self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
-        self.close()  # Close the Launcher
+        self.mainform.showMaximized()
+        self.mainform.closed.connect(self.show_launcher)
+        self.close()
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""

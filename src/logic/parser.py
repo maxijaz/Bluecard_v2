@@ -50,9 +50,9 @@ def validate_class_format(data: dict) -> bool:
         # Validate metadata
         metadata = class_data.get("metadata", {})
         required_metadata_fields = [
-            "Company", "Consultant", "Teacher", "Room", "CourseBook",
-            "MaxClasses", "CourseHours", "ClassTime", "StartDate", "FinishDate",
-            "Days", "Time", "Notes"
+            "class_no", "company", "consultant", "teacher", "teacher_no", "room", "course_book",
+            "start_date", "finish_date", "time", "notes", "rate", "ccp", "travel", "bonus",
+            "course_hours", "class_time", "max_classes", "days", "dates", "cod_cia"
         ]
         if not all(field in metadata for field in required_metadata_fields):
             return False
@@ -63,8 +63,8 @@ def validate_class_format(data: dict) -> bool:
             return False
         for student_id, student_data in students.items():
             required_student_fields = [
-                "name", "company_no", "gender", "nickname", "score", "pre_test", "post_test",
-                "active", "note", "attendance"
+                "name", "nickname", "gender", "score", "pre_test", "post_test",
+                "note", "active", "attendance"
             ]
             if not all(field in student_data for field in required_student_fields):
                 return False
