@@ -42,17 +42,18 @@
                     "02/06/2025",
                     "03/06/2025",
                     "09/06/2025"
-                ]
+                ],
+                "cod_cia": "1 COD / 2 CIA"
             },
             "students": {
                 "S001": {
                     "name": "Paul",
-                    "nickname": "Monkey",
+                    "nickname": "Monkey King",
                     "gender": "Female",
-                    "score": "",
-                    "pre_test": "",
-                    "post_test": "",
-                    "note": "",
+                    "score": "65% B",
+                    "pre_test": "58%",
+                    "post_test": "98%",
+                    "note": "Good Student",
                     "active": "Yes",
                     "attendance": {
                         "14/05/2025": "P",
@@ -66,6 +67,17 @@
                         "22/05/2025": "P",
                         "23/05/2025": "CIA"
                     }
+                },
+                "S002": {
+                    "name": "Jee Suadee",
+                    "nickname": "Jee",
+                    "gender": "Female",
+                    "score": "55% C",
+                    "pre_test": "53%",
+                    "post_test": "88%",
+                    "note": "Nutter",
+                    "active": "Yes",
+                    "attendance": {}
                 }
             },
             "archive": "No"
