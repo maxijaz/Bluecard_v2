@@ -476,22 +476,18 @@ QTableView::item:selected {
     def open_metadata_form(self):
         """Open the Metadata Form."""
         print("Manage Metadata button clicked")
-
-        # Pass the Dates metadata to the MetadataForm
+        defaults = self.load_default_settings()
         metadata_form = MetadataForm(
             self,
             self.class_id,
             self.data,
-            self.theme,  # Pass the theme argument
-            self.refresh_student_table,  # Pass the on_metadata_save callback
-            is_read_only=True  # Make class_no read-only
+            self.theme,
+            self.refresh_student_table,
+            defaults,  # Pass defaults here
+            is_read_only=True
         )
-
-        # Connect the class_saved signal to refresh the metadata and student table
         metadata_form.class_saved.connect(self.refresh_metadata)
         metadata_form.class_saved.connect(self.refresh_student_table)
-
-        # Open the form as a modal dialog
         metadata_form.exec_()
 
     def resizeEvent(self, event):

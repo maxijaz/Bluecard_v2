@@ -70,8 +70,6 @@ class MetadataForm(QDialog):
         ]:
             field_label = QLabel(label)
             field_input = QLineEdit()
-
-            # Use default value if adding a new class, otherwise use existing metadata
             if not self.is_edit:
                 default_key = f"def_{key}"
                 field_input.setText(self.defaults.get(default_key, ""))

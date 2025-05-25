@@ -148,20 +148,21 @@ class Launcher(QMainWindow):
             return
 
         class_id = self.table.item(selected_row, 0).text()
-
-        # Open the MetadataForm for editing
-        metadata_form = MetadataForm(self, class_id, self.data, self.theme, self.refresh_table)
-        metadata_form.exec_()  # Open the form as a modal dialog
+        defaults = self.load_defaults()
+        metadata_form = MetadataForm(
+            self, class_id, self.data, self.theme, self.refresh_table, defaults
+        )
+        metadata_form.exec_()
 
     def add_new_class(self):
         """Add a new class with default values."""
-        # Load default values
         defaults = self.load_defaults()
         if not defaults:
-            return  # Exit if defaults could not be loaded
+            return
 
-        # Open the MetadataForm with single-date mode enabled
-        metadata_form = MetadataForm(self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True)
+        metadata_form = MetadataForm(
+            self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True
+        )
 
         def handle_class_saved(class_id):
             metadata = self.data["classes"][class_id]["metadata"]
