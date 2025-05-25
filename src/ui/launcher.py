@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QLabel, QHeaderView, QWidget, QMessageBox, QApplication, QDialog
+    QPushButton, QLabel, QHeaderView, QWidget, QMessageBox, QApplication, QDialog,
+    QTextEdit
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import load_data, save_data
@@ -15,6 +16,7 @@ import sys
 import json
 import os
 from datetime import datetime, timedelta
+from ui.monthly_summary import load_attendance_data, get_summary_text
 
 
 class Launcher(QMainWindow):
@@ -219,7 +221,10 @@ class Launcher(QMainWindow):
 
     def open_ttr(self):
         """Open the TTR."""
-        pass  # Logic to open the TTR goes here
+        data = load_attendance_data()  # No argument needed
+        summary_text = get_summary_text(data, teacher_name="Paul R")  # Or use a variable for teacher
+        dlg = MonthlySummaryDialog(summary_text, self)
+        dlg.exec_()
 
     def open_settings(self):
         """Open the Settings dialog."""
@@ -318,6 +323,21 @@ def generate_dates(start_date_str, days_str, max_classes):
         dates = [f"Date{i + 1}" for i in range(max_classes)]
 
     return dates
+
+
+class MonthlySummaryDialog(QDialog):
+    def __init__(self, summary_text, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Monthly Summary")
+        self.setMinimumSize(600, 400)
+        layout = QVBoxLayout(self)
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setText(summary_text)
+        layout.addWidget(text_edit)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
 
 
 if __name__ == "__main__":
