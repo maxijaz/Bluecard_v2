@@ -609,12 +609,17 @@ QTableView::item:selected {
         # Only include students who are active
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
 
+        # --- PATCH: Ensure attendance_dates is always valid ---
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
+
         # Initialize totals for all fields
         total_cia = 0
         total_cod = 0
 
         # Calculate CIA and COD totals by searching scrollable_data
-        attendance_dates = self.metadata.get("dates", [])
         scrollable_data = [
             [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
             for student in self.students.values()
