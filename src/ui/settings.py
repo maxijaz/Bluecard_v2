@@ -6,8 +6,9 @@ from PyQt5 import QtGui
 import json
 import os
 
+from logic.db_interface import get_all_defaults, set_all_defaults  # <-- PATCH: Use DB for defaults
+
 SETTINGS_PATH = "data/settings.json"
-DEFAULT_PATH = "data/default.json"
 THEMES_PATH = "data/themes.json"
 
 
@@ -39,14 +40,8 @@ class SettingsForm(QDialog):
             return []
 
     def load_default_settings(self):
-        """Load default settings from default.json."""
-        if not os.path.exists(DEFAULT_PATH):
-            return {}
-        try:
-            with open(DEFAULT_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            return {}
+        """Load default settings from the database."""
+        return get_all_defaults()
 
     def init_ui(self):
         """Initialize the UI components."""
@@ -71,7 +66,7 @@ class SettingsForm(QDialog):
         form_layout = QFormLayout()
         fields_to_include = [
             "def_teacher",
-            "def_teacherno",
+            "def_teacher_no",
             "def_coursehours",
             "def_classtime",
             "def_rate",
@@ -183,7 +178,7 @@ class SettingsForm(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to save theme: {e}")
             return
 
-        # Save default settings to default.json
+        # Save default settings to the database
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
         updated_settings["columns_before_today"] = self.columns_before_today_entry.text()
         updated_settings.update({
@@ -195,8 +190,7 @@ class SettingsForm(QDialog):
             for key, checkbox in self.scrollable_column_visibility.items()
         })
         try:
-            with open(DEFAULT_PATH, "w", encoding="utf-8") as f:
-                json.dump(updated_settings, f, indent=4)
+            set_all_defaults(updated_settings)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save default settings: {e}")
             return

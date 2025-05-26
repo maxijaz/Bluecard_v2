@@ -153,3 +153,26 @@ def get_all_defaults():
     rows = cursor.fetchall()
     conn.close()
     return {row["key"]: row["value"] for row in rows}
+
+def set_default(key, value):
+    """Set or update a default value in the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)",
+        (key, str(value))
+    )
+    conn.commit()
+    conn.close()
+
+def set_all_defaults(defaults_dict):
+    """Set or update multiple defaults in the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    for key, value in defaults_dict.items():
+        cursor.execute(
+            "INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)",
+            (key, str(value))
+        )
+    conn.commit()
+    conn.close()

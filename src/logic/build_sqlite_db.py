@@ -170,6 +170,9 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         return
     with open(defaults_path, "r", encoding="utf-8") as f:
         defaults = json.load(f)
+    # --- PATCH: Map def_teacherno to def_teacher_no ---
+    if "def_teacherno" in defaults:
+        defaults["def_teacher_no"] = defaults.pop("def_teacherno")
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
