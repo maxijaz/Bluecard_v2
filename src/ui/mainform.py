@@ -1,5 +1,3 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
     QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate, QDialog  # Added QDialog
@@ -15,6 +13,7 @@ import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
 from .archive_manager import ArchiveManager
 import subprocess  # Import subprocess to run external scripts
 import sys
+import re
 import os # Import sys and os for path manipulation
 from .calendar import CalendarView, launch_calendar  # Make sure to import the new function
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
@@ -28,6 +27,7 @@ from logic.db_interface import (
     update_class,
     update_student,
     get_all_defaults,
+    set_attendance,
 )
 
 # Add the src directory to the Python path
@@ -60,9 +60,12 @@ class TableModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             header = self.headers[section]
-            # Check if the header is a date in the format "DD/MM/YYYY"
+            # If it's a real date, show DD/MM
             if len(header) == 10 and header[2] == "/" and header[5] == "/":
-                return header[:5]  # Return only "DD/MM"
+                return header[:5]
+            # If it's a placeholder (e.g., "Empty-1", "Date1", "Extra-2"), show "--/--"
+            if header.lower().startswith("empty") or header.lower().startswith("date") or header.lower().startswith("extra"):
+                return "--/--"
             return header
         return None
 
@@ -368,7 +371,9 @@ class Mainform(QMainWindow):
         self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
 
         # **Connect the sectionDoubleClicked signal to open_pal_cod_form**
-        self.scrollable_table.horizontalHeader().sectionDoubleClicked.connect(self.open_pal_cod_form)
+        self.scrollable_table.horizontalHeader().sectionDoubleClicked.connect(
+        lambda col: self.open_pal_cod_form(col)
+        )
 
         # Set a 1px solid right border for the frozen table
         self.frozen_table.setStyleSheet("""
@@ -939,40 +944,69 @@ QTableView::item:selected {
         selection = QItemSelection(top_left, bottom_right)
         self.scrollable_table.selectionModel().select(selection, QItemSelectionModel.Select | QItemSelectionModel.Columns)
 
-    def open_pal_cod_form(self):
-        """Open the PALCODForm to update attendance."""
-        # Get the selected column index
-        selected_columns = self.scrollable_table.selectionModel().selectedColumns()
-        if not selected_columns:
-            QMessageBox.warning(self, "No Column Selected", "Please select a column header to update.")
-            return
-
-        column_index = selected_columns[0].column()  # Get the first selected column
-
-        # Validate the column index
+    def open_pal_cod_form(self, column_index=None):
+        print("DEBUG: open_pal_cod_form called, column_index =", column_index)
         attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
+        print(f"DEBUG: attendance_dates={attendance_dates}, column_index={column_index}, len={len(attendance_dates)}")
         if column_index < 0 or column_index >= len(attendance_dates):
-            QMessageBox.warning(self, "Invalid Column", "Please select a valid date column.")
-            return
-
-        date = attendance_dates[column_index]
-
-        # --- Block if the header is not a real date (e.g., "Date1", "date2", "Empty-1") ---
-        if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
             QMessageBox.warning(
                 self,
-                "Invalid Date",
-                "Cannot set P/A/L for this column. Please add real dates first before attempting to change attendance."
+                "Invalid Column",
+                "Please select a valid date column header in the attendance table before using PAL/COD."
             )
             return
+
+        attendance_dates = self.metadata.get("dates", [])
+
+        # If called from header double-click, column_index is provided
+        if column_index is not None:
+            if column_index < 0 or column_index >= len(attendance_dates):
+                QMessageBox.warning(
+                    self,
+                    "Invalid Column",
+                    "Please select a valid date column header in the attendance table before using PAL/COD."
+                )
+                return
+        else:
+            # Called from button/menu, get selected column
+            selected_columns = self.scrollable_table.selectionModel().selectedColumns()
+            if not selected_columns:
+                QMessageBox.warning(
+                    self,
+                    "No Column Selected",
+                    "Please select a valid date column header in the attendance table before using PAL/COD."
+                )
+                return
+            column_index = selected_columns[0].column()
+            if column_index < 0 or column_index >= len(attendance_dates):
+                QMessageBox.warning(
+                    self,
+                    "Invalid Column",
+                    "Please select a valid date column header in the attendance table before using PAL/COD."
+                )
+                return
+
+        print(f"DEBUG: column_index={column_index}, attendance_dates={attendance_dates}")
+        date = re.sub(r'\s+', '', attendance_dates[column_index])
+        print(f"DEBUG: selected date header for PAL/COD: {date!r}")
+
+        if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
+            print("DEBUG: Not a real date, but allowing for placeholder columns.")
+            # Remove or comment out the QMessageBox and return if you want to allow
+            # QMessageBox.warning(
+            #     self,
+            #     "Invalid Date",
+            #     "Cannot set P/A/L for this column. Please add real dates first before attempting to change attendance."
+            # )
+            # return
 
         # Open the PALCODForm with COD and CIA options, without student name
         pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=True, show_student_name=False)
         if pal_cod_form.exec_() == QDialog.Accepted:
-            # Get the selected value from the form
             new_value = pal_cod_form.selected_value
-
-            # Update the attendance data for all students in the selected column
             self.update_column_values(column_index, new_value)
 
     def update_column_values(self, column_index, value):
@@ -989,7 +1023,7 @@ QTableView::item:selected {
         # Update the attendance value for all students (skip the "Running Total" row)
         for student in self.students.values():
             student["attendance"][date] = value
-            update_student(student["student_id"], student)
+            set_attendance(student["student_id"], date, value)
 
         # --- Ensure there are always MaxClasses teaching dates (excluding CIA/HOL) ---
         max_classes = int(self.metadata.get("max_classes", "20").split()[0])
@@ -1044,7 +1078,10 @@ QTableView::item:selected {
 
         # Save the updated dates and data
         self.metadata["dates"] = attendance_dates
-        update_class(self.class_id, self.metadata)
+        # Only update DB columns, not 'dates'
+        db_metadata = {k: v for k, v in self.metadata.items() if k != "dates"}
+        update_class(self.class_id, db_metadata)
+        # If you want to update the dates table, do it here with your insert_date/update_dates logic
         self.refresh_student_table()
 
     def refresh_scrollable_table_column(self, column_index):
@@ -1104,12 +1141,15 @@ QTableView::item:selected {
         # --- Only allow editing if the header is a valid date ---
         # Check if the header is a real date (e.g., "20/05/2025")
         if not (len(date) == 10 and date[2] == "/" and date[5] == "/"):
-            QMessageBox.warning(
-                self,
-                "Invalid Date",
-                "Please add dates first before attempting to change attendance."
-            )
-            return
+            # Optionally allow placeholders, or show a different message
+            print("DEBUG: Not a real date, but allowing for placeholder columns.")
+            # Remove or comment out the QMessageBox and return if you want to allow
+            # QMessageBox.warning(
+            #     self,
+            #     "Invalid Date",
+            #     "Please add dates first before attempting to change attendance."
+            # )
+            # return
 
         # row - 1 because row 0 is running total, row 1 is first student, etc.
         student_keys = list(self.students.keys())
