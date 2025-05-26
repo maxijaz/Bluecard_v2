@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
-from logic.db_interface import insert_student, update_student
+from logic.db_interface import insert_student, update_student, get_students_by_class
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
@@ -188,7 +188,7 @@ class StudentForm(QDialog):
 
     def generate_unique_student_id(self):
         """Generate a unique Student ID."""
-        existing_ids = self.data["classes"][self.class_id]["students"].keys()
+        existing_ids = [row["student_id"] for row in get_students_by_class(self.class_id)]
         idx = 1
         while True:
             student_id = f"S{str(idx).zfill(3)}"

@@ -257,8 +257,8 @@ class Mainform(QMainWindow):
         html_button = QPushButton("Run HTML Output")
         metadata_form_btn = QPushButton("Manage Metadata")
         manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
-        settings_btn = QPushButton("Settings")
-        settings_btn.clicked.connect(self.open_settings)
+        show_hide_btn = QPushButton("Show/Hide")
+        show_hide_btn.clicked.connect(self.open_show_hide)
 
         # Connect buttons to their respective methods
         add_edit_student_btn.clicked.connect(self.add_edit_student)
@@ -271,7 +271,7 @@ class Mainform(QMainWindow):
         # Add buttons to the layout
         buttons = [
             add_edit_student_btn, remove_student_btn, pal_cod_btn,
-            html_button, metadata_form_btn, manage_dates_btn, settings_btn  # Add settings_btn here
+            html_button, metadata_form_btn, manage_dates_btn, show_hide_btn  # Add settings_btn here
         ]
         for button in buttons:
             buttons_layout.addWidget(button)
@@ -1180,6 +1180,9 @@ QTableView::item:selected {
         # print("Scrollable Table width:", self.scrollable_table.width())
         # print("Scrollable Table vertical scrollbar visible:", self.scrollable_table.verticalScrollBar().isVisible())
         # print("Scrollable Table horizontal scrollbar visible:", self.scrollable_table.horizontalScrollBar().isVisible())
+        print("Scrollable table visible:", self.scrollable_table.isVisible())
+        print("Scrollable table geometry:", self.scrollable_table.geometry())
+        print("Scrollable table width:", self.scrollable_table.width())
         print("--- END DEBUG ---\n")
 
     def debug_frozen_selection(self, selected, deselected):
@@ -1228,6 +1231,11 @@ QTableView::item:selected {
             else:
                 attendance[date] = "-"
         return attendance
+
+    def open_show_hide(self):
+        from ui.show_hide_form import ShowHideForm
+        dlg = ShowHideForm(self, self.class_id, self.refresh_student_table)
+        dlg.exec_()
 
 
 class EditAttendanceDialog(QDialog):

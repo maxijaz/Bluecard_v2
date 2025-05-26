@@ -61,11 +61,20 @@ def recreate_db(db_path=DB_PATH):
         max_classes TEXT,
         days TEXT,
         cod_cia TEXT,
-        archive TEXT
+        archive TEXT,
+        show_nickname TEXT DEFAULT 'Yes',
+        show_company_no TEXT DEFAULT 'Yes',
+        show_score TEXT DEFAULT 'Yes',
+        show_prestest TEXT DEFAULT 'Yes',
+        show_posttest TEXT DEFAULT 'Yes',
+        show_attn TEXT DEFAULT 'Yes',
+        show_p TEXT DEFAULT 'Yes',
+        show_a TEXT DEFAULT 'Yes',
+        show_l TEXT DEFAULT 'Yes'
     );
     CREATE TABLE students (
         student_id TEXT PRIMARY KEY,
-        class_no TEXT,  -- <-- PATCH: Add this line
+        class_no TEXT,
         name TEXT,
         nickname TEXT,
         company_no TEXT,
@@ -122,13 +131,22 @@ def import_data(conn, data):
         meta = class_data["metadata"]
 
         cursor.execute("""
-            INSERT OR REPLACE INTO classes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO classes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             meta["class_no"], meta["company"], meta["consultant"], meta["teacher"], meta["teacher_no"],
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
-            meta.get("max_classes", ""), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No")
+            meta.get("max_classes", ""), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
+            meta.get("show_nickname", "Yes"),
+            meta.get("show_company_no", "Yes"),
+            meta.get("show_score", "Yes"),
+            meta.get("show_prestest", "Yes"),
+            meta.get("show_posttest", "Yes"),
+            meta.get("show_attn", "Yes"),
+            meta.get("show_p", "Yes"),
+            meta.get("show_a", "Yes"),
+            meta.get("show_l", "Yes")
         ))
 
         for date in meta.get("dates", []):
