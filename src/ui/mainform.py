@@ -135,6 +135,35 @@ class Mainform(QMainWindow):
             self.students[student_id] = student_row
         self.metadata = self.class_data  # All fields are now top-level
 
+        # Ensure self.metadata["dates"] is set
+        if "dates" not in self.metadata or not self.metadata["dates"]:
+            # Generate dates if missing
+            max_classes_str = self.metadata.get("max_classes", "10")
+            max_classes = int(max_classes_str.split()[0])
+            start_date_str = self.metadata.get("start_date", "")
+            days_str = self.metadata.get("days", "")
+            try:
+                start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
+            except ValueError:
+                start_date = None
+            weekdays = []
+            if days_str:
+                day_map = {
+                    "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+                    "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+                }
+                weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
+            dates = []
+            if start_date and weekdays:
+                current_date = start_date
+                while len(dates) < max_classes:
+                    if current_date.weekday() in weekdays:
+                        dates.append(current_date.strftime("%d/%m/%Y"))
+                    current_date += timedelta(days=1)
+            if not dates:
+                dates = [f"Empty-{i + 1}" for i in range(max_classes)]
+            self.metadata["dates"] = dates
+
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
             "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",
@@ -414,27 +443,35 @@ QTableView::item:selected {
         self.scrollable_table.selectionModel().selectionChanged.connect(self.debug_scrollable_selection)
 
     # Button Methods
+    def run_html_output(self):
+        """Run htmlbluecard.py to output HTML."""
+        try:
+            # --- PATCH: No need to write temp_data.json, just launch htmlbluecard.py ---
+            subprocess.Popen(
+                ["python", "src/ui/htmlbluecard.py"],
+                shell=True,
+                cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")),  # Set working directory
+            )
+            QMessageBox.information(self, "HTML Output", "HTML output is running in your browser.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to run HTML output: {e}")
+
     def add_edit_student(self):
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
 
         if adjusted_row < 0:
-            # No valid student row selected, add a new student
             print("Add Student button clicked")
             def refresh_callback():
                 print("Refreshing student table after adding a student...")
                 self.refresh_student_table()
                 self.frozen_table.selectionModel().clearSelection()  # Clear selection after adding
 
-            # --- PATCH: Set default attendance for new student ---
             default_attendance = self.get_default_attendance_for_new_student()
-
-            # Pass default_attendance to StudentForm (if your StudentForm supports it)
-            student_form = StudentForm(self, self.class_id, self.data, refresh_callback, default_attendance=default_attendance)
+            student_form = StudentForm(self, self.class_id, {}, refresh_callback, default_attendance=default_attendance)
             student_form.exec_()
         else:
-            # A valid student row is selected, edit the student
             print("Edit Student button clicked")
             try:
                 student_id = list(self.students.keys())[adjusted_row]
@@ -445,33 +482,28 @@ QTableView::item:selected {
                     self.refresh_student_table()
                     self.frozen_table.selectionModel().clearSelection()  # Clear selection after editing
 
-                student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
+                student_form = StudentForm(self, self.class_id, {}, refresh_callback, student_id, student_data)
                 student_form.exec_()
             except IndexError:
                 QMessageBox.warning(self, "Error", "Invalid row selected. Please try again.")
 
     def remove_student(self):
         """Handle removing or managing students."""
-        # Check if a row is selected
         if not self.frozen_table.selectionModel().hasSelection():
-            # No row selected, open the StudentManager
             print("No student selected. Opening Student Manager...")
-            student_manager = StudentManager(self, self.data, self.class_id, self.refresh_student_table)
-            student_manager.exec_()  # Open the StudentManager as a modal dialog
+            student_manager = StudentManager(self, {}, self.class_id, self.refresh_student_table)
+            student_manager.exec_()
             return
 
-        # A row is selected, confirm removal
         selected_row = self.frozen_table.currentIndex().row()
-        adjusted_row = selected_row - 1  # Adjust for the "Running Total" row
+        adjusted_row = selected_row - 1
         if adjusted_row < 0:
             QMessageBox.warning(self, "Invalid Selection", "Cannot remove the 'Running Total' row.")
             return
 
-        # Get the student ID and data for the selected row
         student_id = list(self.students.keys())[adjusted_row]
         student_data = self.students[student_id]
 
-        # Confirm removal of the student
         confirm = QMessageBox.question(
             self,
             "Remove Student",
@@ -479,15 +511,11 @@ QTableView::item:selected {
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            # Mark the student as inactive
             self.students[student_id]["active"] = "No"
-            save_data(self.data)  # Save the updated data
+            update_student(student_id, self.students[student_id])
             print(f"Student '{student_data['name']}' marked as inactive.")
-
-            # Refresh the Mainform
             self.refresh_student_table()
         else:
-            # Clear the selection if the user clicks "No"
             self.frozen_table.selectionModel().clearSelection()
 
     def open_metadata_form(self):
@@ -497,10 +525,10 @@ QTableView::item:selected {
         metadata_form = MetadataForm(
             self,
             self.class_id,
-            self.data,
+            {},  # No need to pass self.data
             self.theme,
             self.refresh_student_table,
-            defaults,  # Pass defaults here
+            defaults,
             is_read_only=True
         )
         metadata_form.class_saved.connect(self.refresh_metadata)
@@ -755,7 +783,7 @@ QTableView::item:selected {
             self.refresh_student_table()
 
         # Open the StudentForm in Edit mode
-        student_form = StudentForm(self, self.class_id, self.data, refresh_callback, student_id, student_data)
+        student_form = StudentForm(self, self.class_id, {}, refresh_callback, student_id, student_data)
 
         # Center the form relative to the Mainform
         student_form.move(
@@ -831,30 +859,13 @@ QTableView::item:selected {
         except json.JSONDecodeError:
             return {}
 
-    def run_html_output(self):
-        """Run htmlbluecard.py to output HTML."""
-        try:
-            # Write data to a temporary JSON file
-            temp_data_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "temp_data.json"))
-            with open(temp_data_file, "w", encoding="utf-8") as f:
-                json.dump(self.data, f, indent=4)
-
-            # Run htmlbluecard.py in a separate process
-            subprocess.Popen(
-                ["python", "src/ui/htmlbluecard.py"],
-                shell=True,
-                cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")),  # Set working directory
-            )
-            QMessageBox.information(self, "HTML Output", "HTML output is running in your browser.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to run HTML output: {e}")
-
     def refresh_metadata(self):
         """Refresh the metadata section with updated data from the DB."""
         print("Refreshing metadata...")  # Debugging: Method entry
 
-        # Update the metadata dictionary
-        self.metadata = self.data["classes"][self.class_id]["metadata"]
+        # --- PATCH: Reload class metadata from DB ---
+        self.class_data = get_class_by_id(self.class_id)
+        self.metadata = self.class_data  # All fields are now top-level
 
         # Clear the existing metadata layout
         metadata_widget = self.layout.itemAt(0).widget()
@@ -915,7 +926,8 @@ QTableView::item:selected {
             print(f"Selected dates from calendar: {selected_dates}")  # Debugging: Check selected dates
             self.metadata["dates"] = selected_dates
             self.metadata, self.students = update_dates(self.metadata, self.students)
-            save_data(self.data)
+            # --- PATCH: Save to DB if needed ---
+            update_class(self.class_id, self.metadata)
             self.refresh_metadata()
             self.refresh_student_table()
 
@@ -981,6 +993,7 @@ QTableView::item:selected {
         # Update the attendance value for all students (skip the "Running Total" row)
         for student in self.students.values():
             student["attendance"][date] = value
+            update_student(student["student_id"], student)
 
         # --- Ensure there are always MaxClasses teaching dates (excluding CIA/HOL) ---
         max_classes = int(self.metadata.get("max_classes", "20").split()[0])
@@ -1035,9 +1048,7 @@ QTableView::item:selected {
 
         # Save the updated dates and data
         self.metadata["dates"] = attendance_dates
-        save_data(self.data)
-
-        # Refresh the frozen table and scrollable table
+        update_class(self.class_id, self.metadata)
         self.refresh_student_table()
 
     def refresh_scrollable_table_column(self, column_index):

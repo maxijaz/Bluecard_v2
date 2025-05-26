@@ -16,7 +16,7 @@ import sys
 import json
 import os
 from datetime import datetime, timedelta
-from ui.monthly_summary import load_attendance_data, get_summary_text
+from ui.monthly_summary import get_summary_text
 from logic.db_interface import (
     get_all_classes,
     get_class_by_id,
@@ -215,8 +215,7 @@ class Launcher(QMainWindow):
 
     def open_ttr(self):
         """Open the TTR."""
-        data = load_attendance_data()  # No argument needed
-        summary_text = get_summary_text(data, teacher_name="Paul R")  # Or use a variable for teacher
+        summary_text = get_summary_text(teacher_name="Paul R")  # Or use a variable for teacher
         dlg = MonthlySummaryDialog(summary_text, self)
         dlg.exec_()
 

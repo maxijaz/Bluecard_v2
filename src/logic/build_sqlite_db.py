@@ -65,6 +65,7 @@ def recreate_db(db_path=DB_PATH):
     );
     CREATE TABLE students (
         student_id TEXT PRIMARY KEY,
+        class_no TEXT,  -- <-- PATCH: Add this line
         name TEXT,
         nickname TEXT,
         company_no TEXT,
@@ -133,11 +134,19 @@ def import_data(conn, data):
 
         for student_id, student in class_data["students"].items():
             cursor.execute("""
-                INSERT OR REPLACE INTO students VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO students VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                student_id, student["name"], student.get("nickname", ""), student.get("company_no", ""),
-                student.get("gender", ""), student.get("score", ""), student.get("pre_test", ""),
-                student.get("post_test", ""), student.get("note", ""), student.get("active", "Yes")
+                student_id,
+                class_no,  # <-- PATCH: Add class_no here
+                student["name"],
+                student.get("nickname", ""),
+                student.get("company_no", ""),
+                student.get("gender", ""),
+                student.get("score", ""),
+                student.get("pre_test", ""),
+                student.get("post_test", ""),
+                student.get("note", ""),
+                student.get("active", "Yes")
             ))
             cursor.execute("""
                 INSERT OR IGNORE INTO class_students VALUES (?, ?)
