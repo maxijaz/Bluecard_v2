@@ -16,11 +16,9 @@ Features:
 
 import os
 import json
-import signal
 import shutil
 import sys
-import datetime
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication
 from logic import parser
 from ui.launcher import Launcher
 
@@ -30,9 +28,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
 TEST_MODE = os.getenv("BLUECARD_TEST_MODE") == "1"  # optional environment toggle
-
-DB_PATH = os.path.join("data", "001attendance.db")
-BACKUP_DIR = os.path.join("data", "backup")
 
 def load_theme():
     """Loads UI theme from settings.json, fallback to default."""
@@ -59,37 +54,6 @@ def clean_environment():
             except Exception as e:
                 parser.log_error(f"Failed to clean {path}: {e}")
 
-def backup_sqlite_db():
-    """Backup the SQLite DB to /data/backup/ with a timestamp."""
-    if not os.path.exists(DB_PATH):
-        print("No database file found to backup.")
-        return
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = os.path.join(BACKUP_DIR, f"001attendance_{timestamp}.db")
-    shutil.copy2(DB_PATH, backup_path)
-    print(f"✅ Database backed up to {backup_path}")
-
-def on_close():
-    """Handles cleanup and backup on app close."""
-    try:
-        app = QApplication.instance()
-        if app is not None:
-            reply = QMessageBox.question(
-                None,
-                "Backup Database",
-                "Would you like to backup the database before exiting?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                backup_sqlite_db()
-        print("✅ Backup prompt completed.")
-    except Exception as e:
-        parser.log_error(f"Backup failed: {e}")
-    finally:
-        sys.exit(0)
-
 def start_launcher():
     """Start the Launcher form."""
     theme = load_theme()
@@ -104,10 +68,6 @@ if __name__ == "__main__":
         if TEST_MODE:
             print("🔄 Running in TEST MODE: Cleaning environment...")
             clean_environment()
-
-        # Register shutdown signals
-        signal.signal(signal.SIGINT, lambda sig, frame: on_close())
-        signal.signal(signal.SIGTERM, lambda sig, frame: on_close())
 
         start_launcher()
     except Exception as e:

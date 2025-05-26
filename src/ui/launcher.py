@@ -15,6 +15,8 @@ from logic.date_utils import warn_if_start_date_not_in_days
 import sys
 import json
 import os
+import shutil
+import datetime
 from datetime import datetime, timedelta
 from ui.monthly_summary import get_summary_text
 from logic.db_interface import (
@@ -24,6 +26,9 @@ from logic.db_interface import (
     update_class,
     set_class_archived,
 )
+
+DB_PATH = os.path.join("data", "001attendance.db")
+BACKUP_DIR = os.path.join("data", "backup")
 
 
 class Launcher(QMainWindow):
@@ -137,7 +142,7 @@ class Launcher(QMainWindow):
         self.mainform = Mainform(class_id, {"classes": {class_id: class_data}}, self.theme)
         self.mainform.showMaximized()  # Open the Mainform maximized
         self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
-        self.close()  # Close the Launcher
+        self.hide()  # Hide the Launcher instead of closing it
 
     def show_launcher(self):
         """Reopen the Launcher and refresh its data."""
@@ -273,7 +278,15 @@ class Launcher(QMainWindow):
         self.populate_table()  # Refresh the table with the updated data
 
     def closeEvent(self, event):
-        """Restore the initial size when the launcher is reopened."""
+        """Prompt for DB backup when closing the launcher."""
+        reply = QMessageBox.question(
+            self,
+            "Backup Database",
+            "Would you like to backup the database before exiting?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            backup_sqlite_db()
         self.resize(395, 300)
         super().closeEvent(event)
 
@@ -324,6 +337,19 @@ class MonthlySummaryDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
+
+
+def backup_sqlite_db():
+    """Backup the SQLite DB to /data/backup/ with a timestamp."""
+    if not os.path.exists(DB_PATH):
+        print("No database file found to backup.")
+        return
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # <-- PATCHED LINE
+    backup_path = os.path.join(BACKUP_DIR, f"001attendance_{timestamp}.db")
+    shutil.copy2(DB_PATH, backup_path)
+    print(f"✅ Database backed up to {backup_path}")
 
 
 if __name__ == "__main__":
