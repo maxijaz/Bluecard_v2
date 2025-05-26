@@ -13,7 +13,6 @@ from .calendar import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date
 from logic.date_utils import warn_if_start_date_not_in_days
 import sys
-import json
 import os
 import shutil
 import datetime
@@ -25,6 +24,7 @@ from logic.db_interface import (
     insert_class,
     update_class,
     set_class_archived,
+    get_all_defaults,
 )
 
 DB_PATH = os.path.join("data", "001attendance.db")
@@ -239,17 +239,8 @@ class Launcher(QMainWindow):
         self.populate_table()
 
     def load_defaults(self):
-        """Load default values from default.json."""
-        defaults_path = "data/default.json"
-        if not os.path.exists(defaults_path):
-            QMessageBox.warning(self, "Error", "Default settings file (default.json) not found.")
-            return {}
-        try:
-            with open(defaults_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            QMessageBox.warning(self, "Error", "Failed to parse default.json.")
-            return {}
+        """Load default values from the database."""
+        return get_all_defaults()
 
     def center_window(self):
         """Center the Launcher window on the screen."""

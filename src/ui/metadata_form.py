@@ -11,7 +11,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
-from logic.db_interface import insert_class, update_class
+from logic.db_interface import insert_class, update_class, get_all_defaults
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -26,15 +26,11 @@ class MetadataForm(QDialog):
         self.is_read_only = is_read_only
         self.single_date_mode = single_date_mode
 
-        # Load defaults from default.json
+        # --- PATCH: Load defaults from DB, not JSON ---
         if not self.is_edit:
-            defaults_path = "data/default.json"
-            if os.path.exists(defaults_path):
-                with open(defaults_path, "r") as f:
-                    defaults = json.load(f)
-            else:
-                defaults = {}
-        self.defaults = defaults or {}
+            self.defaults = get_all_defaults()
+        else:
+            self.defaults = {}
 
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
         self.resize(700, 600)

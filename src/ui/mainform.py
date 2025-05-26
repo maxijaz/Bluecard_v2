@@ -13,7 +13,6 @@ from .student_manager import StudentManager
 from datetime import datetime, timedelta
 import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
 from .archive_manager import ArchiveManager
-import json  # Import json for reading and writing JSON files
 import subprocess  # Import subprocess to run external scripts
 import sys
 import os # Import sys and os for path manipulation
@@ -28,13 +27,11 @@ from logic.db_interface import (
     get_attendance_by_student,
     update_class,
     update_student,
+    get_all_defaults,
 )
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-DEFAULT_PATH = "data/default.json"  # Define the path to the default settings file
-
 
 class TableModel(QAbstractTableModel):
     def __init__(self, data, headers):
@@ -850,14 +847,8 @@ QTableView::item:selected {
         self.debug_table_positions("after update_scrollable_table_position")
 
     def load_default_settings(self):
-        """Load default settings from default.json."""
-        if not os.path.exists(DEFAULT_PATH):
-            return {}
-        try:
-            with open(DEFAULT_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            return {}
+        """Load default settings from the database."""
+        return get_all_defaults()
 
     def refresh_metadata(self):
         """Refresh the metadata section with updated data from the DB."""

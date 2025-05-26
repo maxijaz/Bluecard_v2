@@ -135,3 +135,21 @@ def delete_class(class_no):
     cursor.execute("DELETE FROM attendance WHERE class_no = ?", (class_no,))
     conn.commit()
     conn.close()
+
+def get_default(key):
+    """Fetch a single default value by key."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM defaults WHERE key = ?", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    return row["value"] if row else None
+
+def get_all_defaults():
+    """Fetch all defaults as a dict."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM defaults")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["key"]: row["value"] for row in rows}

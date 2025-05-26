@@ -103,6 +103,10 @@ def recreate_db(db_path=DB_PATH):
         date TEXT PRIMARY KEY,
         name TEXT
     );
+    CREATE TABLE defaults (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    );
     """)
     print("Created tables")
 
@@ -160,6 +164,18 @@ def import_data(conn, data):
     conn.commit()
     print("Imported class data")
 
+def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
+    if not os.path.exists(defaults_path):
+        print(f"No default.json found at {defaults_path}")
+        return
+    with open(defaults_path, "r", encoding="utf-8") as f:
+        defaults = json.load(f)
+    cursor = conn.cursor()
+    for key, value in defaults.items():
+        cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
+    conn.commit()
+    print("Imported defaults from default.json")
+
 def main():
     if not os.path.exists(JSON_PATH):
         print(f"Error: Dataset file not found: {JSON_PATH}")
@@ -170,6 +186,7 @@ def main():
 
     conn = recreate_db()
     import_data(conn, data)
+    import_defaults(conn)
 
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM holidays ORDER BY date")
