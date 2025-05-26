@@ -1023,7 +1023,7 @@ QTableView::item:selected {
         # Update the attendance value for all students (skip the "Running Total" row)
         for student in self.students.values():
             student["attendance"][date] = value
-            set_attendance(student["student_id"], date, value)
+            set_attendance(self.class_id, student["student_id"], date, value)
 
         # --- Ensure there are always MaxClasses teaching dates (excluding CIA/HOL) ---
         max_classes = int(self.metadata.get("max_classes", "20").split()[0])
@@ -1089,8 +1089,6 @@ QTableView::item:selected {
         model = self.scrollable_table.model()
         if not model:
             return
-
-        # Notify the view that the data in the column has changed
         row_count = model.rowCount()
         if row_count > 0:
             top_left = model.index(0, column_index)
@@ -1130,28 +1128,18 @@ QTableView::item:selected {
             QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
             return
 
-        # Get the corresponding date and column data
         attendance_dates = self.metadata.get("dates", [])
+        # Only allow editing if the column is a valid date column
         if column < 0 or column >= len(attendance_dates):
             QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
             return
 
         date = attendance_dates[column]
-
-        # --- Only allow editing if the header is a valid date ---
-        # Check if the header is a real date (e.g., "20/05/2025")
+        # Only allow editing if the header is a real date (DD/MM/YYYY)
         if not (len(date) == 10 and date[2] == "/" and date[5] == "/"):
-            # Optionally allow placeholders, or show a different message
-            print("DEBUG: Not a real date, but allowing for placeholder columns.")
-            # Remove or comment out the QMessageBox and return if you want to allow
-            # QMessageBox.warning(
-            #     self,
-            #     "Invalid Date",
-            #     "Please add dates first before attempting to change attendance."
-            # )
-            # return
+            QMessageBox.warning(self, "Invalid Date", "Please add dates first before attempting to change attendance.")
+            return
 
-        # row - 1 because row 0 is running total, row 1 is first student, etc.
         student_keys = list(self.students.keys())
         if (row - 1) < 0 or (row - 1) >= len(student_keys):
             QMessageBox.warning(self, "Invalid Selection", "Student row out of range.")
@@ -1161,7 +1149,7 @@ QTableView::item:selected {
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
 
-        # Check if the column contains "CIA" or "COD"
+        # Check if the column contains "CIA" or "COD" or "HOL"
         column_values = [self.students[sid]["attendance"].get(date, "-") for sid in self.students]
         if "CIA" in column_values or "COD" in column_values or "HOL" in column_values:
             QMessageBox.warning(
@@ -1170,21 +1158,15 @@ QTableView::item:selected {
                 "Press header [date] to clear CIA, COD, or HOL before \nchanging any individual attendance data (P,A,L)....",
                 QMessageBox.Cancel,
             )
-            return  # Do not proceed with editing
+            return
 
         # Open the PALCODForm without COD and CIA options, with student name
         dialog = PALCODForm(self, column, None, current_value, date, student_name, show_cod_cia=False, show_student_name=True)
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
-
-            # Update the attendance data for the specific student and date
             self.students[student_id]["attendance"][date] = new_value
-
-            # Save the updated data
-            save_data(self.data)
-
-            # Refresh the tables
-            self.refresh_student_table()
+            set_attendance(student_id, date, new_value)
+            self.refresh_scrollable_table_column(column)
 
     def open_settings(self):
         """Open the Settings dialog."""

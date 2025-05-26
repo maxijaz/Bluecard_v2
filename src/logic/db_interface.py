@@ -199,24 +199,13 @@ def delete_date(class_no, date):
     conn.commit()
     conn.close()
 
-def set_attendance(student_id, date, status):
+def set_attendance(class_no, student_id, date, status):
     """Set or update attendance for a student on a specific date."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT OR REPLACE INTO attendance (student_id, date, status) VALUES (?, ?, ?)",
-        (student_id, date, status)
-    )
-    conn.commit()
-    conn.close()
-
-def delete_attendance(student_id, date):
-    """Delete an attendance record for a student on a specific date."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM attendance WHERE student_id = ? AND date = ?",
-        (student_id, date)
+        "INSERT OR REPLACE INTO attendance (class_no, student_id, date, status) VALUES (?, ?, ?, ?)",
+        (class_no, student_id, date, status)
     )
     conn.commit()
     conn.close()
