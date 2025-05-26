@@ -1122,6 +1122,11 @@ QTableView::item:selected {
         """Open a dialog to edit the selected attendance field."""
         row = index.row()
         column = index.column()
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
+        print(f"DEBUG: row={row}, column={column}, attendance_dates={attendance_dates}, len={len(attendance_dates)}")
 
         # Skip the "Running Total" row
         if row == 0:
@@ -1131,6 +1136,7 @@ QTableView::item:selected {
         attendance_dates = self.metadata.get("dates", [])
         # Only allow editing if the column is a valid date column
         if column < 0 or column >= len(attendance_dates):
+            print(f"DEBUG: Invalid column: {column}, attendance_dates length: {len(attendance_dates)}")
             QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
             return
 
@@ -1165,8 +1171,17 @@ QTableView::item:selected {
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
             self.students[student_id]["attendance"][date] = new_value
-            set_attendance(student_id, date, new_value)
-            self.refresh_scrollable_table_column(column)
+            set_attendance(self.class_id, student_id, date, new_value)
+
+            # Reload this student's attendance from DB to keep in sync
+            attendance_records = get_attendance_by_student(student_id)
+            self.students[student_id]["attendance"] = {rec["date"]: rec["status"] for rec in attendance_records}
+
+            # Refresh only the affected cell
+            self.scrollable_table.model().dataChanged.emit(
+                self.scrollable_table.model().index(row, 0),
+                self.scrollable_table.model().index(row, self.scrollable_table.model().columnCount() - 1)
+            )
 
     def open_settings(self):
         """Open the Settings dialog."""
