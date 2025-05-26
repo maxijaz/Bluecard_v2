@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
+from logic.db_interface import insert_student, update_student
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
@@ -134,7 +135,7 @@ class StudentForm(QDialog):
         """Save the student data."""
         name = self.capitalize_words(self.name_entry.text().strip())
         nickname = self.capitalize_words(self.nickname_entry.text().strip())
-        company_no = self.company_no_entry.text().strip()  # <-- Ensure this is captured
+        company_no = self.company_no_entry.text().strip()
         gender = "Male" if self.male_radio.isChecked() else "Female"
         score = self.score_entry.text().strip()
         pre_test = self.pre_test_entry.text().strip()
@@ -148,37 +149,42 @@ class StudentForm(QDialog):
 
         if self.student_id:
             # Edit existing student
-            self.data["classes"][self.class_id]["students"][self.student_id] = {
+            student_record = {
+                "student_id": self.student_id,
+                "class_no": self.class_id,
                 "name": name,
                 "nickname": nickname,
-                "company_no": company_no,  # <-- Add this line
+                "company_no": company_no,
                 "gender": gender,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
                 "note": note,
                 "active": active,
-                "attendance": self.student_data.get("attendance", {}),
+                # Attendance is handled in a separate table; update if needed
             }
+            update_student(self.student_id, student_record)
         else:
             # Add new student
             student_id = self.generate_unique_student_id()
-            self.data["classes"][self.class_id]["students"][student_id] = {
+            student_record = {
+                "student_id": student_id,
+                "class_no": self.class_id,
                 "name": name,
                 "nickname": nickname,
-                "company_no": company_no,  # <-- Add this line
+                "company_no": company_no,
                 "gender": gender,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
                 "note": note,
                 "active": active,
-                "attendance": dict(self.default_attendance) if self.default_attendance else {},
+                # Attendance is handled in a separate table; insert if needed
             }
+            insert_student(student_record)
 
-        save_data(self.data)  # Save changes to the file
-        self.refresh_callback()  # Refresh the table
-        self.accept()  # Close the dialog
+        self.refresh_callback()
+        self.accept()
 
     def generate_unique_student_id(self):
         """Generate a unique Student ID."""
@@ -283,8 +289,7 @@ class StudentForm(QDialog):
                         table.setItem(row_idx, col_idx, QTableWidgetItem(value))
 
     def save_bulk_import(self, table, dialog):
-        students = self.data["classes"][self.class_id]["students"]
-        from logic.parser import generate_next_student_id, save_data
+        from logic.db_interface import insert_student
 
         headers = ["Name", "Nickname", "Company No", "Gender", "Score", "Pre-Test", "Post-Test", "Note"]
 
@@ -311,8 +316,10 @@ class StudentForm(QDialog):
             post_test = table.item(row, 6).text().strip() if table.item(row, 6) else ""
             note = table.item(row, 7).text().strip() if table.item(row, 7) else ""
 
-            student_id = generate_next_student_id(students)
-            students[student_id] = {
+            student_id = self.generate_unique_student_id()
+            student_record = {
+                "student_id": student_id,
+                "class_no": self.class_id,
                 "name": name,
                 "nickname": nickname,
                 "company_no": company_no,
@@ -321,10 +328,11 @@ class StudentForm(QDialog):
                 "pre_test": pre_test,
                 "post_test": post_test,
                 "note": note,
-                "active": "Yes",  # Always set to Yes
-                "attendance": {},
+                "active": "Yes",
+                # Attendance is handled in a separate table; insert if needed
             }
-        save_data(self.data)
+            insert_student(student_record)
+
         self.refresh_callback()
         QMessageBox.information(self, "Bulk Import", "Students imported successfully!")
         dialog.accept()

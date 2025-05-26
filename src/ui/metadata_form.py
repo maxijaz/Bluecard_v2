@@ -11,6 +11,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
+from logic.db_interface import insert_class, update_class
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -291,15 +292,19 @@ class MetadataForm(QDialog):
         # Update metadata and students using update_dates
         metadata, students = update_dates(metadata, students)
 
+        # --- PATCH: Save to DB instead of JSON ---
+        class_record = dict(metadata)
+        class_record["archive"] = "No" if not self.is_edit else self.data["classes"][self.class_id].get("archive", "No")
+        # If you have a students table, you may need to save students separately
+
         if not self.is_edit:
-            self.data["classes"][class_no] = {"metadata": metadata, "students": students, "archive": "No"}
+            insert_class(class_record)
+            # Optionally, insert students here as well
         else:
-            self.data["classes"][self.class_id]["metadata"] = metadata
-            self.data["classes"][self.class_id]["students"] = students
+            update_class(self.class_id, class_record)
+            # Optionally, update students here as well
 
-        save_data(self.data)
         self.on_metadata_save()
-
         self.class_saved.emit(class_no)
         self.accept()
 

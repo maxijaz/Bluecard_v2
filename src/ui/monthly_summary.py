@@ -2,22 +2,13 @@ import json
 import os
 from datetime import datetime
 from collections import defaultdict
-
-def load_attendance_data(filepath=None):
-    if filepath is None:
-        # Go up two directories from this file, then into 'data'
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        filepath = os.path.join(base_dir, "data", "001attendance_data.json")
-    with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
-
+from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student
 
 def is_attended(value):
     """Check if an attendance value counts as a class held."""
     return value in ("P", "COD", "CIA")  # Add others if needed
 
-
-def generate_monthly_summary(data, teacher_name="Paul R"):
+def generate_monthly_summary(teacher_name="Paul R"):
     """
     Build a monthly summary across all classes taught by a given teacher.
 
@@ -42,18 +33,19 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
         "notes": set()
     })
 
-    for class_id, class_data in data["classes"].items():
-        meta = class_data["metadata"]
-        if meta.get("teacher") != teacher_name:
+    for class_row in get_all_classes():
+        if class_row.get("teacher") != teacher_name:
             continue
 
-        class_time = float(meta.get("class_time", "2"))
-        rate = float(meta.get("rate", "0"))
-        travel_rate = float(meta.get("travel", "0"))
-        bonus_amount = float(meta.get("bonus", "0"))
-        dates = meta.get("dates", [])
-        students = class_data.get("students", {})
-        class_name = meta.get("company", class_id)
+        class_time = float(class_row.get("class_time", "2"))
+        rate = float(class_row.get("rate", "0"))
+        travel_rate = float(class_row.get("travel", "0"))
+        bonus_amount = float(class_row.get("bonus", "0"))
+        dates = class_row.get("dates", [])
+        class_name = class_row.get("company", class_row.get("class_no", ""))
+
+        # Get all students for this class
+        students = get_students_by_class(class_row["class_no"])
 
         # Count actual held sessions per date
         class_dates_by_month = defaultdict(int)
@@ -64,8 +56,9 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
 
                 # Check if at least one student attended
                 any_attended = False
-                for student in students.values():
-                    attendance = student.get("attendance", {})
+                for student in students:
+                    attendance_records = get_attendance_by_student(student["student_id"])
+                    attendance = {rec["date"]: rec["status"] for rec in attendance_records}
                     if is_attended(attendance.get(date_str, "")):
                         any_attended = True
                         break
@@ -80,7 +73,7 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
             hours = count * class_time
             travel = count * travel_rate
             # If you have a lowercase "bonus_claimed" field, use that; otherwise, remove this logic or adapt as needed
-            bonus = bonus_amount if meta.get("bonus_claimed", "") == month else 0
+            bonus = bonus_amount if class_row.get("bonus_claimed", "") == month else 0
             pay = hours * rate + travel + bonus
 
             summary[month]["total_hours"] += hours
@@ -95,9 +88,8 @@ def generate_monthly_summary(data, teacher_name="Paul R"):
 
     return summary
 
-
-def get_summary_text(data, teacher_name="Paul R"):
-    summary = generate_monthly_summary(data, teacher_name)
+def get_summary_text(teacher_name="Paul R"):
+    summary = generate_monthly_summary(teacher_name)
     lines = []
     lines.append(f"{'Month':<10} {'Hours':<6} {'Travel':<8} {'Bonus':<7} {'Total Pay':<10} {'Notes'}")
     lines.append("-" * 60)
@@ -106,8 +98,5 @@ def get_summary_text(data, teacher_name="Paul R"):
         lines.append(f"{month:<10} {row['total_hours']:<6} {row['total_travel']:<8} {row['total_bonus']:<7} {row['total_pay']:<10} {row['notes']}")
     return "\n".join(lines)
 
-
 if __name__ == "__main__":
-    data = load_attendance_data("001attendance.json")
-    summary = generate_monthly_summary(data, teacher_name="Paul R")
-    print(get_summary_text(data, teacher_name="Paul R"))
+    print(get_summary_text("Paul R"))

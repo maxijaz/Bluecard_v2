@@ -1,40 +1,38 @@
 import os
-import json
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict
 
-DATA_FILE = "data/001attendance_data.json"
-BACKUP_DIR = "data/backup"
+from logic.db_interface import (
+    get_all_classes,
+    get_class_by_id,
+    get_students_by_class,
+    get_attendance_by_student,
+    get_holidays,
+)
+
+# DATA_FILE and BACKUP_DIR are now obsolete for DB usage
 
 def load_data() -> Dict[str, Any]:
-    """Load data from 001attendance_data.json."""
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data
-    except FileNotFoundError:
-        print("Data file not found. Returning empty data.")
-        return {"classes": {}}
-    except json.JSONDecodeError:
-        print("Error decoding JSON. Returning empty data.")
-        return {"classes": {}}
+    """Fetch all classes and their students from the database."""
+    classes = {}
+    for class_row in get_all_classes():
+        class_no = class_row["class_no"]
+        students = {}
+        for student_row in get_students_by_class(class_no):
+            student_id = student_row["student_id"]
+            attendance_records = get_attendance_by_student(student_id)
+            # Convert attendance records to {date: status}
+            attendance = {rec["date"]: rec["status"] for rec in attendance_records}
+            student_row["attendance"] = attendance
+            students[student_id] = student_row
+        class_row["students"] = students
+        classes[class_no] = class_row
+    return {"classes": classes}
 
-def save_data(data: dict, filepath: str = DATA_FILE) -> None:
-    """Save the updated data to the JSON file."""
-    try:
-        # Load the existing data
-        with open(filepath, "r", encoding="utf-8") as f:
-            existing_data = json.load(f)
-
-        # Update the "classes" structure with the new data
-        existing_data["classes"] = data["classes"]
-
-        # Save the updated data back to the file
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(existing_data, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print("[ERROR] Failed to save data:", e)
+def save_data(data: dict, filepath: str = None) -> None:
+    """Saving is now handled by db_interface insert/update functions. This is a no-op."""
+    print("[INFO] save_data is now handled by db_interface. No action taken.")
 
 def log_error(message: str) -> None:
     """Logs errors to a file."""
@@ -47,14 +45,13 @@ def validate_class_format(data: dict) -> bool:
         return False  # Ensure "classes" exists, is a dictionary, and is not empty
 
     for class_id, class_data in data["classes"].items():
-        # Validate metadata
-        metadata = class_data.get("metadata", {})
+        # Validate metadata (now top-level fields)
         required_metadata_fields = [
             "class_no", "company", "consultant", "teacher", "teacher_no", "room", "course_book",
             "start_date", "finish_date", "time", "notes", "rate", "ccp", "travel", "bonus",
             "course_hours", "class_time", "max_classes", "days", "dates", "cod_cia"
         ]
-        if not all(field in metadata for field in required_metadata_fields):
+        if not all(field in class_data for field in required_metadata_fields):
             return False
 
         # Validate students
@@ -72,38 +69,12 @@ def validate_class_format(data: dict) -> bool:
     return True
 
 def backup_data() -> None:
-    """Creates a timestamped backup of the JSON data file."""
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
-    if os.path.exists(DATA_FILE):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_filename = f"001attendance_data_{timestamp}.json"
-        backup_path = os.path.join(BACKUP_DIR, backup_filename)
-        shutil.copy(DATA_FILE, backup_path)
-        print("Auto backing up 001attendance_data.JSON to /data/backup")  # Flash message equivalent
-        cleanup_old_backups()
-    else:
-        log_error(f"Backup failed. Source file not found: {DATA_FILE}")
+    """Backups are not needed for the SQLite DB in this function. Use DB backup tools if needed."""
+    print("[INFO] backup_data is not implemented for SQLite DB. Use external backup tools.")
 
 def cleanup_old_backups(days: int = 90) -> None:
-    """Deletes backup files older than the specified number of days."""
-    now = datetime.now()
-    if not os.path.exists(BACKUP_DIR):
-        return  # If the backup directory doesn't exist, nothing to clean up
-
-    for filename in os.listdir(BACKUP_DIR):
-        file_path = os.path.join(BACKUP_DIR, filename)
-        if os.path.isfile(file_path):
-            # Extract the timestamp from the filename
-            try:
-                timestamp_str = filename.split("_")[-1].replace(".json", "")
-                file_date = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
-                # Check if the file is older than the specified number of days
-                if (now - file_date).days > days:
-                    os.remove(file_path)
-            except ValueError:
-                # Skip files that don't match the expected timestamp format
-                continue
+    """No-op for SQLite DB."""
+    pass
 
 def generate_next_student_id(students: dict) -> str:
     """Generate the next unique student ID."""

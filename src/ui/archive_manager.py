@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QMessageBox, QHeaderView
 )
 from PyQt5.QtCore import Qt
-from logic.parser import save_data
+from logic.db_interface import set_class_archived, get_all_classes, get_class_by_id, update_class, delete_class
 
 
 class ArchiveManager(QDialog):
@@ -53,14 +53,14 @@ class ArchiveManager(QDialog):
         """Populate the table with archived class data."""
         self.table.setRowCount(0)  # Clear existing rows
         for class_id, class_data in self.archived_classes.items():
-            metadata = class_data.get("metadata", {})
-            if metadata.get("archive", "No") != "Yes":
+            # class_data is now a flat dict from DB
+            if class_data.get("archive", "No") != "Yes":
                 continue  # Only show archived classes
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
             self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
-            self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("company", "Unknown")))  # <-- lowercase
-            self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "Yes")))
+            self.table.setItem(row_position, 1, QTableWidgetItem(class_data.get("company", "Unknown")))
+            self.table.setItem(row_position, 2, QTableWidgetItem(class_data.get("archive", "Yes")))
 
     def restore_class(self):
         """Restore the selected archived class."""
@@ -76,9 +76,8 @@ class ArchiveManager(QDialog):
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
-            self.data["classes"][class_id]["metadata"]["archive"] = "No"  # Restore the class
-            save_data(self.data)  # Save changes to file
-            self.refresh_data()  # Refresh the table and launcher
+            set_class_archived(class_id, archived=False)
+            self.refresh_data()
 
     def delete_class(self):
         """Delete the selected archived class."""
@@ -94,17 +93,19 @@ class ArchiveManager(QDialog):
             QMessageBox.Yes | QMessageBox.No
         )
         if confirm == QMessageBox.Yes:
-            del self.data["classes"][class_id]  # Delete the class and its data
-            save_data(self.data)  # Save changes to file
-            self.refresh_data()  # Refresh the table and launcher
+            # --- PATCH: Delete from DB ---
+            from logic.db_interface import delete_class
+            delete_class(class_id)
+            self.refresh_data()
 
     def refresh_data(self):
         """Refresh the table and trigger the refresh callback."""
-        # Refresh the archived classes
+        # Refresh the archived classes from DB
+        all_classes = {row["class_no"]: row for row in get_all_classes()}
         self.archived_classes = {
             class_id: class_data
-            for class_id, class_data in self.data["classes"].items()
-            if class_data.get("metadata", {}).get("archive", "No") == "Yes"
+            for class_id, class_data in all_classes.items()
+            if class_data.get("archive", "No") == "Yes"
         }
         self.populate_table()  # Refresh the table
 

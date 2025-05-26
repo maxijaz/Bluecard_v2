@@ -22,6 +22,13 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from PyQt5.QtCore import QItemSelection, QItemSelectionModel
 from .pal_cod_form import PALCODForm
 from ui.settings import SettingsForm  # Make sure this import is at the top
+from logic.db_interface import (
+    get_class_by_id,
+    get_students_by_class,
+    get_attendance_by_student,
+    update_class,
+    update_student,
+)
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -115,10 +122,18 @@ class Mainform(QMainWindow):
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         self.class_id = class_id
-        self.data = data
         self.theme = theme
-        self.metadata = self.data["classes"][self.class_id]["metadata"]
-        self.students = self.data["classes"][self.class_id]["students"]
+
+        # --- PATCH: Load from DB ---
+        self.class_data = get_class_by_id(self.class_id)
+        self.students = {}
+        for student_row in get_students_by_class(self.class_id):
+            student_id = student_row["student_id"]
+            attendance_records = get_attendance_by_student(student_id)
+            attendance = {rec["date"]: rec["status"] for rec in attendance_records}
+            student_row["attendance"] = attendance
+            self.students[student_id] = student_row
+        self.metadata = self.class_data  # All fields are now top-level
 
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
@@ -556,12 +571,18 @@ QTableView::item:selected {
         event.accept()  # Accept the close event
 
     def refresh_student_table(self):
-        """Refresh the student table with updated data."""
-        active_students = {
-            key: student
-            for key, student in self.students.items()
-            if student.get("active", "Yes") == "Yes"
-        }
+        """Refresh the student table with updated data from the DB."""
+        # --- PATCH: Reload students from DB ---
+        self.students = {}
+        for student_row in get_students_by_class(self.class_id):
+            student_id = student_row["student_id"]
+            attendance_records = get_attendance_by_student(student_id)
+            attendance = {rec["date"]: rec["status"] for rec in attendance_records}
+            student_row["attendance"] = attendance
+            self.students[student_id] = student_row
+
+        # Only include students who are active
+        active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
 
         # Initialize totals for all fields
         total_cia = 0
@@ -829,7 +850,7 @@ QTableView::item:selected {
             QMessageBox.critical(self, "Error", f"Failed to run HTML output: {e}")
 
     def refresh_metadata(self):
-        """Refresh the metadata section with updated data."""
+        """Refresh the metadata section with updated data from the DB."""
         print("Refreshing metadata...")  # Debugging: Method entry
 
         # Update the metadata dictionary

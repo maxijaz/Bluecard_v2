@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QHBoxLayout
 )
 from PyQt5.QtCore import Qt
-from src.logic.parser import save_data, generate_next_student_id
+from src.logic.db_interface import update_student, insert_student, get_students_by_class, delete_student
 from src.ui.student_form import StudentForm
 
 def validate_student_data(student_data: dict) -> bool:
@@ -25,7 +25,9 @@ class StudentManager(QDialog):
         self.data = data
         self.class_id = class_id
         self.refresh_callback = refresh_callback
-        self.students = self.data["classes"][self.class_id]["students"]
+
+        # --- PATCH: Load students from DB ---
+        self.students = {row["student_id"]: row for row in get_students_by_class(self.class_id)}
         self.row_to_student_id = []
 
         self.setWindowTitle("Student Manager")
@@ -66,6 +68,8 @@ class StudentManager(QDialog):
         layout.addLayout(button_layout)
 
     def populate_table(self):
+        # --- PATCH: Reload students from DB ---
+        self.students = {row["student_id"]: row for row in get_students_by_class(self.class_id)}
         self.table.setRowCount(0)
         self.row_to_student_id = []
         for student_id, student_data in self.students.items():
@@ -81,7 +85,7 @@ class StudentManager(QDialog):
             item_nick.setFlags(item_nick.flags() & ~Qt.ItemIsEditable)
             self.table.setItem(row_position, 1, item_nick)
             # Company No
-            item_company = QTableWidgetItem(student_data.get("company_no", ""))  # <-- lowercase
+            item_company = QTableWidgetItem(student_data.get("company_no", ""))
             item_company.setFlags(item_company.flags() & ~Qt.ItemIsEditable)
             self.table.setItem(row_position, 2, item_company)
             # Note
@@ -102,8 +106,10 @@ class StudentManager(QDialog):
             row = idx.row()
             student_id = self.row_to_student_id[row]
             current_status = self.students[student_id].get("active", "No")
-            self.students[student_id]["active"] = "No" if current_status == "Yes" else "Yes"
-        save_data(self.data)
+            new_status = "No" if current_status == "Yes" else "Yes"
+            self.students[student_id]["active"] = new_status
+            # --- PATCH: Update in DB ---
+            update_student(student_id, self.students[student_id])
         self.populate_table()
         self.refresh_callback()
 
@@ -138,11 +144,10 @@ class StudentManager(QDialog):
         )
         if confirm == QMessageBox.Yes:
             for student_id in deletable_ids:
-                if student_id in self.students:
-                    del self.students[student_id]
-            save_data(self.data)  # Save the updated data
-            self.populate_table()  # Refresh the table
-            self.refresh_callback()  # Refresh the main form
+                # --- PATCH: Delete from DB ---
+                delete_student(student_id)
+            self.populate_table()
+            self.refresh_callback()
 
             if undeletable_names:
                 QMessageBox.information(

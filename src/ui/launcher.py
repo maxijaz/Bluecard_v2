@@ -17,6 +17,13 @@ import json
 import os
 from datetime import datetime, timedelta
 from ui.monthly_summary import load_attendance_data, get_summary_text
+from logic.db_interface import (
+    get_all_classes,
+    get_class_by_id,
+    insert_class,
+    update_class,
+    set_class_archived,
+)
 
 
 class Launcher(QMainWindow):
@@ -27,9 +34,8 @@ class Launcher(QMainWindow):
         self.resize(395, 300)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
-        # Load class data
-        self.data = load_data()
-        self.classes = self.data.get("classes", {})
+        # Load class data from DB
+        self.classes = {row["class_no"]: row for row in get_all_classes()}
 
         # Main container widget
         container = QWidget()
@@ -107,17 +113,16 @@ class Launcher(QMainWindow):
         """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
         self.table.setRowCount(0)  # Clear the table before repopulating
         sorted_classes = sorted(
-            self.classes.items(),
-            key=lambda item: item[1].get("metadata", {}).get("company", "Unknown")
+            self.classes.values(),
+            key=lambda row: row.get("company", "Unknown")
         )
-        for class_id, class_data in sorted_classes:
-            metadata = class_data.get("metadata", {})
-            if metadata.get("archive", "No") == "No":
+        for class_row in sorted_classes:
+            if class_row.get("archive", "No") == "No":
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
-                self.table.setItem(row_position, 0, QTableWidgetItem(class_id))
-                self.table.setItem(row_position, 1, QTableWidgetItem(metadata.get("company", "Unknown")))
-                self.table.setItem(row_position, 2, QTableWidgetItem(metadata.get("archive", "No")))
+                self.table.setItem(row_position, 0, QTableWidgetItem(class_row["class_no"]))
+                self.table.setItem(row_position, 1, QTableWidgetItem(class_row.get("company", "Unknown")))
+                self.table.setItem(row_position, 2, QTableWidgetItem(class_row.get("archive", "No")))
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -127,9 +132,9 @@ class Launcher(QMainWindow):
             return
 
         class_id = self.table.item(selected_row, 0).text()
-
-        # Open the Mainform window with the correct data
-        self.mainform = Mainform(class_id, self.data, self.theme)
+        # Fetch latest class data from DB
+        class_data = get_class_by_id(class_id)
+        self.mainform = Mainform(class_id, {"classes": {class_id: class_data}}, self.theme)
         self.mainform.showMaximized()  # Open the Mainform maximized
         self.mainform.closed.connect(self.show_launcher)  # Reopen Launcher when Mainform is closed
         self.close()  # Close the Launcher
@@ -149,8 +154,9 @@ class Launcher(QMainWindow):
 
         class_id = self.table.item(selected_row, 0).text()
         defaults = self.load_defaults()
+        class_data = get_class_by_id(class_id)
         metadata_form = MetadataForm(
-            self, class_id, self.data, self.theme, self.refresh_table, defaults
+            self, class_id, {"classes": {class_id: class_data}}, self.theme, self.refresh_table, defaults
         )
         metadata_form.exec_()
 
@@ -160,19 +166,14 @@ class Launcher(QMainWindow):
         if not defaults:
             return
 
-        metadata_form = MetadataForm(
-            self, None, self.data, self.theme, self.refresh_table, defaults, single_date_mode=True
-        )
-
         def handle_class_saved(class_id):
-            metadata = self.data["classes"][class_id]["metadata"]
-            start_date = metadata.get("start_date", "").strip()
-            days = metadata.get("days", "").strip()
-            max_classes = int(metadata.get("max_classes", "20").split()[0])
-            metadata["dates"] = generate_dates(start_date, days, max_classes)
-            save_data(self.data)
+            # After saving, refresh from DB
+            self.refresh_data()
             self.open_mainform_after_save(class_id)
 
+        metadata_form = MetadataForm(
+            self, None, {"classes": {}}, self.theme, self.refresh_table, defaults, single_date_mode=True
+        )
         metadata_form.class_saved.connect(handle_class_saved)  # Connect the signal
 
         metadata_form.exec_()  # Open the form as a modal dialog
@@ -193,25 +194,23 @@ class Launcher(QMainWindow):
         )
 
         if confirm == QMessageBox.Yes:
-            # Set the archive field to "Yes"
-            self.classes[class_id]["metadata"]["archive"] = "Yes"
-            save_data(self.data)  # Save changes to 001attendance_data.json
-            self.populate_table()  # Refresh the table to show only non-archived classes
+            set_class_archived(class_id, archived=True)
+            self.refresh_data()
             QMessageBox.information(self, "Archived", f"Class {class_id} has been archived.")
 
     def open_archive_manager(self):
         """Open the Archive Manager for all archived classes."""
         archived_classes = {
-            class_id: class_data
-            for class_id, class_data in self.classes.items()
-            if class_data.get("metadata", {}).get("archive", "Yes") == "Yes"
+            row["class_no"]: row
+            for row in get_all_classes()
+            if row.get("archive", "Yes") == "Yes"
         }
 
         if not archived_classes:
             QMessageBox.information(self, "No Archived Classes", "There are no archived classes to manage.")
             return
 
-        archive_manager = ArchiveManager(self, self.data, archived_classes, self.refresh_table)
+        archive_manager = ArchiveManager(self, {"classes": archived_classes}, archived_classes, self.refresh_table)
         archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):
@@ -271,8 +270,7 @@ class Launcher(QMainWindow):
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""
-        self.data = load_data()  # Reload the data from the source
-        self.classes = self.data.get("classes", {})  # Update the classes dictionary
+        self.classes = {row["class_no"]: row for row in get_all_classes()}
         self.populate_table()  # Refresh the table with the updated data
 
     def closeEvent(self, event):

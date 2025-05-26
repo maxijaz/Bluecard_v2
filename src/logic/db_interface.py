@@ -54,3 +54,84 @@ def get_holidays():
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+def set_class_archived(class_no, archived=True):
+    """Set the archive status of a class."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE classes SET archive = ? WHERE class_no = ?",
+        ("Yes" if archived else "No", class_no)
+    )
+    conn.commit()
+    conn.close()
+
+def insert_class(class_data):
+    """Insert a new class into the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    fields = ', '.join(class_data.keys())
+    placeholders = ', '.join(['?'] * len(class_data))
+    cursor.execute(
+        f"INSERT INTO classes ({fields}) VALUES ({placeholders})",
+        tuple(class_data.values())
+    )
+    conn.commit()
+    conn.close()
+
+def update_class(class_no, class_data):
+    """Update an existing class in the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    assignments = ', '.join([f"{k}=?" for k in class_data.keys()])
+    cursor.execute(
+        f"UPDATE classes SET {assignments} WHERE class_no = ?",
+        tuple(class_data.values()) + (class_no,)
+    )
+    conn.commit()
+    conn.close()
+
+def insert_student(student_data):
+    """Insert a new student into the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    fields = ', '.join(student_data.keys())
+    placeholders = ', '.join(['?'] * len(student_data))
+    cursor.execute(
+        f"INSERT INTO students ({fields}) VALUES ({placeholders})",
+        tuple(student_data.values())
+    )
+    conn.commit()
+    conn.close()
+
+def update_student(student_id, student_data):
+    """Update an existing student in the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    assignments = ', '.join([f"{k}=?" for k in student_data.keys()])
+    cursor.execute(
+        f"UPDATE students SET {assignments} WHERE student_id = ?",
+        tuple(student_data.values()) + (student_id,)
+    )
+    conn.commit()
+    conn.close()
+
+def delete_student(student_id):
+    """Delete a student from the database by student_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM students WHERE student_id = ?", (student_id,))
+    # Optionally, also delete attendance records for this student:
+    cursor.execute("DELETE FROM attendance WHERE student_id = ?", (student_id,))
+    conn.commit()
+    conn.close()
+
+def delete_class(class_no):
+    """Delete a class and all associated students and attendance from the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM classes WHERE class_no = ?", (class_no,))
+    cursor.execute("DELETE FROM students WHERE class_no = ?", (class_no,))
+    cursor.execute("DELETE FROM attendance WHERE class_no = ?", (class_no,))
+    conn.commit()
+    conn.close()
