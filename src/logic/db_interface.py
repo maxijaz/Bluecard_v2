@@ -176,3 +176,14 @@ def set_all_defaults(defaults_dict):
         )
     conn.commit()
     conn.close()
+
+def insert_date(class_no, date, note=""):
+    """Insert a date for a class into the dates table."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO dates (class_no, date, note) VALUES (?, ?, ?)",
+        (class_no, date, note)
+    )
+    conn.commit()
+    conn.close()

@@ -291,7 +291,10 @@ class MetadataForm(QDialog):
         # --- PATCH: Save to DB instead of JSON ---
         class_record = dict(metadata)
         class_record["archive"] = "No" if not self.is_edit else self.data["classes"][self.class_id].get("archive", "No")
-        # If you have a students table, you may need to save students separately
+
+        # --- PATCH: Remove 'dates' before inserting/updating class record ---
+        if "dates" in class_record:
+            del class_record["dates"]
 
         if not self.is_edit:
             insert_class(class_record)
@@ -299,6 +302,12 @@ class MetadataForm(QDialog):
         else:
             update_class(self.class_id, class_record)
             # Optionally, update students here as well
+
+        # --- PATCH: Save dates to the dates table ---
+        from logic.db_interface import insert_date
+        for date in metadata.get("dates", []):
+            if date and len(date) == 10 and date[2] == "/" and date[5] == "/":
+                insert_date(class_record["class_no"], date, "")
 
         self.on_metadata_save()
         self.class_saved.emit(class_no)

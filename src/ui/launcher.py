@@ -251,17 +251,12 @@ class Launcher(QMainWindow):
 
     def open_mainform_after_save(self, class_id):
         """Open the Mainform after saving a new class."""
-        metadata = self.data["classes"][class_id]["metadata"]
-        start_date = metadata.get("start_date", "").strip()
-        days = metadata.get("days", "").strip()
-        max_classes = int(metadata.get("max_classes", "20").split()[0])
-        if not metadata.get("dates"):
-            metadata["dates"] = generate_dates(start_date, days, max_classes)
-        save_data(self.data)
-        self.mainform = Mainform(class_id, self.data, self.theme)
+        # Fetch latest class data from DB
+        class_data = get_class_by_id(class_id)
+        self.mainform = Mainform(class_id, {"classes": {class_id: class_data}}, self.theme)
         self.mainform.showMaximized()
         self.mainform.closed.connect(self.show_launcher)
-        self.close()
+        self.hide()
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""
