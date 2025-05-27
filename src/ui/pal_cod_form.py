@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 
 
 class PALCODForm(QDialog):
-    def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name=None, show_cod_cia=True, show_student_name=False):
+    def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name=None, show_cod_cia=True, show_student_name=False, refresh_cell_callback=None, row=None):
         super().__init__(parent)
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
@@ -14,6 +14,8 @@ class PALCODForm(QDialog):
         self.date = date
         self.student_name = student_name
         self.selected_value = None  # Initialize the selected_value attribute
+        self.refresh_cell_callback = refresh_cell_callback
+        self.row = row
 
         # Layout
         layout = QVBoxLayout(self)
@@ -72,12 +74,18 @@ class PALCODForm(QDialog):
             QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
-            self.selected_value = value  # Set the selected value
-            self.accept()  # Close the form
+            self.selected_value = value
+            self.accept()
+            # Refresh the cell if callback is provided
+            if self.refresh_cell_callback and self.row is not None:
+                self.refresh_cell_callback(self.row, self.column_index)
 
     def select_value(self, value):
         self.selected_value = value
         self.accept()
+        # Refresh the cell if callback is provided
+        if self.refresh_cell_callback and self.row is not None:
+            self.refresh_cell_callback(self.row, self.column_index)
 
 
 def open_pal_cod_form(self, column_index=None):
@@ -124,7 +132,7 @@ def open_pal_cod_form(self, column_index=None):
         return
 
     # Open the PALCODForm with COD and CIA options, without student name
-    pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=True, show_student_name=False)
+    pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=False, show_student_name=True)
     if pal_cod_form.exec_() == QDialog.Accepted:
         new_value = pal_cod_form.selected_value
         self.update_column_values(column_index, new_value)

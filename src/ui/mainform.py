@@ -803,6 +803,13 @@ QTableView::item:selected {
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
 
+    def setData(self, index, value, role=Qt.EditRole):
+        if role == Qt.EditRole:
+            self.data[index.row()][index.column()] = value
+            self.dataChanged.emit(index, index)
+            return True
+        return False
+
     FROZEN_COLUMN_WIDTHS = {
         "#": 30,
         "Name": 150,
@@ -1122,42 +1129,44 @@ QTableView::item:selected {
         """Open a dialog to edit the selected attendance field."""
         row = index.row()
         column = index.column()
+        print(f"[DEBUG] edit_attendance_field: row={row}, column={column}")
+
         attendance_dates = self.metadata.get("dates", [])
         if not attendance_dates:
             attendance_dates = self.get_attendance_dates()
             self.metadata["dates"] = attendance_dates
-        print(f"DEBUG: row={row}, column={column}, attendance_dates={attendance_dates}, len={len(attendance_dates)}")
+        print(f"[DEBUG] attendance_dates={attendance_dates}, len={len(attendance_dates)}")
 
         # Skip the "Running Total" row
         if row == 0:
+            print("[DEBUG] Attempted to edit Running Total row")
             QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
             return
 
-        attendance_dates = self.metadata.get("dates", [])
-        # Only allow editing if the column is a valid date column
         if column < 0 or column >= len(attendance_dates):
-            print(f"DEBUG: Invalid column: {column}, attendance_dates length: {len(attendance_dates)}")
+            print(f"[DEBUG] Invalid column: {column}, attendance_dates length: {len(attendance_dates)}")
             QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
             return
 
         date = attendance_dates[column]
-        # Only allow editing if the header is a real date (DD/MM/YYYY)
-        if not (len(date) == 10 and date[2] == "/" and date[5] == "/"):
-            QMessageBox.warning(self, "Invalid Date", "Please add dates first before attempting to change attendance.")
-            return
+        print(f"[DEBUG] Editing date: {date}")
 
         student_keys = list(self.students.keys())
         if (row - 1) < 0 or (row - 1) >= len(student_keys):
+            print(f"[DEBUG] Invalid student row: {row-1}, student_keys: {student_keys}")
             QMessageBox.warning(self, "Invalid Selection", "Student row out of range.")
             return
 
         student_id = student_keys[row - 1]
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
+        print(f"[DEBUG] Editing student_id={student_id}, name={student_name}, current_value={current_value}")
 
-        # Check if the column contains "CIA" or "COD" or "HOL"
         column_values = [self.students[sid]["attendance"].get(date, "-") for sid in self.students]
+        print(f"[DEBUG] column_values for date {date}: {column_values}")
+
         if "CIA" in column_values or "COD" in column_values or "HOL" in column_values:
+            print("[DEBUG] Edit blocked due to CIA/COD/HOL in column")
             QMessageBox.warning(
                 self,
                 "Edit Blocked",
@@ -1166,22 +1175,30 @@ QTableView::item:selected {
             )
             return
 
-        # Open the PALCODForm without COD and CIA options, with student name
-        dialog = PALCODForm(self, column, None, current_value, date, student_name, show_cod_cia=False, show_student_name=True)
+        dialog = PALCODForm(
+            self,
+            column,
+            None,
+            current_value,
+            date,
+            student_name,
+            show_cod_cia=False,
+            show_student_name=True,
+            refresh_cell_callback=lambda r, c: print(f"[DEBUG] refresh_cell_callback called for row={r}, col={c}"),
+            row=row
+        )
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
+            print(f"[DEBUG] Dialog accepted, new_value={new_value}")
             self.students[student_id]["attendance"][date] = new_value
             set_attendance(self.class_id, student_id, date, new_value)
 
-            # Reload this student's attendance from DB to keep in sync
             attendance_records = get_attendance_by_student(student_id)
             self.students[student_id]["attendance"] = {rec["date"]: rec["status"] for rec in attendance_records}
 
-            # Refresh only the affected cell
-            self.scrollable_table.model().dataChanged.emit(
-                self.scrollable_table.model().index(row, 0),
-                self.scrollable_table.model().index(row, self.scrollable_table.model().columnCount() - 1)
-            )
+            print(f"[DEBUG] After DB update, attendance for {student_id}: {self.students[student_id]['attendance']}")
+            print(f"[DEBUG] Calling refresh_scrollable_table()")
+            self.refresh_scrollable_table()
 
     def open_settings(self):
         """Open the Settings dialog."""
