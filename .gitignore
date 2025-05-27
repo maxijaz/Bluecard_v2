@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Python bytecode and cache
 __pycache__/
 *.py[cod]
 *.pyo
@@ -8,24 +8,37 @@ __pycache__/
 env/
 venv/
 
-# VSCode settings (optional)
+# VSCode settings
 .vscode/
 
-# Distribution / packaging (optional if you're not packaging yet)
+# Packaging and build
 *.egg
 *.egg-info/
 dist/
 build/
 
-# Backup / log / temp files / AHK
+# Logs, temp, backups
 *.log
 *.bak
 *.tmp
-# *.ahk
 
-# OS junk
+# Ignore SQLite backups
+data/backup/*.db
+data/backup/*.sqlite
+
+# Ignore working temp files or autosaves
+*.swp
+*.swo
+*~
+
+# Ignore OS files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+desktop.ini
 
-# Ignore all DB backups in data/backup
-data/backup/*.db
+# GitHub Desktop backup folder (if you ever use stash/restore)
+.github/
+
+# Python dotenv/config (if added later)
+.env
