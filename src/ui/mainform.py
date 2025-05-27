@@ -34,39 +34,66 @@ from logic.db_interface import (
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data, headers):
+    def __init__(self, students, attendance_dates, class_time=2):
         super().__init__()
-        self.data = data
-        self.headers = headers
+        self.students = students  # dict of student_id: student_data
+        self.attendance_dates = attendance_dates
+        self.student_keys = list(students.keys())
+        self.class_time = class_time
+
+        # Precompute running total row
+        self.running_total = [self.class_time * (i + 1) for i in range(len(self.attendance_dates))]
 
     def rowCount(self, parent=QModelIndex()):
-        return len(self.data)
+        # +1 for the running total row
+        return 1 + len(self.student_keys)
 
     def columnCount(self, parent=QModelIndex()):
-        return len(self.headers)
+        return len(self.attendance_dates)
 
     def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        row = index.row()
+        col = index.column()
+        if row == 0:
+            # Running total row
+            if role == Qt.DisplayRole:
+                return self.running_total[col]
+            return None
+        student_id = self.student_keys[row - 1]
+        date = self.attendance_dates[col]
+        value = self.students[student_id]["attendance"].get(date, "-")
         if role == Qt.DisplayRole:
-            try:
-                return self.data[index.row()][index.column()]
-            except IndexError:
-                return ""
+            return value
         elif role == Qt.BackgroundRole:
-            # Alternate row coloring for better readability
-            if index.row() % 2 == 0:
-                return QColor("#f0f0f0")
+            if value == "P":
+                return QColor("#c8e6c9")
+            elif value == "A":
+                return QColor("#ffcdd2")
+            elif value == "L":
+                return QColor("#fff9c4")
         return None
+
+    def setData(self, index, value, role=Qt.EditRole):
+        row = index.row()
+        col = index.column()
+        if role == Qt.EditRole and row > 0:
+            student_id = self.student_keys[row - 1]
+            date = self.attendance_dates[col]
+            self.students[student_id]["attendance"][date] = value
+            self.dataChanged.emit(index, index)
+            return True
+        return False
+
+        def flags(self, index):
+            if index.row() == 0:
+                return Qt.ItemIsEnabled  # Running total row is not editable/selectable
+            return Qt.ItemIsSelectable | Qt.ItemIsEnabled  # Remove Qt.ItemIsEditable
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            header = self.headers[section]
-            # If it's a real date, show DD/MM
-            if len(header) == 10 and header[2] == "/" and header[5] == "/":
-                return header[:5]
-            # If it's a placeholder (e.g., "Empty-1", "Date1", "Extra-2"), show "--/--"
-            if header.lower().startswith("empty") or header.lower().startswith("date") or header.lower().startswith("extra"):
-                return "--/--"
-            return header
+            return self.attendance_dates[section]
         return None
 
 
@@ -315,7 +342,7 @@ class Mainform(QMainWindow):
 
         self.frozen_table = DebugTableView()
         self.frozen_table.setObjectName("FROZEN")
-        self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+        self.frozen_table.setModel(FrozenTableModel(frozen_data, frozen_headers))
         self.frozen_table.verticalHeader().hide()
         self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -360,7 +387,7 @@ class Mainform(QMainWindow):
 
         self.scrollable_table = DebugTableView()
         self.scrollable_table.setObjectName("SCROLLABLE")
-        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
         self.scrollable_table.verticalHeader().hide()
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -722,7 +749,7 @@ QTableView::item:selected {
         # for row in frozen_data:
           #  print("Row Length:", len(row))
 
-        self.frozen_table.setModel(TableModel(frozen_data, frozen_headers))
+        self.frozen_table.setModel(FrozenTableModel(frozen_data, frozen_headers))
         # Reconnect selection sync after setModel (Qt gotcha)
         # self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
 
@@ -747,7 +774,7 @@ QTableView::item:selected {
         # for row in scrollable_data:
           #  print("Row Length:", len(row))
 
-        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
         # Reconnect selection sync after setModel (Qt gotcha)
         # self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
 
@@ -802,13 +829,6 @@ QTableView::item:selected {
         student_form.exec_()
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
-
-    def setData(self, index, value, role=Qt.EditRole):
-        if role == Qt.EditRole:
-            self.data[index.row()][index.column()] = value
-            self.dataChanged.emit(index, index)
-            return True
-        return False
 
     FROZEN_COLUMN_WIDTHS = {
         "#": 30,
@@ -1120,7 +1140,7 @@ QTableView::item:selected {
             scrollable_data.append(row_data)
 
         # Update the model
-        self.scrollable_table.setModel(TableModel(scrollable_data, scrollable_headers))
+        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
 
         # Reset column widths
         self.reset_scrollable_column_widths()
@@ -1193,12 +1213,9 @@ QTableView::item:selected {
             self.students[student_id]["attendance"][date] = new_value
             set_attendance(self.class_id, student_id, date, new_value)
 
-            attendance_records = get_attendance_by_student(student_id)
-            self.students[student_id]["attendance"] = {rec["date"]: rec["status"] for rec in attendance_records}
-
-            print(f"[DEBUG] After DB update, attendance for {student_id}: {self.students[student_id]['attendance']}")
-            print(f"[DEBUG] Calling refresh_scrollable_table()")
-            self.refresh_scrollable_table()
+            # No need to reload all attendance or refresh the whole table!
+            model = self.scrollable_table.model()
+            model.setData(model.index(row, column), new_value, Qt.EditRole)
 
     def open_settings(self):
         """Open the Settings dialog."""
@@ -1327,6 +1344,35 @@ class EditAttendanceDialog(QDialog):
         """Set the selected value and close the dialog."""
         self.selected_value = value
         self.accept()  # Close the dialog
+
+
+class FrozenTableModel(QAbstractTableModel):
+    def __init__(self, data, headers):
+        super().__init__()
+        self.data_matrix = data  # List of lists
+        self.headers = headers
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.data_matrix)
+
+    def columnCount(self, parent=QModelIndex()):
+        return len(self.headers)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        value = self.data_matrix[index.row()][index.column()]
+        if role == Qt.DisplayRole:
+            return value
+        return None
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self.headers[section]
+        return None
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled
 
 
 if __name__ == "__main__":
