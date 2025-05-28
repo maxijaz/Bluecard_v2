@@ -101,29 +101,34 @@ class AttendanceDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
         value = index.data()
-        option.displayAlignment = Qt.AlignCenter  # Center-align the content
+        option.displayAlignment = Qt.AlignCenter
+        option.palette.setColor(option.palette.Text, Qt.black)  # Normal text
+        option.palette.setColor(option.palette.HighlightedText, Qt.black)  # Selected text
         if value == "P":
-            option.backgroundBrush = QColor("#c8e6c9")  # Light green for Present
+            option.backgroundBrush = QColor("#c8e6c9")
         elif value == "A":
-            option.backgroundBrush = QColor("#ffcdd2")  # Light red for Absent
+            option.backgroundBrush = QColor("#ffcdd2")
         elif value == "L":
-            option.backgroundBrush = QColor("#fff9c4")  # Light yellow for Late
+            option.backgroundBrush = QColor("#fff9c4")
 
 
 class CenterAlignDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        option.displayAlignment = Qt.AlignCenter  # Center-align the content
+        option.palette.setColor(option.palette.Text, Qt.black)
+        option.palette.setColor(option.palette.HighlightedText, Qt.black)
+        option.displayAlignment = Qt.AlignCenter
 
 
 class FrozenTableDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        # Center-align all columns except the "Name" column (column index 1)
-        if index.column() == 1:  # "Name" column
+        if index.column() == 1:
             option.displayAlignment = Qt.AlignLeft | Qt.AlignVCenter
         else:
             option.displayAlignment = Qt.AlignCenter
+        option.palette.setColor(option.palette.Text, Qt.black)
+        option.palette.setColor(option.palette.HighlightedText, Qt.black)
 
 
 class DebugTableView(QTableView):
