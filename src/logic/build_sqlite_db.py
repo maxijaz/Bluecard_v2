@@ -37,6 +37,7 @@ def recreate_db(db_path=DB_PATH):
         print(f"Deleted existing database {db_path}")
 
     conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     cursor.executescript("""
@@ -73,7 +74,7 @@ def recreate_db(db_path=DB_PATH):
         show_l TEXT DEFAULT 'Yes'
     );
     CREATE TABLE students (
-        student_id TEXT PRIMARY KEY,
+        student_id INTEGER PRIMARY KEY AUTOINCREMENT,
         class_no TEXT,
         name TEXT,
         nickname TEXT,
@@ -155,29 +156,48 @@ def import_data(conn, data):
             """, (class_no, date, None))
 
         for student_id, student in class_data["students"].items():
-            cursor.execute("""
-                INSERT OR REPLACE INTO students VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                student_id,
-                class_no,  # <-- PATCH: Add class_no here
-                student["name"],
-                student.get("nickname", ""),
-                student.get("company_no", ""),
-                student.get("gender", ""),
-                student.get("score", ""),
-                student.get("pre_test", ""),
-                student.get("post_test", ""),
-                student.get("note", ""),
-                student.get("active", "Yes")
-            ))
-            cursor.execute("""
-                INSERT OR IGNORE INTO class_students VALUES (?, ?)
-            """, (class_no, student_id))
-
-            for date, status in student.get("attendance", {}).items():
+            # Let SQLite auto-assign student_id by passing None
+            sid = None
+            try:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO attendance VALUES (?, ?, ?, ?)
-                """, (class_no, student_id, date, status))
+                    INSERT INTO students (
+                        student_id, class_no, name, nickname, company_no, gender,
+                        score, pre_test, post_test, note, active
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    None,  # Let SQLite auto-increment student_id
+                    class_no,
+                    student["name"],
+                    student.get("nickname", ""),
+                    student.get("company_no", ""),
+                    student.get("gender", ""),
+                    student.get("score", ""),
+                    student.get("pre_test", ""),
+                    student.get("post_test", ""),
+                    student.get("note", ""),
+                    student.get("active", "Yes")
+                ))
+                sid = cursor.lastrowid  # Get the DB-generated student_id
+            except Exception as e:
+                print(f"Error inserting student {student.get('name', '')}: {e}")
+                continue
+
+            # Insert into class_students (future-proof)
+            try:
+                cursor.execute("""
+                    INSERT OR IGNORE INTO class_students VALUES (?, ?)
+                """, (class_no, sid))
+            except Exception as e:
+                print(f"Error inserting into class_students for {student.get('name', '')}: {e}")
+
+            # Insert attendance records for this student
+            for date, status in student.get("attendance", {}).items():
+                try:
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO attendance VALUES (?, ?, ?, ?)
+                    """, (class_no, sid, date, status))
+                except Exception as e:
+                    print(f"Error inserting attendance for {student.get('name', '')}, date {date}: {e}")
 
     conn.commit()
     print("Imported class data")

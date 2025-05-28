@@ -95,6 +95,8 @@ def insert_student(student_data):
     """Insert a new student into the database."""
     conn = get_connection()
     cursor = conn.cursor()
+    student_data = dict(student_data)
+    student_data.pop("student_id", None)  # Let SQLite auto-assign
     fields = ', '.join(student_data.keys())
     placeholders = ', '.join(['?'] * len(student_data))
     cursor.execute(

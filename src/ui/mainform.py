@@ -98,16 +98,15 @@ class TableModel(QAbstractTableModel):
             return True
         return False
 
-        def flags(self, index):
-            if index.row() == 0:
-                return Qt.ItemIsEnabled  # Running total row is not editable/selectable
-            return Qt.ItemIsSelectable | Qt.ItemIsEnabled  # Remove Qt.ItemIsEditable
+    def flags(self, index):
+        if index.row() == 0:
+            return Qt.ItemIsEnabled  # Running total row is not editable/selectable
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled  # Remove Qt.ItemIsEditable
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.attendance_dates[section]
         return None
-
 
 class AttendanceDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
@@ -573,7 +572,7 @@ QTableView::item:selected {
         metadata_form = MetadataForm(
             self,
             self.class_id,
-            {},  # No need to pass self.data
+            {"classes": {self.class_id: {"metadata": self.metadata, "students": self.students}}},
             self.theme,
             self.refresh_student_table,
             defaults,
@@ -649,6 +648,7 @@ QTableView::item:selected {
     def refresh_student_table(self):
         """Refresh the student table with updated data from the DB."""
         # --- PATCH: Reload students from DB ---
+        self.ensure_max_teaching_dates()
         self.students = {}
         for student_row in get_students_by_class(self.class_id):
             student_id = student_row["student_id"]
@@ -1121,13 +1121,12 @@ QTableView::item:selected {
                 student["attendance"][new_date_str] = "-"
             teaching_dates.append(new_date_str)
 
-        # --- Remove extra dates if there are too many teaching dates ---
+        # Remove extra dates if needed
         while len(teaching_dates) > max_classes:
             # Remove the last date in attendance_dates that is a teaching date
             for i in range(len(attendance_dates) - 1, -1, -1):
                 d = attendance_dates[i]
                 if is_teaching_date(d):
-                    # Remove this date from attendance_dates and all students' attendance
                     del attendance_dates[i]
                     for student in self.students.values():
                         if d in student["attendance"]:
@@ -1135,148 +1134,64 @@ QTableView::item:selected {
                     teaching_dates.remove(d)
                     break  # Remove one at a time
 
-        # Save the updated dates and data
         self.metadata["dates"] = attendance_dates
-        # Only update DB columns, not 'dates'
-        db_metadata = {k: v for k, v in self.metadata.items() if k != "dates"}
-        update_class(self.class_id, db_metadata)
-        # If you want to update the dates table, do it here with your insert_date/update_dates logic
-        self.refresh_student_table()
 
-    def refresh_scrollable_table_column(self, column_index):
-        """Refresh a specific column in the scrollable table."""
-        model = self.scrollable_table.model()
-        if not model:
-            return
-        row_count = model.rowCount()
-        if row_count > 0:
-            top_left = model.index(0, column_index)
-            bottom_right = model.index(row_count - 1, column_index)
-            model.dataChanged.emit(top_left, bottom_right)
+    def ensure_max_teaching_dates(self):
+        """Ensure there are always exactly maxclasses teaching dates (excluding CIA/HOL)."""
+        attendance_dates = self.metadata["dates"]
+        max_classes = int(self.metadata.get("max_classes", "20").split()[0])
+        days_str = self.metadata.get("days", "")
+        weekdays = []
+        if days_str:
+            day_map = {
+                "Monday": 0, "Tuesday": 1, "Wednesday": 2,
+                "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6
+            }
+            weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
 
-    def refresh_scrollable_table(self):
-        """Rebuild the scrollable table model to reflect updated data."""
-        attendance_dates = self.metadata.get("dates", [])
-        scrollable_headers = attendance_dates  # Only include date columns
-        scrollable_data = []
-
-        # Add "Running Total" row
-        class_time = int(self.metadata.get("class_time", "2"))  # Default to 2 if not provided
-        running_total = [class_time * (i + 1) for i in range(len(attendance_dates))]
-        scrollable_data.append(running_total)  # Add the "Running Total" row as the first row
-
-        # Add student attendance rows
-        for student in self.students.values():
-            attendance = student.get("attendance", {})
-            row_data = [attendance.get(date, "-") for date in attendance_dates]
-            scrollable_data.append(row_data)
-
-        # Update the model
-        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
-
-        # Reset column widths
-        self.reset_scrollable_column_widths()
-
-    def edit_attendance_field(self, index):
-        """Open a dialog to edit the selected attendance field."""
-        row = index.row()
-        column = index.column()
-        print(f"[DEBUG] edit_attendance_field: row={row}, column={column}")
-
-        attendance_dates = self.metadata.get("dates", [])
-        if not attendance_dates:
-            attendance_dates = self.get_attendance_dates()
-            self.metadata["dates"] = attendance_dates
-        print(f"[DEBUG] attendance_dates={attendance_dates}, len={len(attendance_dates)}")
-
-        # Skip the "Running Total" row
-        if row == 0:
-            print("[DEBUG] Attempted to edit Running Total row")
-            QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
-            return
-
-        if column < 0 or column >= len(attendance_dates):
-            print(f"[DEBUG] Invalid column: {column}, attendance_dates length: {len(attendance_dates)}")
-            QMessageBox.warning(self, "Invalid Selection", "Please select a valid date column.")
-            return
-
-        date = attendance_dates[column]
-        print(f"[DEBUG] Editing date: {date}")
-
-        student_keys = list(self.students.keys())
-        if (row - 1) < 0 or (row - 1) >= len(student_keys):
-            print(f"[DEBUG] Invalid student row: {row-1}, student_keys: {student_keys}")
-            QMessageBox.warning(self, "Invalid Selection", "Student row out of range.")
-            return
-
-        student_id = student_keys[row - 1]
-        student_name = self.students[student_id].get("name", "Unknown")
-        current_value = self.students[student_id]["attendance"].get(date, "-")
-        print(f"[DEBUG] Editing student_id={student_id}, name={student_name}, current_value={current_value}")
-
-        column_values = [self.students[sid]["attendance"].get(date, "-") for sid in self.students]
-        print(f"[DEBUG] column_values for date {date}: {column_values}")
-
-        if "CIA" in column_values or "COD" in column_values or "HOL" in column_values:
-            print("[DEBUG] Edit blocked due to CIA/COD/HOL in column")
-            QMessageBox.warning(
-                self,
-                "Edit Blocked",
-                "Press header [date] to clear CIA, COD, or HOL before \nchanging any individual attendance data (P,A,L)....",
-                QMessageBox.Cancel,
+        def is_teaching_date(d):
+            return not any(
+                student.get("attendance", {}).get(d) in ["CIA", "HOL"]
+                for student in self.students.values()
             )
-            return
 
-        dialog = PALCODForm(
-            self,
-            column,
-            None,
-            current_value,
-            date,
-            student_name,
-            show_cod_cia=False,
-            show_student_name=True,
-            refresh_cell_callback=lambda r, c: print(f"[DEBUG] refresh_cell_callback called for row={r}, col={c}"),
-            row=row
-        )
-        if dialog.exec_() == QDialog.Accepted:
-            new_value = dialog.selected_value
-            print(f"[DEBUG] Dialog accepted, new_value={new_value}")
-            self.students[student_id]["attendance"][date] = new_value
-            set_attendance(self.class_id, student_id, date, new_value)
+        teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
 
-            # No need to reload all attendance or refresh the whole table!
-            model = self.scrollable_table.model()
-            model.setData(model.index(row, column), new_value, Qt.EditRole)
+        # Add new dates if needed
+        while len(teaching_dates) < max_classes:
+            if attendance_dates:
+                last_date = attendance_dates[-1]
+                try:
+                    last_date_dt = datetime.strptime(last_date, "%d/%m/%Y")
+                except Exception:
+                    last_date_dt = datetime.now()
+                next_date = last_date_dt
+                while True:
+                    next_date += timedelta(days=1)
+                    if not weekdays or next_date.weekday() in weekdays:
+                        break
+                new_date_str = next_date.strftime("%d/%m/%Y")
+            else:
+                new_date_str = f"Extra-{len(attendance_dates)+1}"
+            attendance_dates.append(new_date_str)
+            for student in self.students.values():
+                student["attendance"][new_date_str] = "-"
+            teaching_dates.append(new_date_str)
 
-    def open_settings(self):
-        """Open the Settings dialog."""
-        settings_form = SettingsForm(self, self.theme, self.apply_theme_and_refresh)
-        settings_form.exec_()
+        # Remove extra teaching dates if needed
+        while len(teaching_dates) > max_classes:
+            # Remove the last date in attendance_dates that is a teaching date
+            for i in range(len(attendance_dates) - 1, -1, -1):
+                d = attendance_dates[i]
+                if is_teaching_date(d):
+                    del attendance_dates[i]
+                    for student in self.students.values():
+                        if d in student["attendance"]:
+                            del student["attendance"][d]
+                    teaching_dates.remove(d)
+                    break  # Remove one at a time
 
-    def apply_theme_and_refresh(self, selected_theme):
-        # Reload settings and refresh UI as needed
-        self.default_settings = self.load_default_settings()
-        self.theme = selected_theme
-
-        # Rebuild column visibility dictionaries from updated settings
-        self.column_visibility = {
-            "Nickname": self.default_settings.get("show_nickname", "Yes") == "Yes",
-            "CompanyNo": self.default_settings.get("show_company_no", "Yes") == "Yes",
-            "Score": self.default_settings.get("show_score", "Yes") == "Yes",
-            "PreTest": self.default_settings.get("show_prestest", "Yes") == "Yes",
-            "PostTest": self.default_settings.get("show_posttest", "Yes") == "Yes",
-            "Attn": self.default_settings.get("show_attn", "Yes") == "Yes",
-            "P": self.default_settings.get("show_p", "Yes") == "Yes",
-            "A": self.default_settings.get("show_a", "Yes") == "Yes",
-            "L": self.default_settings.get("show_l", "Yes") == "Yes"
-        }
-        self.scrollable_column_visibility = {
-            "show_dates": self.default_settings.get("show_dates", "Yes") == "Yes"
-        }
-
-        self.refresh_student_table()
-        # Optionally, refresh other UI elements if needed
+        self.metadata["dates"] = attendance_dates
 
     def debug_table_positions(self, context=""):
         print(f"\n--- DEBUG [{context}] ---")
@@ -1345,6 +1260,38 @@ QTableView::item:selected {
         dlg = ShowHideForm(self, self.class_id, self.refresh_student_table)
         dlg.exec_()
 
+    def edit_attendance_field(self, index):
+        """Open the PALCODForm for the selected cell in the scrollable table."""
+        row = index.row()
+        col = index.column()
+        # Skip running total row
+        if row == 0:
+            return
+        attendance_dates = self.metadata.get("dates", [])
+        if col < 0 or col >= len(attendance_dates):
+            return
+        date = attendance_dates[col]
+        student_keys = list(self.students.keys())
+        student_id = student_keys[row - 1]
+        student_name = self.students[student_id].get("name", "Unknown")
+        current_value = self.students[student_id]["attendance"].get(date, "-")
+        dialog = PALCODForm(
+            self,
+            col,
+            None,
+            current_value,
+            date,
+            student_name,
+            show_cod_cia=False,
+            show_student_name=True,
+            row=row
+        )
+        if dialog.exec_() == QDialog.Accepted:
+            new_value = dialog.selected_value
+            self.students[student_id]["attendance"][date] = new_value
+            set_attendance(self.class_id, student_id, date, new_value)
+            model = self.scrollable_table.model()
+            model.setData(model.index(row, col), new_value, Qt.EditRole)
 
 class EditAttendanceDialog(QDialog):
     def __init__(self, parent, current_value):

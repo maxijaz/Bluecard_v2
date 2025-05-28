@@ -11,7 +11,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
-from logic.db_interface import insert_class, update_class, get_all_defaults
+from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -189,9 +189,18 @@ class MetadataForm(QDialog):
             QMessageBox.warning(self, "Validation Error", "Class No is required.")
             return
 
-        if class_no in self.data["classes"] and not self.is_edit:
-            QMessageBox.warning(self, "Duplicate Class ID", f"Class ID '{class_no}' already exists.")
-            return
+        # --- PATCH: Check for duplicate class_no in the database ---
+        if not self.is_edit:
+            if get_class_by_id(class_no):
+                QMessageBox.warning(
+                    self,
+                    "Duplicate Class ID",
+                    f"Class ID '{class_no}' already exists in the database.\n"
+                    "Please enter a different Class ID."
+                )
+                self.fields["class_no"].setFocus()
+                self.fields["class_no"].selectAll()
+                return
 
         # Gather metadata from fields and ensure all keys are lowercase
         metadata = {key: field.text().strip() for key, field in self.fields.items()}
