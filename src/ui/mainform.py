@@ -14,6 +14,7 @@ from .archive_manager import ArchiveManager
 import subprocess  # Import subprocess to run external scripts
 import sys
 import re
+import time  # Import time for profiling
 import os # Import sys and os for path manipulation
 from .calendar import CalendarView, launch_calendar  # Make sure to import the new function
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
@@ -578,8 +579,11 @@ QTableView::item:selected {
             defaults,
             is_read_only=True
         )
-        metadata_form.class_saved.connect(self.refresh_metadata)
-        metadata_form.class_saved.connect(self.refresh_student_table)
+        # metadata_form.class_saved.connect(self.refresh_metadata)
+        def deferred_refresh():
+            QTimer.singleShot(0, self.refresh_student_table)
+
+        metadata_form.class_saved.connect(deferred_refresh)
         metadata_form.exec_()
 
     def resizeEvent(self, event):
@@ -645,9 +649,13 @@ QTableView::item:selected {
         event.accept()  # Accept the close event
 
     def refresh_student_table(self):
-        """Refresh the student table with updated data from the DB."""
-        # --- PATCH: Reload students from DB ---
+        start = time.time()
+        print("[PROFILE] Start refresh_student_table")
+
         self.ensure_max_teaching_dates()
+        t1 = time.time()
+        print(f"[PROFILE] ensure_max_teaching_dates: {t1 - start:.3f}s")
+
         self.students = {}
         for student_row in get_students_by_class(self.class_id):
             student_id = student_row["student_id"]
@@ -655,6 +663,8 @@ QTableView::item:selected {
             attendance = {rec["date"]: rec["status"] for rec in attendance_records}
             student_row["attendance"] = attendance
             self.students[student_id] = student_row
+        t2 = time.time()
+        print(f"[PROFILE] Reload students/attendance: {t2 - t1:.3f}s")
 
         # Only include students who are active
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
@@ -768,51 +778,30 @@ QTableView::item:selected {
           #  print("Row Length:", len(row))
 
         self.frozen_table.setModel(FrozenTableModel(frozen_data, frozen_headers))
-        # Reconnect selection sync after setModel (Qt gotcha)
-        # self.frozen_table.selectionModel().selectionChanged.connect(self.sync_selection_to_scrollable)
-
-        # Center-align all headers in the frozen table
-        header = self.frozen_table.horizontalHeader()
-        header.setDefaultAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-
-        # Rebuild the scrollable table data
-        scrollable_headers = attendance_dates
-        scrollable_data = []
-
-        # Add "Running Total" row
-        scrollable_data.append(running_total)
-
-        # Add student attendance rows
-        for student in active_students.values():
-            row_data = [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
-            scrollable_data.append(row_data)
-
-        # Debugging: Check scrollable_data dimensions
-        # print("Scrollable Data Dimensions:", len(scrollable_data), len(scrollable_headers))
-        # for row in scrollable_data:
-          #  print("Row Length:", len(row))
+        t3 = time.time()
+        print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
 
         self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
-        # Reconnect selection sync after setModel (Qt gotcha)
-        # self.scrollable_table.selectionModel().selectionChanged.connect(self.sync_selection_to_frozen)
+        t4 = time.time()
+        print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
 
-        # Adjust column widths
         self.reset_column_widths()
         self.reset_scrollable_column_widths()
+        t5 = time.time()
+        print(f"[PROFILE] Reset column widths: {t5 - t4:.3f}s")
 
-        # --- Scroll to today's date if present ---
+        scrollable_headers = attendance_dates
         today_str = datetime.now().strftime("%d/%m/%Y")
-        print("DEBUG: scrollable_headers =", scrollable_headers)
-        print("DEBUG: today_str =", today_str)
-
         QTimer.singleShot(0, lambda: self.scroll_to_today(scrollable_headers, today_str))
+        t6 = time.time()
+        print(f"[PROFILE] Scroll to today: {t6 - t5:.3f}s")
 
-        # print("Frozen Data:", frozen_data)
-        # print("Scrollable Data:", scrollable_data)
-
-        # Refresh the metadata section to include COD/CIA totals
         self.refresh_metadata()
+        t7 = time.time()
+        print(f"[PROFILE] Refresh metadata: {t7 - t6:.3f}s")
+
         self.debug_table_positions("after refresh_student_table")
+        print(f"[PROFILE] TOTAL refresh_student_table: {t7 - start:.3f}s")
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
