@@ -406,7 +406,8 @@ class Mainform(QMainWindow):
 
         self.scrollable_table = DebugTableView()
         self.scrollable_table.setObjectName("SCROLLABLE")
-        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
+        active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates))
         self.scrollable_table.verticalHeader().hide()
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -781,7 +782,7 @@ QTableView::item:selected {
         t3 = time.time()
         print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
 
-        self.scrollable_table.setModel(TableModel(self.students, attendance_dates))
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates))
         t4 = time.time()
         print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
 
