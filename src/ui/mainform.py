@@ -41,8 +41,20 @@ class TableModel(QAbstractTableModel):
         self.student_keys = list(students.keys())
         self.class_time = class_time
 
-        # Precompute running total row
-        self.running_total = [self.class_time * (i + 1) for i in range(len(self.attendance_dates))]
+        # PATCH: Running total skips columns with CIA or HOL
+        self.running_total = []
+        cumulative_total = 0
+        for date in self.attendance_dates:
+            # If any student has CIA or HOL for this date, skip counting this class
+            has_cia_hol = any(
+                self.students[student_id]["attendance"].get(date) in ["CIA", "HOL"]
+                for student_id in self.student_keys
+            )
+            if has_cia_hol:
+                self.running_total.append("-")
+            else:
+                cumulative_total += self.class_time
+                self.running_total.append(cumulative_total)
 
     def rowCount(self, parent=QModelIndex()):
         # +1 for the running total row
