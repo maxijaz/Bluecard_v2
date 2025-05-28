@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QVBoxLayout, QWidget, QHeaderView, QAbstractItemView, QLabel,
     QHBoxLayout, QFrame, QGridLayout, QPushButton, QMessageBox, QStyledItemDelegate, QDialog  # Added QDialog
 )
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QTimer, QEvent
 from PyQt5.QtGui import QColor, QFont
 from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
@@ -216,6 +216,8 @@ class Mainform(QMainWindow):
         self.frozen_table_width = 0
         self._syncing_selection = False  # <-- Add this line
         self.init_ui()
+
+        self.installEventFilter(self)  # <-- Add this line
 
     def reset_scrollable_column_widths(self):
         """Reset the column widths of the scrollable table to their default values."""
@@ -834,6 +836,19 @@ QTableView::item:selected {
         student_form.exec_()
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.MouseButtonPress:
+            # Get the widget under the mouse
+            widget = self.childAt(event.pos())
+            # If not clicking inside either table, clear selection
+            if widget not in (self.frozen_table, self.scrollable_table):
+                self.frozen_table.selectionModel().clearSelection()
+                self.scrollable_table.selectionModel().clearSelection()
+                # Clear the current cell (removes dotted box)
+                self.frozen_table.setCurrentIndex(QModelIndex())
+                self.scrollable_table.setCurrentIndex(QModelIndex())
+        return super().eventFilter(obj, event)
 
     FROZEN_COLUMN_WIDTHS = {
         "#": 30,
