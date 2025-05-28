@@ -204,7 +204,7 @@ class Mainform(QMainWindow):
                         dates.append(current_date.strftime("%d/%m/%Y"))
                     current_date += timedelta(days=1)
             if not dates:
-                dates = [f"Empty-{i + 1}" for i in range(max_classes)]
+                dates = ["--/--/--" for _ in range(max_classes)]
             self.metadata["dates"] = dates
 
         self.default_settings = self.load_default_settings()
@@ -625,8 +625,7 @@ QTableView::item:selected {
 
         # Fallback to placeholders if no valid dates are generated
         if not dates:
-            dates = [f"Empty-{i + 1}" for i in range(max_classes)]
-
+            dates = ["--/--/--" for _ in range(max_classes)]
         return dates
     
     def select_row_in_both_tables(self, row):
@@ -1093,7 +1092,10 @@ QTableView::item:selected {
                 for student in self.students.values()
             )
 
-        attendance_dates = self.metadata["dates"]  # Make sure to use the updated list
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
         teaching_dates = [d for d in attendance_dates if is_teaching_date(d)]
 
         # Add new dates if needed
@@ -1138,7 +1140,10 @@ QTableView::item:selected {
 
     def ensure_max_teaching_dates(self):
         """Ensure there are always exactly maxclasses teaching dates (excluding CIA/HOL)."""
-        attendance_dates = self.metadata["dates"]
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
         max_classes = int(self.metadata.get("max_classes", "20").split()[0])
         days_str = self.metadata.get("days", "")
         weekdays = []
