@@ -114,6 +114,8 @@ class Launcher(QMainWindow):
 
         self.layout.addLayout(button_layout_row2)
 
+        self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
+
     def populate_table(self):
         """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
         self.table.setRowCount(0)  # Clear the table before repopulating
@@ -152,16 +154,21 @@ class Launcher(QMainWindow):
 
     def edit_class(self):
         """Edit the selected class."""
-        selected_row = self.table.currentRow()
-        if selected_row == -1:
+        selected_items = self.table.selectedItems()
+        if not selected_items:
             QMessageBox.warning(self, "No Selection", "Please select a class to edit.")
             return
-
+        selected_row = selected_items[0].row()
         class_id = self.table.item(selected_row, 0).text()
         defaults = self.load_defaults()
         class_data = get_class_by_id(class_id)
         metadata_form = MetadataForm(
-            self, class_id, {"classes": {class_id: class_data}}, self.theme, self.refresh_table, defaults
+            self,
+            class_id,
+            {"classes": {class_id: {"metadata": class_data}}},
+            self.theme,
+            self.refresh_table,
+            defaults
         )
         metadata_form.exec_()
 

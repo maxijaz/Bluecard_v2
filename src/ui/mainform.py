@@ -1252,7 +1252,23 @@ QTableView::item:selected {
 
     def open_show_hide(self):
         from ui.show_hide_form import ShowHideForm
-        dlg = ShowHideForm(self, self.class_id, self.refresh_student_table)
+        def on_save():
+            # Reload class data and update column visibility
+            self.class_data = get_class_by_id(self.class_id)
+            # Update column_visibility from DB
+            self.column_visibility = {
+                "Nickname": self.class_data.get("show_nickname", "Yes") == "Yes",
+                "CompanyNo": self.class_data.get("show_company_no", "Yes") == "Yes",
+                "Score": self.class_data.get("show_score", "Yes") == "Yes",
+                "PreTest": self.class_data.get("show_prestest", "Yes") == "Yes",
+                "PostTest": self.class_data.get("show_posttest", "Yes") == "Yes",
+                "Attn": self.class_data.get("show_attn", "Yes") == "Yes",
+                "P": self.class_data.get("show_p", "Yes") == "Yes",
+                "A": self.class_data.get("show_a", "Yes") == "Yes",
+                "L": self.class_data.get("show_l", "Yes") == "Yes"
+            }
+            self.refresh_student_table()
+        dlg = ShowHideForm(self, self.class_id, on_save)
         dlg.exec_()
 
     def edit_attendance_field(self, index):
