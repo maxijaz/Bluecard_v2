@@ -35,8 +35,8 @@ from logic.db_interface import (
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, students, attendance_dates, class_time=2):
-        super().__init__()
+    def __init__(self, students, attendance_dates, class_time=2, parent=None):
+        super().__init__(parent)
         self.students = students  # dict of student_id: student_data
         self.attendance_dates = attendance_dates
         self.student_keys = list(students.keys())
@@ -80,13 +80,27 @@ class TableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return value
         elif role == Qt.BackgroundRole:
-            if value == "P":
-                return QColor("#c8e6c9")
-            elif value == "A":
-                return QColor("#ffcdd2")
-            elif value == "L":
-                return QColor("#fff9c4")
-        return None
+            # Get per-class color settings from self.parent().metadata
+            mainform = self.parent()
+            if hasattr(mainform, "metadata"):
+                color_map = {
+                    "P": mainform.metadata.get("bgcolor_p", "#c8e6c9"),
+                    "COD": mainform.metadata.get("bgcolor_cod", "#c8e6c9"),
+                    "A": mainform.metadata.get("bgcolor_a", "#ffcdd2"),
+                    "CIA": mainform.metadata.get("bgcolor_cia", "#ffcdd2"),
+                    "HOL": mainform.metadata.get("bgcolor_hol", "#ffcdd2"),
+                    "L": mainform.metadata.get("bgcolor_l", "#fff9c4"),
+                }
+                color = color_map.get(value, "")
+                # PATCH: Only use color if it's a valid hex string
+                if not (isinstance(color, str) and color.startswith("#") and len(color) in (4, 7)):
+                    print(f"[DEBUG] Value: {value}, DB color: '{color}' -> using white")
+                    color = "#ffffff"
+                else:
+                    print(f"[DEBUG] Value: {value}, DB color: '{color}' -> using as is")
+                return QColor(color)
+            # Fallback if no metadata
+            return None
 
     def setData(self, index, value, role=Qt.EditRole):
         row = index.row()
@@ -710,6 +724,12 @@ QTableView::item:selected {
         db_metadata = {k: v for k, v in self.metadata.items() if k in db_columns}
         update_class(self.class_id, db_metadata)
 
+        # --- PATCH: Reload metadata from DB before refreshing UI ---
+        self.class_data = get_class_by_id(self.class_id)
+        self.metadata = self.class_data
+
+        self.refresh_metadata()  # Only call once here!
+
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name"]
         if self.column_visibility.get("Nickname", True):
@@ -796,7 +816,8 @@ QTableView::item:selected {
         t3 = time.time()
         print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
 
-        self.scrollable_table.setModel(TableModel(active_students, attendance_dates))
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, parent=self.scrollable_table))
+        self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
         t4 = time.time()
         print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
 
@@ -811,7 +832,6 @@ QTableView::item:selected {
         t6 = time.time()
         print(f"[PROFILE] Scroll to today: {t6 - t5:.3f}s")
 
-        self.refresh_metadata()
         t7 = time.time()
         print(f"[PROFILE] Refresh metadata: {t7 - t6:.3f}s")
 
@@ -991,7 +1011,6 @@ QTableView::item:selected {
             self.metadata, self.students = update_dates(self.metadata, self.students)
             # --- PATCH: Save to DB if needed ---
             update_class(self.class_id, self.metadata)
-            self.refresh_metadata()
             self.refresh_student_table()
 
         launch_calendar(self, scheduled_dates, students, max_classes, on_save_callback)
@@ -1141,7 +1160,8 @@ QTableView::item:selected {
                     break  # Remove one at a time
 
         self.metadata["dates"] = attendance_dates
-
+        self.refresh_student_table()  # <-- Add this as the last line of the method
+#
     def ensure_max_teaching_dates(self):
         """Ensure there are always exactly maxclasses teaching dates (excluding CIA/HOL)."""
         attendance_dates = self.metadata.get("dates", [])
@@ -1267,7 +1287,7 @@ QTableView::item:selected {
     def open_show_hide(self):
         from ui.show_hide_form import ShowHideForm
         def on_save():
-            # Reload class data and update column visibility
+            # Reload class data and update column visibility and color settings
             self.class_data = get_class_by_id(self.class_id)
             # Update column_visibility from DB
             self.column_visibility = {
@@ -1281,6 +1301,8 @@ QTableView::item:selected {
                 "A": self.class_data.get("show_a", "Yes") == "Yes",
                 "L": self.class_data.get("show_l", "Yes") == "Yes"
             }
+            # PATCH: Reload color settings
+            self.metadata = self.class_data  # All color fields are in self.class_data
             self.refresh_student_table()
         dlg = ShowHideForm(self, self.class_id, on_save)
         dlg.exec_()
