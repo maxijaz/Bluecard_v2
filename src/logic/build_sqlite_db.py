@@ -211,6 +211,14 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     # --- PATCH: Map def_teacherno to def_teacher_no ---
     if "def_teacherno" in defaults:
         defaults["def_teacher_no"] = defaults.pop("def_teacherno")
+    # --- PATCH: Add cod_cia_hol default if not present ---
+    if "cod_cia_hol" not in defaults:
+        # Insert between columns_before_today and show_nickname if you care about order
+        keys = list(defaults.keys())
+        idx = keys.index("columns_before_today") + 1 if "columns_before_today" in keys else len(keys)
+        items = list(defaults.items())
+        items.insert(idx, ("cod_cia_hol", "0 COD / 0 CIA / 0 HOL"))
+        defaults = dict(items)
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

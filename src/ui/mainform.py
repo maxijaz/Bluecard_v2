@@ -265,7 +265,7 @@ class Mainform(QMainWindow):
             ("Consultant:", self.metadata.get("consultant", ""), "Finish Date:", self.metadata.get("finish_date", "")),
             ("Teacher:", self.metadata.get("teacher", ""), "Days:", self.metadata.get("days", "")),
             ("CourseBook:", self.metadata.get("course_book", ""), "Time:", self.metadata.get("time", "")),
-            ("Notes:", self.metadata.get("notes", ""), "COD/CIA:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA
+            ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA/HOL
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
@@ -679,8 +679,9 @@ QTableView::item:selected {
         # Initialize totals for all fields
         total_cia = 0
         total_cod = 0
+        total_hol = 0
 
-        # Calculate CIA and COD totals by searching scrollable_data
+        # Calculate CIA, COD, HOL totals by searching scrollable_data
         scrollable_data = [
             [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
             for student in self.students.values()
@@ -692,9 +693,22 @@ QTableView::item:selected {
                 total_cia += 1
             if "COD" in column_values:
                 total_cod += 1
+            if "HOL" in column_values:
+                total_hol += 1
 
-        # Update the metadata with COD/CIA totals
-        self.metadata["cod_cia"] = f"{total_cod} COD / {total_cia} CIA"
+        # Update the metadata with COD/CIA/HOL totals and save to DB
+        self.metadata["cod_cia"] = f"{total_cod} COD / {total_cia} CIA / {total_hol} HOL"
+
+        # Only save DB columns (exclude non-schema keys like "dates")
+        db_columns = {
+            "class_no", "company", "room", "consultant", "teacher", "course_book",
+            "course_hours", "class_time", "max_classes", "start_date", "finish_date",
+            "days", "notes", "cod_cia", "archive", "show_nickname", "show_company_no",
+            "show_score", "show_prestest", "show_posttest", "show_attn", "show_p",
+            "show_l", "show_a"
+        }
+        db_metadata = {k: v for k, v in self.metadata.items() if k in db_columns}
+        update_class(self.class_id, db_metadata)
 
         # Rebuild the frozen table data
         frozen_headers = ["#", "Name"]
@@ -932,7 +946,7 @@ QTableView::item:selected {
             ("Consultant:", self.metadata.get("consultant", ""), "Finish Date:", self.metadata.get("finish_date", "")),
             ("Teacher:", self.metadata.get("teacher", ""), "Days:", self.metadata.get("days", "")),
             ("CourseBook:", self.metadata.get("course_book", ""), "Time:", self.metadata.get("time", "")),
-            ("Notes:", self.metadata.get("notes", ""), "COD/CIA:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA
+            ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")), # Combine Notes and COD/CIA/HOL
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):

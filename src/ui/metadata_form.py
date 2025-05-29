@@ -29,6 +29,8 @@ class MetadataForm(QDialog):
         # --- PATCH: Load defaults from DB, not JSON ---
         if not self.is_edit:
             self.defaults = get_all_defaults()
+            # --- PATCH: Set cod_cia_hol in metadata for new class ---
+            self.cod_cia_hol_default = self.defaults.get("cod_cia_hol", "0 COD / 0 CIA / 0 HOL")
         else:
             self.defaults = {}
 
@@ -247,6 +249,10 @@ class MetadataForm(QDialog):
         # Combine selected days into a comma-separated string
         selected_days = [day for day, checkbox in self.days_checkboxes.items() if checkbox.isChecked()]
         metadata["days"] = ", ".join(selected_days)
+
+        # --- PATCH: Set default COD/CIA/HOL for new class ---
+        if not self.is_edit:
+            metadata["cod_cia"] = self.cod_cia_hol_default
 
         # --- PROTECT EXISTING DATES AND ATTENDANCE ---
         students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
