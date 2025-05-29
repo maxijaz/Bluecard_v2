@@ -502,8 +502,8 @@ QTableView::item:selected {
         self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + highlight_style)
         self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + highlight_style)
 
-        self.frozen_table.selectionModel().selectionChanged.connect(self.debug_frozen_selection)
-        self.scrollable_table.selectionModel().selectionChanged.connect(self.debug_scrollable_selection)
+        # self.frozen_table.selectionModel().selectionChanged.connect(self.debug_frozen_selection)
+        # self.scrollable_table.selectionModel().selectionChanged.connect(self.debug_scrollable_selection)
 
     # Button Methods
     def run_html_output(self):
@@ -665,11 +665,11 @@ QTableView::item:selected {
 
     def refresh_student_table(self):
         start = time.time()
-        print("[PROFILE] Start refresh_student_table")
+        # print("[PROFILE] Start refresh_student_table")
 
         self.ensure_max_teaching_dates()
         t1 = time.time()
-        print(f"[PROFILE] ensure_max_teaching_dates: {t1 - start:.3f}s")
+        # print(f"[PROFILE] ensure_max_teaching_dates: {t1 - start:.3f}s")
 
         self.students = {}
         for student_row in get_students_by_class(self.class_id):
@@ -679,7 +679,7 @@ QTableView::item:selected {
             student_row["attendance"] = attendance
             self.students[student_id] = student_row
         t2 = time.time()
-        print(f"[PROFILE] Reload students/attendance: {t2 - t1:.3f}s")
+        # print(f"[PROFILE] Reload students/attendance: {t2 - t1:.3f}s")
 
         # Only include students who are active
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
@@ -814,30 +814,30 @@ QTableView::item:selected {
 
         self.frozen_table.setModel(FrozenTableModel(frozen_data, frozen_headers))
         t3 = time.time()
-        print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
+        # print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
 
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, parent=self.scrollable_table))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
         self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
-        print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
+        # print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
 
         self.reset_column_widths()
         self.reset_scrollable_column_widths()
         t5 = time.time()
-        print(f"[PROFILE] Reset column widths: {t5 - t4:.3f}s")
+        # print(f"[PROFILE] Reset column widths: {t5 - t4:.3f}s")
 
         scrollable_headers = attendance_dates
         today_str = datetime.now().strftime("%d/%m/%Y")
         QTimer.singleShot(0, lambda: self.scroll_to_today(scrollable_headers, today_str))
         t6 = time.time()
-        print(f"[PROFILE] Scroll to today: {t6 - t5:.3f}s")
+        # print(f"[PROFILE] Scroll to today: {t6 - t5:.3f}s")
 
         t7 = time.time()
-        print(f"[PROFILE] Refresh metadata: {t7 - t6:.3f}s")
+        # print(f"[PROFILE] Refresh metadata: {t7 - t6:.3f}s")
 
-        self.debug_table_positions("after refresh_student_table")
-        print(f"[PROFILE] TOTAL refresh_student_table: {t7 - start:.3f}s")
+        # self.debug_table_positions("after refresh_student_table")
+        # print(f"[PROFILE] TOTAL refresh_student_table: {t7 - start:.3f}s")
 
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
@@ -914,9 +914,9 @@ QTableView::item:selected {
 
     def adjust_frozen_table_width(self):
         """Adjust the frozen table's frame width to match the total column widths."""
-        print("Frozen Table column widths:", [self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount())])
+        # print("Frozen Table column widths:", [self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount())])
         total_width = sum(self.frozen_table.columnWidth(col) for col in range(self.frozen_table.model().columnCount()))
-        print("Calculated total frozen table width:", total_width)
+        # print("Calculated total frozen table width:", total_width)
         self.frozen_table.setFixedWidth(total_width)
         self.frozen_table_width = total_width  # Update the frozen table width
         self.update_scrollable_table_position()  # Ensure the scrollable table is updated
@@ -937,7 +937,7 @@ QTableView::item:selected {
 
         # Align the scrollable table to the right of the frozen table and match its y-coordinate
         self.scrollable_table.move(frozen_table_right, self.frozen_table.geometry().top())
-        self.debug_table_positions("after update_scrollable_table_position")
+        # self.debug_table_positions("after update_scrollable_table_position")
 
     def load_default_settings(self):
         """Load default settings from the database."""
@@ -945,7 +945,7 @@ QTableView::item:selected {
 
     def refresh_metadata(self):
         """Refresh the metadata section with updated data from the DB."""
-        print("Refreshing metadata...")  # Debugging: Method entry
+        # print("Refreshing metadata...")  # Debugging: Method entry
 
         # --- PATCH: Reload class metadata from DB ---
         self.class_data = get_class_by_id(self.class_id)
@@ -1226,8 +1226,8 @@ QTableView::item:selected {
 
         self.metadata["dates"] = attendance_dates
 
-    def debug_table_positions(self, context=""):
-        print(f"\n--- DEBUG [{context}] ---")
+    # def debug_table_positions(self, context=""):
+        # print(f"\n--- DEBUG [{context}] ---")
         # print("Frozen Table geometry:", self.frozen_table.geometry())
         # print("Frozen Table pos:", self.frozen_table.pos())
         # print("Frozen Table width:", self.frozen_table.width())
@@ -1236,16 +1236,16 @@ QTableView::item:selected {
         # print("Scrollable Table width:", self.scrollable_table.width())
         # print("Scrollable Table vertical scrollbar visible:", self.scrollable_table.verticalScrollBar().isVisible())
         # print("Scrollable Table horizontal scrollbar visible:", self.scrollable_table.horizontalScrollBar().isVisible())
-        print("Scrollable table visible:", self.scrollable_table.isVisible())
-        print("Scrollable table geometry:", self.scrollable_table.geometry())
-        print("Scrollable table width:", self.scrollable_table.width())
-        print("--- END DEBUG ---\n")
+        # print("Scrollable table visible:", self.scrollable_table.isVisible())
+        # print("Scrollable table geometry:", self.scrollable_table.geometry())
+        # print("Scrollable table width:", self.scrollable_table.width())
+        # print("--- END DEBUG ---\n")
 
-    def debug_frozen_selection(self, selected, deselected):
-        print(f"[DEBUG] FROZEN selection changed: {[i.row() for i in self.frozen_table.selectionModel().selectedRows()]}")
+    # def debug_frozen_selection(self, selected, deselected):
+       # print(f"[DEBUG] FROZEN selection changed: {[i.row() for i in self.frozen_table.selectionModel().selectedRows()]}")
 
-    def debug_scrollable_selection(self, selected, deselected):
-        print(f"[DEBUG] SCROLLABLE selection changed: {[i.row() for i in self.scrollable_table.selectionModel().selectedRows()]}")
+    # def debug_scrollable_selection(self, selected, deselected):
+      #  print(f"[DEBUG] SCROLLABLE selection changed: {[i.row() for i in self.scrollable_table.selectionModel().selectedRows()]}")
 
     def scroll_to_today(self, scrollable_headers, today_str):
         today_index = None
@@ -1260,14 +1260,14 @@ QTableView::item:selected {
                 continue
 
         if today_index is not None:
-            print(f"Auto-scroll to column: {today_index} (Centering today)")
+            # print(f"Auto-scroll to column: {today_index} (Centering today)")
             self.scrollable_table.scrollTo(
                 self.scrollable_table.model().index(0, today_index),
                 QTableView.PositionAtCenter
             )
         else:
             last_col = len(scrollable_headers) - 1
-            print(f"Auto-scroll to column: {last_col} (End of table)")
+            # print(f"Auto-scroll to column: {last_col} (End of table)")
             self.scrollable_table.scrollTo(
                 self.scrollable_table.model().index(0, last_col),
                 QTableView.PositionAtCenter
@@ -1339,8 +1339,10 @@ QTableView::item:selected {
         def refresh_cell_callback(row, col):
             print(f"DEBUG: refresh_cell_callback called for row={row}, col={col}")
             self.refresh_student_table()
-            # Optionally, re-select the edited cell
-            self.scrollable_table.setCurrentIndex(self.scrollable_table.model().index(row, col))
+            # After refresh, clear all selection in both tables (no row highlighted)
+            self.frozen_table.selectionModel().clearSelection()
+            self.scrollable_table.selectionModel().clearSelection()
+            # Do NOT re-select any row in either table
 
         dialog = PALCODForm(
             self,
@@ -1361,8 +1363,9 @@ QTableView::item:selected {
             self.students[student_id]["attendance"][date] = new_value
             set_attendance(self.class_id, student_id, date, new_value)
             self.refresh_student_table()
-            # Optionally, re-select the edited cell
-            self.scrollable_table.setCurrentIndex(self.scrollable_table.model().index(row, col))
+            # After refresh, clear all selection in both tables (no row highlighted)
+            self.frozen_table.selectionModel().clearSelection()
+            self.scrollable_table.selectionModel().clearSelection()
         else:
             print("DEBUG: PALCODForm cancelled or closed.")
 
