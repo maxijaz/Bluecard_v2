@@ -1326,6 +1326,9 @@ QTableView::item:selected {
         date = attendance_dates[col]
         student_keys = list(self.students.keys())
         print(f"DEBUG: student_keys={student_keys}")
+        if row - 1 < 0 or row - 1 >= len(student_keys):
+            print(f"DEBUG: edit_attendance_field: row {row} out of range for student_keys, returning early.")
+            return
         student_id = student_keys[row - 1]
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
@@ -1352,6 +1355,9 @@ QTableView::item:selected {
             row=row
         )
         print("DEBUG: Opening PALCODForm for individual cell")
+        if hasattr(dialog, '_blocked') and dialog._blocked:
+            print("DEBUG: PALCODForm: Dialog was blocked, not calling exec_()")
+            return
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
             print(f"DEBUG: PALCODForm accepted, new_value={new_value}")

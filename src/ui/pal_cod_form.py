@@ -5,6 +5,30 @@ from PyQt5.QtCore import Qt
 class PALCODForm(QDialog):
     def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name=None, show_cod_cia=True, show_student_name=False, refresh_cell_callback=None, row=None):
         super().__init__(parent)
+        self._blocked = False
+        # --- Prevent single-cell edit if column contains CIA/COD/HOL ---
+        if row is not None:
+            mainform = parent
+            try:
+                model = mainform.scrollable_table.model()
+                col = column_index
+                for r in range(1, model.rowCount()):
+                    idx = model.index(r, col)
+                    val = model.data(idx, role=Qt.DisplayRole)
+                    print(f"[DEBUG] PALCODForm: row={r}, col={col}, val={val}")
+                    if val in ("CIA", "COD", "HOL"):
+                        print(f"[DEBUG] PALCODForm: Blocking edit, found special value '{val}' in column {col}")
+                        QMessageBox.information(
+                            mainform,
+                            "Cannot Edit Cell",
+                            "You cannot change a single attendance value in this column because it contains CIA, COD, or HOL.\n\nPlease click the column header and clear the special value for all students before retrying to edit a single cell."
+                        )
+                        self._blocked = True
+                        self.close()
+                        return
+            except Exception as e:
+                print(f"[DEBUG] PALCODForm: Exception during CIA/COD/HOL check: {e}")
+
         self.setWindowTitle("Update Attendance")
         self.setFixedSize(300, 300)
 
@@ -119,8 +143,10 @@ def open_pal_cod_form(self, column_index=None):
         )
         return
 
-    # Open the PALCODForm with COD and CIA options, without student name
     pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=False, show_student_name=True)
+    if hasattr(pal_cod_form, '_blocked') and pal_cod_form._blocked:
+        print("[DEBUG] PALCODForm: Dialog was blocked, not calling exec_()")
+        return
     if pal_cod_form.exec_() == QDialog.Accepted:
         new_value = pal_cod_form.selected_value
         self.update_column_values(column_index, new_value)
