@@ -71,7 +71,14 @@ def recreate_db(db_path=DB_PATH):
         show_attn TEXT DEFAULT 'Yes',
         show_p TEXT DEFAULT 'Yes',
         show_a TEXT DEFAULT 'Yes',
-        show_l TEXT DEFAULT 'Yes'
+        show_l TEXT DEFAULT 'Yes',
+        -- PATCH: Add color columns for attendance types
+        bgcolor_p TEXT DEFAULT '#c8e6c9',
+        bgcolor_a TEXT DEFAULT '#ffcdd2',
+        bgcolor_l TEXT DEFAULT '#fff9c4',
+        bgcolor_cod TEXT DEFAULT '#c8e6c9',
+        bgcolor_cia TEXT DEFAULT '#ffcdd2',
+        bgcolor_hol TEXT DEFAULT '#ffcdd2'
     );
     CREATE TABLE students (
         student_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,7 +139,7 @@ def import_data(conn, data):
         meta = class_data["metadata"]
 
         cursor.execute("""
-            INSERT OR REPLACE INTO classes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO classes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             meta["class_no"], meta["company"], meta["consultant"], meta["teacher"], meta["teacher_no"],
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
@@ -147,7 +154,13 @@ def import_data(conn, data):
             meta.get("show_attn", "Yes"),
             meta.get("show_p", "Yes"),
             meta.get("show_a", "Yes"),
-            meta.get("show_l", "Yes")
+            meta.get("show_l", "Yes"),
+            meta.get("bgcolor_p", "#c8e6c9"),
+            meta.get("bgcolor_a", "#ffcdd2"),
+            meta.get("bgcolor_l", "#fff9c4"),
+            meta.get("bgcolor_cod", "#c8e6c9"),
+            meta.get("bgcolor_cia", "#ffcdd2"),
+            meta.get("bgcolor_hol", "#ffcdd2"),
         ))
 
         for date in meta.get("dates", []):
@@ -219,6 +232,17 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         items = list(defaults.items())
         items.insert(idx, ("cod_cia_hol", "0 COD / 0 CIA / 0 HOL"))
         defaults = dict(items)
+    # PATCH: Add default colors if not present
+    for color_key, color_val in [
+        ("bgcolor_p", "#c8e6c9"),
+        ("bgcolor_a", "#ffcdd2"),
+        ("bgcolor_l", "#fff9c4"),
+        ("bgcolor_cod", "#c8e6c9"),
+        ("bgcolor_cia", "#ffcdd2"),
+        ("bgcolor_hol", "#ffcdd2"),
+    ]:
+        if color_key not in defaults:
+            defaults[color_key] = color_val
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
