@@ -35,12 +35,13 @@ from logic.db_interface import (
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, students, attendance_dates, class_time=2, parent=None):
+    def __init__(self, students, attendance_dates, class_time=2, mainform=None, parent=None):
         super().__init__(parent)
         self.students = students  # dict of student_id: student_data
         self.attendance_dates = attendance_dates
         self.student_keys = list(students.keys())
         self.class_time = class_time
+        self.mainform = mainform
 
         # PATCH: Running total skips columns with CIA or HOL
         self.running_total = []
@@ -70,7 +71,6 @@ class TableModel(QAbstractTableModel):
         row = index.row()
         col = index.column()
         if row == 0:
-            # Running total row
             if role == Qt.DisplayRole:
                 return self.running_total[col]
             return None
@@ -80,9 +80,8 @@ class TableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return value
         elif role == Qt.BackgroundRole:
-            # Get per-class color settings from self.parent().metadata
-            mainform = self.parent()
-            if hasattr(mainform, "metadata"):
+            mainform = self.mainform
+            if mainform and hasattr(mainform, "metadata"):
                 color_map = {
                     "P": mainform.metadata.get("bgcolor_p", "#c8e6c9"),
                     "COD": mainform.metadata.get("bgcolor_cod", "#c8e6c9"),
@@ -92,15 +91,12 @@ class TableModel(QAbstractTableModel):
                     "L": mainform.metadata.get("bgcolor_l", "#fff9c4"),
                 }
                 color = color_map.get(value, "")
-                # PATCH: Only use color if it's a valid hex string
-                if not (isinstance(color, str) and color.startswith("#") and len(color) in (4, 7)):
-                    print(f"[DEBUG] Value: {value}, DB color: '{color}' -> using white")
-                    color = "#ffffff"
+                if isinstance(color, str) and color.startswith("#") and len(color) in (4, 7):
+                    return QColor(color)
                 else:
-                    print(f"[DEBUG] Value: {value}, DB color: '{color}' -> using as is")
-                return QColor(color)
-            # Fallback if no metadata
+                    return None
             return None
+        return None
 
     def setData(self, index, value, role=Qt.EditRole):
         row = index.row()
@@ -126,16 +122,10 @@ class TableModel(QAbstractTableModel):
 class AttendanceDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        value = index.data()
         option.displayAlignment = Qt.AlignCenter
         option.palette.setColor(option.palette.Text, Qt.black)  # Normal text
         option.palette.setColor(option.palette.HighlightedText, Qt.black)  # Selected text
-        if value == "P":
-            option.backgroundBrush = QColor("#c8e6c9")
-        elif value == "A":
-            option.backgroundBrush = QColor("#ffcdd2")
-        elif value == "L":
-            option.backgroundBrush = QColor("#fff9c4")
+        # Do NOT set option.backgroundBrush here; let the model's BackgroundRole handle all coloring
 
 
 class CenterAlignDelegate(QStyledItemDelegate):
@@ -402,6 +392,11 @@ class Mainform(QMainWindow):
 
         # Set the FrozenTableDelegate for the frozen table
         self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
+        self.frozen_table_width = 410  # Match the sum of the column widths
+        self.frozen_table.setFixedWidth(self.frozen_table_width)
+
+        # Set the FrozenTableDelegate for the frozen table
+        self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
 
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold;")
 
@@ -421,7 +416,7 @@ class Mainform(QMainWindow):
         self.scrollable_table = DebugTableView()
         self.scrollable_table.setObjectName("SCROLLABLE")
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
-        self.scrollable_table.setModel(TableModel(active_students, attendance_dates))
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.verticalHeader().hide()
         self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -816,7 +811,7 @@ QTableView::item:selected {
         t3 = time.time()
         # print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
 
-        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, parent=self.scrollable_table))
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
         self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
