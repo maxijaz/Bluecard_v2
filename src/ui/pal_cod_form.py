@@ -39,10 +39,11 @@ class PALCODForm(QDialog):
             "Clear": "-",
         }
 
-        if show_cod_cia:  # Include COD and CIA options only if show_cod_cia is True
+        if show_cod_cia:  # Include COD, CIA, HOL options only if show_cod_cia is True
             buttons.update({
                 "COD = Cancel": "COD",
                 "CIA = Postpone": "CIA",
+                "HOL = Holiday": "HOL",
             })
 
         for label, value in buttons.items():
@@ -51,19 +52,6 @@ class PALCODForm(QDialog):
                 button.setStyleSheet("background-color: lightblue; font-weight: bold;")
             button.clicked.connect(lambda _, v=value: self.update_column(v))
             layout.addWidget(button)
-
-        if show_cod_cia:
-            cod_button = QPushButton("COD")
-            cod_button.clicked.connect(lambda: self.select_value("COD"))
-            layout.addWidget(cod_button)
-
-            cia_button = QPushButton("CIA")
-            cia_button.clicked.connect(lambda: self.select_value("CIA"))
-            layout.addWidget(cia_button)
-
-            hol_button = QPushButton("HOL")  # <-- Add this
-            hol_button.clicked.connect(lambda: self.select_value("HOL"))
-            layout.addWidget(hol_button)
 
     def update_column(self, value):
         """Update the selected column with the given value."""

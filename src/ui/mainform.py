@@ -818,6 +818,7 @@ QTableView::item:selected {
 
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, parent=self.scrollable_table))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
+        self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
         print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
 
@@ -1026,13 +1027,16 @@ QTableView::item:selected {
         self.scrollable_table.selectionModel().select(selection, QItemSelectionModel.Select | QItemSelectionModel.Columns)
 
     def open_pal_cod_form(self, column_index=None):
+        # Patch: handle PyQt passing False as the first argument from button/menu
+        if column_index is False:
+            column_index = None
         print("DEBUG: open_pal_cod_form called, column_index =", column_index)
         attendance_dates = self.metadata.get("dates", [])
         if not attendance_dates:
             attendance_dates = self.get_attendance_dates()
             self.metadata["dates"] = attendance_dates
-        print(f"DEBUG: attendance_dates={attendance_dates}, column_index={column_index}, len={len(attendance_dates)}")
-        if column_index < 0 or column_index >= len(attendance_dates):
+        print(f"DEBUG: attendance_dates={attendance_dates}, column_index={column_index}, len={len(attendance_dates)})")
+        if column_index is not None and (column_index < 0 or column_index >= len(attendance_dates)):
             QMessageBox.warning(
                 self,
                 "Invalid Column",
@@ -1308,37 +1312,59 @@ QTableView::item:selected {
         dlg.exec_()
 
     def edit_attendance_field(self, index):
-        """Open the PALCODForm for the selected cell in the scrollable table."""
+        print(f"DEBUG: edit_attendance_field called, index.row()={index.row()}, index.column()={index.column()}")
         row = index.row()
         col = index.column()
         # Skip running total row
         if row == 0:
+            print("DEBUG: edit_attendance_field: row 0 (running total), returning early.")
             return
-        attendance_dates = self.metadata.get("dates", [])
+        # Always get attendance_dates from the current table model if possible
+        model = self.scrollable_table.model()
+        attendance_dates = getattr(model, 'attendance_dates', None)
+        if not attendance_dates:
+            attendance_dates = self.metadata.get("dates", [])
+        print(f"DEBUG: attendance_dates={attendance_dates}")
         if col < 0 or col >= len(attendance_dates):
+            print(f"DEBUG: edit_attendance_field: col {col} out of range, returning early.")
             return
         date = attendance_dates[col]
         student_keys = list(self.students.keys())
+        print(f"DEBUG: student_keys={student_keys}")
         student_id = student_keys[row - 1]
         student_name = self.students[student_id].get("name", "Unknown")
         current_value = self.students[student_id]["attendance"].get(date, "-")
+        print(f"DEBUG: student_id={student_id}, student_name={student_name}, date={date}, current_value={current_value}")
+
+        def refresh_cell_callback(row, col):
+            print(f"DEBUG: refresh_cell_callback called for row={row}, col={col}")
+            self.refresh_student_table()
+            # Optionally, re-select the edited cell
+            self.scrollable_table.setCurrentIndex(self.scrollable_table.model().index(row, col))
+
         dialog = PALCODForm(
             self,
             col,
-            None,
+            None,  # Not using update_column_callback, we handle update below
             current_value,
             date,
             student_name,
             show_cod_cia=False,
             show_student_name=True,
+            refresh_cell_callback=refresh_cell_callback,
             row=row
         )
+        print("DEBUG: Opening PALCODForm for individual cell")
         if dialog.exec_() == QDialog.Accepted:
             new_value = dialog.selected_value
+            print(f"DEBUG: PALCODForm accepted, new_value={new_value}")
             self.students[student_id]["attendance"][date] = new_value
             set_attendance(self.class_id, student_id, date, new_value)
-            model = self.scrollable_table.model()
-            model.setData(model.index(row, col), new_value, Qt.EditRole)
+            self.refresh_student_table()
+            # Optionally, re-select the edited cell
+            self.scrollable_table.setCurrentIndex(self.scrollable_table.model().index(row, col))
+        else:
+            print("DEBUG: PALCODForm cancelled or closed.")
 
 class EditAttendanceDialog(QDialog):
     def __init__(self, parent, current_value):
