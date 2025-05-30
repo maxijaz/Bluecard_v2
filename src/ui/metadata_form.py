@@ -277,7 +277,7 @@ class MetadataForm(QDialog):
             metadata["cod_cia"] = self.cod_cia_hol_default
 
         # --- PROTECT EXISTING DATES AND ATTENDANCE ---
-        students = self.data["classes"][self.class_id]["students"] if self.is_edit else {}
+        students = self.data["classes"][self.class_id].get("students", {}) if self.is_edit else {}
 
         old_dates = []
         if self.is_edit:
@@ -354,7 +354,7 @@ class MetadataForm(QDialog):
         if self.is_edit and self.class_id:
             class_data = self.data["classes"][self.class_id]
             scheduled_dates = class_data["metadata"].get("dates", [])
-            students = class_data["students"]
+            students = class_data.get("students", {})
             max_classes_str = class_data["metadata"].get("max_classes", "1")
             try:
                 max_dates = int(str(max_classes_str).split()[0])

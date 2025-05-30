@@ -34,9 +34,11 @@ BACKUP_DIR = os.path.join("data", "backup")
 class Launcher(QMainWindow):
     def __init__(self, theme):
         super().__init__()
+        print("[DEBUG] Launcher __init__ start")
         self.theme = theme
+        self.font_prompt_shown = False  # Track if font size prompt has been shown this session
         self.setWindowTitle("Bluecard Launcher")
-        self.resize(395, 300)  # Set the initial size without fixing it
+        # self.resize(395, 300)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # --- FONT SIZE PATCH: Set global font size from settings ---
@@ -80,20 +82,18 @@ class Launcher(QMainWindow):
 
         # Center the window on startup
         self.center_window()
+        print("[DEBUG] Launcher __init__ end")
 
     def create_widgets(self):
         """Create the table and buttons."""
         # Table for class data
         self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
-        # Use stretch mode so headers always fill the window width
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setColumnCount(2)  # Only Class No and Company
+        self.table.setHorizontalHeaderLabels(["Class No", "Company"])
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.layout.addWidget(self.table)
-        # Add left/right padding to header cells
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { padding-left: 18px; padding-right: 18px; }")
 
         # Dynamically set initial window size based on widest entry in each column
@@ -105,24 +105,14 @@ class Launcher(QMainWindow):
         header_font = QFont("Segoe UI", table_header_font_size)
         metrics = QFontMetrics(font)
         header_metrics = QFontMetrics(header_font)
-        # Fallback: use header text widths if table is empty
-        col_widths = []
-        for col in range(self.table.columnCount()):
-            max_width = 0
-            # Check all data rows
-            for row in range(self.table.rowCount()):
-                item = self.table.item(row, col)
-                if item:
-                    width = metrics.width(item.text())
-                    if width > max_width:
-                        max_width = width
-            # If no data, use header
-            if max_width == 0:
-                header_text = self.table.horizontalHeaderItem(col).text()
-                max_width = header_metrics.width(header_text)
-            col_widths.append(max_width + 36)  # Add padding
-        min_width = sum(col_widths) + 80  # +80 for margins
-        min_height = int(table_header_font_size * 10) + 300  # Enough for header, rows, buttons
+        # Use max width for Class No (OLO12345678910) and Company (widest entry or header)
+        class_no_width = metrics.width("OLO12345678910") + 36
+        # For company, use header or a long sample value for initial sizing
+        company_sample = "The Almighty Realm Of Luxury ARL"
+        company_width = max(metrics.width(company_sample), header_metrics.width("Company")) + 36
+        col_widths = [class_no_width, company_width]
+        min_width = sum(col_widths) + 80
+        min_height = int(table_header_font_size * 10) + 300
         self.setMinimumWidth(min_width)
         self.setMinimumHeight(min_height)
         self.resize(min_width, min_height)
@@ -132,6 +122,11 @@ class Launcher(QMainWindow):
 
         # Populate the table
         self.populate_table()
+
+        # After populating the table, set columns to Stretch for even distribution
+        header = self.table.horizontalHeader()
+        for col in range(self.table.columnCount()):
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
 
         # Buttons - Row 1
         button_layout_row1 = QHBoxLayout()
@@ -174,6 +169,7 @@ class Launcher(QMainWindow):
         self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
 
     def populate_table(self):
+        print("[DEBUG] populate_table start")
         """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
         self.table.setRowCount(0)  # Clear the table before repopulating
         sorted_classes = sorted(
@@ -186,47 +182,28 @@ class Launcher(QMainWindow):
                 self.table.insertRow(row_position)
                 item0 = QTableWidgetItem(class_row["class_no"])
                 item1 = QTableWidgetItem(class_row.get("company", "Unknown"))
-                item2 = QTableWidgetItem(class_row.get("archive", "No"))
                 from logic.db_interface import get_all_defaults
                 from PyQt5.QtGui import QFont
                 table_font_size = int(get_all_defaults().get("table_font_size", 12))
                 font = QFont("Segoe UI", table_font_size)
                 item0.setFont(font)
                 item1.setFont(font)
-                item2.setFont(font)
                 self.table.setItem(row_position, 0, item0)
                 self.table.setItem(row_position, 1, item1)
-                self.table.setItem(row_position, 2, item2)
         # --- Always set row height after populating ---
         table_font_size = int(get_all_defaults().get("table_font_size", 12))
         row_height = int(table_font_size * 2.4)
         for row in range(self.table.rowCount()):
             self.table.setRowHeight(row, row_height)
-        # --- Set each column width to max of data or header, plus padding ---
-        from PyQt5.QtGui import QFontMetrics, QFont
-        table_header_font_size = int(get_all_defaults().get("table_header_font_size", 16))
-        font = QFont("Segoe UI", table_font_size)
-        header_font = QFont("Segoe UI", table_header_font_size)
-        metrics = QFontMetrics(font)
-        header_metrics = QFontMetrics(header_font)
+        # --- Set both columns to fixed width 250 ---
+        self.table.setColumnWidth(0, 250)
+        self.table.setColumnWidth(1, 250)
+        self.col_widths = [250, 250]
+        header = self.table.horizontalHeader()
         for col in range(self.table.columnCount()):
-            max_width = 0
-            # Check all data rows
-            for row in range(self.table.rowCount()):
-                item = self.table.item(row, col)
-                if item:
-                    width = metrics.width(item.text())
-                    if width > max_width:
-                        max_width = width
-            # Always fallback to header if wider
-            header_text = self.table.horizontalHeaderItem(col).text()
-            header_width = header_metrics.width(header_text)
-            max_width = max(max_width, header_width)
-            # For Archive column, set a minimum width (e.g. 70px)
-            if col == 2:
-                min_archive_width = 70
-                max_width = max(max_width, min_archive_width)
-            self.table.setColumnWidth(col, max_width + 36)  # Add padding
+            header.setSectionResizeMode(col, QHeaderView.Fixed)
+        print("[DEBUG] Columns set to fixed width 250")
+        print("[DEBUG] populate_table end")
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -288,24 +265,29 @@ class Launcher(QMainWindow):
         metadata_form.exec_()  # Open the form as a modal dialog
 
     def archive_class(self):
-        """Archive the selected class."""
+        """Archive the selected class immediately (no Y/N confirmation, auto-closing message)."""
         selected_row = self.table.currentRow()
         if selected_row == -1:
             QMessageBox.warning(self, "No Selection", "Please select a class to archive.")
             return
 
         class_id = self.table.item(selected_row, 0).text()
-        confirm = QMessageBox.question(
-            self,
-            "Archive Class",
-            f"Are you sure you want to archive class {class_id}?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-
-        if confirm == QMessageBox.Yes:
-            set_class_archived(class_id, archived=True)
-            self.refresh_data()
-            QMessageBox.information(self, "Archived", f"Class {class_id} has been archived.")
+        set_class_archived(class_id, archived=True)
+        self.refresh_data()
+        # Show a non-blocking confirmation dialog for 3 seconds
+        from PyQt5.QtCore import QTimer
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Archived")
+        dlg.setWindowFlags(dlg.windowFlags() | Qt.FramelessWindowHint | Qt.Tool)
+        layout = QVBoxLayout(dlg)
+        label = QLabel(f"Class {class_id} has been archived.")
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        dlg.setLayout(layout)
+        dlg.setFixedSize(300, 80)
+        dlg.show()
+        QTimer.singleShot(3000, dlg.accept)
 
     def open_archive_manager(self):
         """Open the Archive Manager for all archived classes."""
@@ -425,6 +407,20 @@ class Launcher(QMainWindow):
             event.accept()
         else:  # Cancel
             event.ignore()  # Do not close the launcher
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Proportional column resizing on window resize
+        if hasattr(self, 'table') and hasattr(self, 'col_widths'):
+            table_width = self.table.viewport().width() or sum(self.col_widths)
+            total_width = sum(self.col_widths)
+            for col, width in enumerate(self.col_widths):
+                if total_width > 0:
+                    proportion = width / total_width
+                    stretch_width = int(proportion * table_width)
+                    self.table.setColumnWidth(col, stretch_width)
+                else:
+                    self.table.setColumnWidth(col, width)
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""
