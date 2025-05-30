@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QCheckBox, QGridLayout, QSpacerItem, QSizePolicy, QTableView
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QSpacerItem, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
@@ -47,9 +47,6 @@ class SettingsForm(QDialog):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
 
-        # Make sure this is at the top, before any assignment to self.scrollable_column_visibility
-        self.scrollable_column_visibility = {}
-
         # Theme selection
         theme_layout = QHBoxLayout()
         theme_label = QLabel("Select Theme:")
@@ -80,81 +77,9 @@ class SettingsForm(QDialog):
             self.entries[key] = entry
             form_layout.addRow(key.replace("def_", "").capitalize() + ":", entry)
 
-        # Add this after the last entry in fields_to_include
-        columns_before_today = int(self.default_settings.get("columns_before_today", 3))
-        self.columns_before_today_entry = QLineEdit(str(columns_before_today))
-        self.columns_before_today_entry.setValidator(QtGui.QIntValidator(0, 10))
-        form_layout.addRow("Columns before today (0-10):", self.columns_before_today_entry)
-
         layout.addLayout(form_layout, stretch=0)
 
-        layout.addSpacerItem(QSpacerItem(0, 8, QSizePolicy.Minimum, QSizePolicy.Fixed))  # 8 pixels high spacer
-
-        # Add heading/label for tickboxes
-        tickbox_heading = QLabel("Select columns to show / hide on mainform (Bluecard).")
-        tickbox_heading.setAlignment(Qt.AlignLeft)
-        tickbox_heading.setStyleSheet("font-weight: bold; margin-bottom: 4px;")
-        layout.addWidget(tickbox_heading)
-
-        # --- Frozen table column visibility tickboxes (first group) ---
-        self.column_visibility = {}
-        main_columns = [
-            ("show_nickname", "Nickname"),
-            ("show_company_no", "Company No"),
-            ("show_score", "Score"),
-            ("show_prestest", "PreTest"),
-            ("show_posttest", "PostTest"),
-        ]
-
-        main_grid = QGridLayout()
-        main_grid.setHorizontalSpacing(2)  # Tighter horizontal gap
-        main_grid.setVerticalSpacing(2)
-        main_grid.setContentsMargins(0, 0, 0, 0)
-        for col, (key, label) in enumerate(main_columns):
-            label_widget = QLabel(label)
-            label_widget.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
-            main_grid.addWidget(label_widget, 0, col)
-            checkbox = QCheckBox()
-            checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
-            self.column_visibility[key] = checkbox
-            main_grid.addWidget(checkbox, 1, col, alignment=Qt.AlignHCenter | Qt.AlignTop)
-
-        layout.addLayout(main_grid)
-
-        # --- Spacer between groups ---
-        layout.addSpacerItem(QSpacerItem(0, 8, QSizePolicy.Minimum, QSizePolicy.Fixed))
-
-        # --- Frozen table column visibility tickboxes (second group) ---
-        secondary_columns = [
-            ("show_attn", "Attn"),
-            ("show_p", "P"),
-            ("show_a", "A"),
-            ("show_l", "L"),
-            ("show_dates", "Show Dates"),
-        ]
-
-        secondary_grid = QGridLayout()
-        secondary_grid.setHorizontalSpacing(2)  # Tighter horizontal gap
-        secondary_grid.setVerticalSpacing(2)
-        secondary_grid.setContentsMargins(0, 0, 0, 0)
-        for col, (key, label) in enumerate(secondary_columns):
-            label_widget = QLabel(label)
-            label_widget.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
-            secondary_grid.addWidget(label_widget, 0, col)
-            checkbox = QCheckBox()
-            checkbox.setChecked(self.default_settings.get(key, "Yes") == "Yes")
-            if key == "show_dates":
-                self.scrollable_column_visibility[key] = checkbox
-            else:
-                self.column_visibility[key] = checkbox
-            secondary_grid.addWidget(checkbox, 1, col, alignment=Qt.AlignHCenter | Qt.AlignTop)
-
-        layout.addLayout(secondary_grid)
-
-        # Add a vertical expanding spacer so tickboxes stay at the top
-        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-        # Add a vertical expanding spacer after tickboxes
+        # Add a vertical expanding spacer so the form stays at the top
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # Buttons
@@ -180,15 +105,6 @@ class SettingsForm(QDialog):
 
         # Save default settings to the database
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
-        updated_settings["columns_before_today"] = self.columns_before_today_entry.text()
-        updated_settings.update({
-            key: "Yes" if checkbox.isChecked() else "No"
-            for key, checkbox in self.column_visibility.items()
-        })
-        updated_settings.update({
-            key: "Yes" if checkbox.isChecked() else "No"
-            for key, checkbox in self.scrollable_column_visibility.items()
-        })
         try:
             set_all_defaults(updated_settings)
         except Exception as e:

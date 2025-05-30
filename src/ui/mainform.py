@@ -172,6 +172,13 @@ class Mainform(QMainWindow):
         self.class_id = class_id
         self.theme = theme
 
+        # --- FONT SIZE PATCH: Set default font size from settings or fallback ---
+        self.default_settings = self.load_default_settings()
+        self.font_size = int(self.default_settings.get("font_size", 12))
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
+
         # --- PATCH: Load from DB ---
         self.class_data = get_class_by_id(self.class_id)
         self.students = {}
@@ -227,13 +234,38 @@ class Mainform(QMainWindow):
         self.scrollable_column_visibility = {
             "Dates": self.default_settings.get("show_dates", "Yes") == "Yes"
         }
-        self.columns_before_today = int(self.default_settings.get("columns_before_today", 3))
 
         self.frozen_table_width = 0
         self._syncing_selection = False  # <-- Add this line
         self.init_ui()
 
         self.installEventFilter(self)  # <-- Add this line
+
+        # --- FONT SIZE PATCH: Add zoom in/out shortcuts ---
+        from PyQt5.QtWidgets import QShortcut
+        from PyQt5.QtGui import QKeySequence
+        QShortcut(QKeySequence("Ctrl++"), self, self.zoom_in)
+        QShortcut(QKeySequence("Ctrl+="), self, self.zoom_in)  # For some keyboards
+        QShortcut(QKeySequence("Ctrl+-"), self, self.zoom_out)
+        QShortcut(QKeySequence("Ctrl+0"), self, self.reset_zoom)
+
+    def zoom_in(self):
+        self.font_size = min(self.font_size + 1, 32)
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
+
+    def zoom_out(self):
+        self.font_size = max(self.font_size - 1, 8)
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
+
+    def reset_zoom(self):
+        self.font_size = int(self.default_settings.get("font_size", 12))
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
 
     def reset_scrollable_column_widths(self):
         """Reset the column widths of the scrollable table to their default values."""
@@ -256,8 +288,8 @@ class Mainform(QMainWindow):
         metadata_widget = QWidget()  # Create a widget to contain the metadata layout
         metadata_layout = QGridLayout(metadata_widget)
         metadata_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
-        metadata_layout.setHorizontalSpacing(2)  # Reduce horizontal spacing
-        metadata_layout.setVerticalSpacing(2)  # Reduce vertical spacing
+        metadata_layout.setHorizontalSpacing(5)  # Reduce horizontal spacing
+        metadata_layout.setVerticalSpacing(5)  # Reduce vertical spacing
 
         # Set the fixed width for the metadata widget
         metadata_widget.setFixedWidth(600)  # Total width: 100 + 150 + 100 + 150 + spacing
