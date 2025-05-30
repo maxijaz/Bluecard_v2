@@ -87,16 +87,45 @@ class Launcher(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Class No", "Company", "Archived"])
+        # Use stretch mode so headers always fill the window width
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.layout.addWidget(self.table)
+        # Add left/right padding to header cells
+        self.table.horizontalHeader().setStyleSheet("QHeaderView::section { padding-left: 18px; padding-right: 18px; }")
 
-        # Set column widths
-        self.table.setColumnWidth(0, 150)  # Class No
-        self.table.setColumnWidth(1, 150)  # Company
-        self.table.setColumnWidth(2, 75)   # Archived
+        # Dynamically set initial window size based on widest entry in each column
+        from PyQt5.QtGui import QFontMetrics, QFont
+        from logic.db_interface import get_all_defaults
+        table_font_size = int(get_all_defaults().get("table_font_size", 12))
+        table_header_font_size = int(get_all_defaults().get("table_header_font_size", 16))
+        font = QFont("Segoe UI", table_font_size)
+        header_font = QFont("Segoe UI", table_header_font_size)
+        metrics = QFontMetrics(font)
+        header_metrics = QFontMetrics(header_font)
+        # Fallback: use header text widths if table is empty
+        col_widths = []
+        for col in range(self.table.columnCount()):
+            max_width = 0
+            # Check all data rows
+            for row in range(self.table.rowCount()):
+                item = self.table.item(row, col)
+                if item:
+                    width = metrics.width(item.text())
+                    if width > max_width:
+                        max_width = width
+            # If no data, use header
+            if max_width == 0:
+                header_text = self.table.horizontalHeaderItem(col).text()
+                max_width = header_metrics.width(header_text)
+            col_widths.append(max_width + 36)  # Add padding
+        min_width = sum(col_widths) + 80  # +80 for margins
+        min_height = int(table_header_font_size * 10) + 300  # Enough for header, rows, buttons
+        self.setMinimumWidth(min_width)
+        self.setMinimumHeight(min_height)
+        self.resize(min_width, min_height)
 
         # Connect double-click event to open_class
         self.table.doubleClicked.connect(self.open_class)
@@ -155,9 +184,49 @@ class Launcher(QMainWindow):
             if class_row.get("archive", "No") == "No":
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
-                self.table.setItem(row_position, 0, QTableWidgetItem(class_row["class_no"]))
-                self.table.setItem(row_position, 1, QTableWidgetItem(class_row.get("company", "Unknown")))
-                self.table.setItem(row_position, 2, QTableWidgetItem(class_row.get("archive", "No")))
+                item0 = QTableWidgetItem(class_row["class_no"])
+                item1 = QTableWidgetItem(class_row.get("company", "Unknown"))
+                item2 = QTableWidgetItem(class_row.get("archive", "No"))
+                from logic.db_interface import get_all_defaults
+                from PyQt5.QtGui import QFont
+                table_font_size = int(get_all_defaults().get("table_font_size", 12))
+                font = QFont("Segoe UI", table_font_size)
+                item0.setFont(font)
+                item1.setFont(font)
+                item2.setFont(font)
+                self.table.setItem(row_position, 0, item0)
+                self.table.setItem(row_position, 1, item1)
+                self.table.setItem(row_position, 2, item2)
+        # --- Always set row height after populating ---
+        table_font_size = int(get_all_defaults().get("table_font_size", 12))
+        row_height = int(table_font_size * 2.4)
+        for row in range(self.table.rowCount()):
+            self.table.setRowHeight(row, row_height)
+        # --- Set each column width to max of data or header, plus padding ---
+        from PyQt5.QtGui import QFontMetrics, QFont
+        table_header_font_size = int(get_all_defaults().get("table_header_font_size", 16))
+        font = QFont("Segoe UI", table_font_size)
+        header_font = QFont("Segoe UI", table_header_font_size)
+        metrics = QFontMetrics(font)
+        header_metrics = QFontMetrics(header_font)
+        for col in range(self.table.columnCount()):
+            max_width = 0
+            # Check all data rows
+            for row in range(self.table.rowCount()):
+                item = self.table.item(row, col)
+                if item:
+                    width = metrics.width(item.text())
+                    if width > max_width:
+                        max_width = width
+            # Always fallback to header if wider
+            header_text = self.table.horizontalHeaderItem(col).text()
+            header_width = header_metrics.width(header_text)
+            max_width = max(max_width, header_width)
+            # For Archive column, set a minimum width (e.g. 70px)
+            if col == 2:
+                min_archive_width = 70
+                max_width = max(max_width, min_archive_width)
+            self.table.setColumnWidth(col, max_width + 36)  # Add padding
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -298,6 +367,18 @@ class Launcher(QMainWindow):
             QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
+        # --- Force update of table data font size for instant effect ---
+        if hasattr(self, 'table'):
+            from PyQt5.QtGui import QFont
+            for row in range(self.table.rowCount()):
+                for col in range(self.table.columnCount()):
+                    item = self.table.item(row, col)
+                    if item:
+                        item.setFont(QFont("Segoe UI", table_font_size))
+            # Adjust row heights to fit new font size (more vertical padding)
+            row_height = int(table_font_size * 2.4)  # 2.4x font size for more padding
+            for row in range(self.table.rowCount()):
+                self.table.setRowHeight(row, row_height)
 
     def refresh_table(self):
         """Refresh the table with updated class data."""

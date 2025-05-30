@@ -120,3 +120,4 @@ class SettingsForm(QDialog):
         if self.on_theme_change:
             self.on_theme_change(self.theme_dropdown.currentText())
         self.accept()
+
