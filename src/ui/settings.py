@@ -93,19 +93,7 @@ class SettingsForm(QDialog):
         style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
         style_col.addWidget(style_heading)
 
-        # Theme selection at top of column 2
-        theme_layout = QHBoxLayout()
-        theme_label = bold_label("Select Theme:")
-        theme_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)  # Right align label
-        self.theme_dropdown = QComboBox()
-        self.theme_dropdown.addItems(self.themes)
-        self.theme_dropdown.setCurrentText(self.current_theme)
-        self.theme_dropdown.setMinimumWidth(min_entry_width)
-        theme_layout.addWidget(theme_label)
-        theme_layout.addWidget(self.theme_dropdown)
-        style_col.addLayout(theme_layout)
-
-        # All style/color label texts for dynamic width
+        # All style/color label texts for dynamic widths
         style_labels = [
             "Font Size:", "Metadata Font Size:", "Metadata Text Color:", "Button Font Size:",
             "Table Header Font Size:", "Table Header BG Color:", "Table Header Text Color:",
@@ -122,12 +110,25 @@ class SettingsForm(QDialog):
             lbl.setStyleSheet("font-weight: bold;")
             lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             return lbl
+
         # Helper for bold labels (used for theme label, etc.)
         def bold_label(text):
             lbl = QLabel(text)
             lbl.setFixedWidth(max_label_width)
             lbl.setStyleSheet("font-weight: bold;")
             return lbl
+
+        # Theme selection at top of column 2
+        theme_layout = QHBoxLayout()
+        theme_label = bold_label("Select Theme:")
+        theme_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)  # Right align label
+        self.theme_dropdown = QComboBox()
+        self.theme_dropdown.addItems(self.themes)
+        self.theme_dropdown.setCurrentText(self.current_theme)
+        self.theme_dropdown.setMinimumWidth(min_entry_width)
+        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(self.theme_dropdown)
+        style_col.addLayout(theme_layout)
 
         # Font size selection
         font_size_layout = QHBoxLayout()
