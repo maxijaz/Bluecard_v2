@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QSpacerItem, QSizePolicy
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QSpacerItem, QSizePolicy, QFrame
 )
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
@@ -47,100 +47,19 @@ class SettingsForm(QDialog):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
 
-        # Theme selection
-        theme_layout = QHBoxLayout()
-        theme_label = QLabel("Select Theme:")
-        theme_label.setFixedWidth(100)
-        self.theme_dropdown = QComboBox()
-        self.theme_dropdown.addItems(self.themes)
-        self.theme_dropdown.setCurrentText(self.current_theme)
-        theme_layout.addWidget(theme_label)
-        theme_layout.addWidget(self.theme_dropdown)
-        layout.addLayout(theme_layout)
+        # --- Layout: Two columns for Metadata and Stylesheet ---
+        columns_layout = QHBoxLayout()
 
-        # Font size selection
-        font_size_layout = QHBoxLayout()
-        font_size_label = QLabel("Font Size:")
-        font_size_label.setFixedWidth(100)
-        self.font_size_dropdown = QComboBox()
-        self.font_size_dropdown.addItems(["10", "12", "14", "16", "18", "20", "22", "24"])
-        current_font_size = str(self.default_settings.get("font_size", "12"))
-        self.font_size_dropdown.setCurrentText(current_font_size)
-        font_size_layout.addWidget(font_size_label)
-        font_size_layout.addWidget(self.font_size_dropdown)
-        layout.addLayout(font_size_layout)
-
-        # Metadata font size and color
-        metadata_font_size_layout = QHBoxLayout()
-        metadata_font_size_label = QLabel("Metadata Font Size:")
-        metadata_font_size_label.setFixedWidth(150)
-        self.metadata_font_size_entry = QLineEdit(self.default_settings.get("metadata_font_size", "12"))
-        metadata_font_size_layout.addWidget(metadata_font_size_label)
-        metadata_font_size_layout.addWidget(self.metadata_font_size_entry)
-        layout.addLayout(metadata_font_size_layout)
-
-        metadata_fg_color_layout = QHBoxLayout()
-        metadata_fg_color_label = QLabel("Metadata Text Color:")
-        metadata_fg_color_label.setFixedWidth(150)
-        self.metadata_fg_color_entry = QLineEdit(self.default_settings.get("metadata_fg_color", "#222222"))
-        metadata_fg_color_layout.addWidget(metadata_fg_color_label)
-        metadata_fg_color_layout.addWidget(self.metadata_fg_color_entry)
-        layout.addLayout(metadata_fg_color_layout)
-
-        # Button font size
-        button_font_size_layout = QHBoxLayout()
-        button_font_size_label = QLabel("Button Font Size:")
-        button_font_size_label.setFixedWidth(150)
-        self.button_font_size_entry = QLineEdit(self.default_settings.get("button_font_size", "11"))
-        button_font_size_layout.addWidget(button_font_size_label)
-        button_font_size_layout.addWidget(self.button_font_size_entry)
-        layout.addLayout(button_font_size_layout)
-
-        # Table header font size and color
-        table_header_font_size_layout = QHBoxLayout()
-        table_header_font_size_label = QLabel("Table Header Font Size:")
-        table_header_font_size_label.setFixedWidth(150)
-        self.table_header_font_size_entry = QLineEdit(self.default_settings.get("table_header_font_size", "12"))
-        table_header_font_size_layout.addWidget(table_header_font_size_label)
-        table_header_font_size_layout.addWidget(self.table_header_font_size_entry)
-        layout.addLayout(table_header_font_size_layout)
-
-        table_header_bg_color_layout = QHBoxLayout()
-        table_header_bg_color_label = QLabel("Table Header BG Color:")
-        table_header_bg_color_label.setFixedWidth(150)
-        self.table_header_bg_color_entry = QLineEdit(self.default_settings.get("table_header_bg_color", "#1976d2"))
-        table_header_bg_color_layout.addWidget(table_header_bg_color_label)
-        table_header_bg_color_layout.addWidget(self.table_header_bg_color_entry)
-        layout.addLayout(table_header_bg_color_layout)
-
-        table_header_fg_color_layout = QHBoxLayout()
-        table_header_fg_color_label = QLabel("Table Header Text Color:")
-        table_header_fg_color_label.setFixedWidth(150)
-        self.table_header_fg_color_entry = QLineEdit(self.default_settings.get("table_header_fg_color", "#ffffff"))
-        table_header_fg_color_layout.addWidget(table_header_fg_color_label)
-        table_header_fg_color_layout.addWidget(self.table_header_fg_color_entry)
-        layout.addLayout(table_header_fg_color_layout)
-
-        # Table data font size and color
-        table_font_size_layout = QHBoxLayout()
-        table_font_size_label = QLabel("Table Data Font Size:")
-        table_font_size_label.setFixedWidth(150)
-        self.table_font_size_entry = QLineEdit(self.default_settings.get("font_size", "12"))
-        table_font_size_layout.addWidget(table_font_size_label)
-        table_font_size_layout.addWidget(self.table_font_size_entry)
-        layout.addLayout(table_font_size_layout)
-
-        table_fg_color_layout = QHBoxLayout()
-        table_fg_color_label = QLabel("Table Data Text Color:")
-        table_fg_color_label.setFixedWidth(150)
-        self.table_fg_color_entry = QLineEdit(self.default_settings.get("table_fg_color", "#222222"))
-        table_fg_color_layout.addWidget(table_fg_color_label)
-        table_fg_color_layout.addWidget(self.table_fg_color_entry)
-        layout.addLayout(table_fg_color_layout)
-
-        # Default settings fields
+        # --- Column 1: Default Metadata ---
+        metadata_col = QVBoxLayout()
+        metadata_heading = QLabel("Default Metadata")
+        metadata_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
+        metadata_col.addWidget(metadata_heading)
         self.entries = {}
         form_layout = QFormLayout()
+        form_layout.setLabelAlignment(Qt.AlignRight)  # Right-align labels for even spacing
+        form_layout.setFormAlignment(Qt.AlignLeft)    # Align form to left
+        form_layout.setHorizontalSpacing(16)          # Match spacing to column 2
         fields_to_include = [
             "def_teacher",
             "def_teacher_no",
@@ -151,29 +70,222 @@ class SettingsForm(QDialog):
             "def_travel",
             "def_bonus"
         ]
+        # Helper for bold metadata labels
+        def bold_metadata_label(text):
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-weight: bold;")
+            return lbl
+        min_entry_width = 220
         for key in fields_to_include:
             value = self.default_settings.get(key, "")
             entry = QLineEdit(value)
+            entry.setMinimumWidth(min_entry_width)
+            entry.setStyleSheet("padding-left: 8px; padding-right: 16px;")  # Add left padding for symmetry
             self.entries[key] = entry
-            form_layout.addRow(key.replace("def_", "").capitalize() + ":", entry)
+            form_layout.addRow(bold_metadata_label(key.replace("def_", "").capitalize() + ":"), entry)
+        metadata_col.addLayout(form_layout)
+        metadata_col.addStretch(1)
 
-        layout.addLayout(form_layout, stretch=0)
+        # --- Column 2: Stylesheet (Colors/Fonts) ---
+        style_col = QVBoxLayout()
+        style_col.setContentsMargins(24, 0, 0, 0)     # left margin for right column
+        style_heading = QLabel("Stylesheet")
+        style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
+        style_col.addWidget(style_heading)
+
+        # Theme selection at top of column 2
+        theme_layout = QHBoxLayout()
+        theme_label = bold_label("Select Theme:")
+        theme_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)  # Right align label
+        self.theme_dropdown = QComboBox()
+        self.theme_dropdown.addItems(self.themes)
+        self.theme_dropdown.setCurrentText(self.current_theme)
+        self.theme_dropdown.setMinimumWidth(min_entry_width)
+        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(self.theme_dropdown)
+        style_col.addLayout(theme_layout)
+
+        # All style/color label texts for dynamic width
+        style_labels = [
+            "Font Size:", "Metadata Font Size:", "Metadata Text Color:", "Button Font Size:",
+            "Table Header Font Size:", "Table Header BG Color:", "Table Header Text Color:",
+            "Table Data Font Size:", "Table Data Text Color:", "Form Background Color:",
+            "Button Background Color:", "Button Text Color:", "Table Background Color:", "Select Theme:"
+        ]
+        # Add extra width for bold font and padding
+        max_label_width = max(QtGui.QFontMetrics(self.font()).width(lbl) for lbl in style_labels) + 40
+
+        # Helper for right-aligned bold labels in style_col
+        def right_bold_label(text):
+            lbl = QLabel(text)
+            lbl.setFixedWidth(max_label_width)
+            lbl.setStyleSheet("font-weight: bold;")
+            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            return lbl
+        # Helper for bold labels (used for theme label, etc.)
+        def bold_label(text):
+            lbl = QLabel(text)
+            lbl.setFixedWidth(max_label_width)
+            lbl.setStyleSheet("font-weight: bold;")
+            return lbl
+
+        # Font size selection
+        font_size_layout = QHBoxLayout()
+        font_size_label = right_bold_label("Font Size:")
+        self.font_size_dropdown = QComboBox()
+        self.font_size_dropdown.addItems(["10", "12", "14", "16", "18", "20", "22", "24"])
+        current_font_size = str(self.default_settings.get("font_size", "12"))
+        self.font_size_dropdown.setCurrentText(current_font_size)
+        font_size_layout.addWidget(font_size_label)
+        font_size_layout.addWidget(self.font_size_dropdown)
+        style_col.addLayout(font_size_layout)
+
+        # Metadata font size and color
+        metadata_font_size_layout = QHBoxLayout()
+        metadata_font_size_label = right_bold_label("Metadata Font Size:")
+        self.metadata_font_size_entry = QLineEdit(self.default_settings.get("metadata_font_size", "12"))
+        metadata_font_size_layout.addWidget(metadata_font_size_label)
+        metadata_font_size_layout.addWidget(self.metadata_font_size_entry)
+        style_col.addLayout(metadata_font_size_layout)
+
+        metadata_fg_color_layout = QHBoxLayout()
+        metadata_fg_color_label = right_bold_label("Metadata Text Color:")
+        self.metadata_fg_color_entry = QLineEdit(self.default_settings.get("metadata_fg_color", "#222222"))
+        metadata_fg_color_layout.addWidget(metadata_fg_color_label)
+        metadata_fg_color_layout.addWidget(self.metadata_fg_color_entry)
+        style_col.addLayout(metadata_fg_color_layout)
+
+        # Button font size
+        button_font_size_layout = QHBoxLayout()
+        button_font_size_label = right_bold_label("Button Font Size:")
+        self.button_font_size_entry = QLineEdit(self.default_settings.get("button_font_size", "11"))
+        button_font_size_layout.addWidget(button_font_size_label)
+        button_font_size_layout.addWidget(self.button_font_size_entry)
+        style_col.addLayout(button_font_size_layout)
+
+        # Table header font size and color
+        table_header_font_size_layout = QHBoxLayout()
+        table_header_font_size_label = right_bold_label("Table Header Font Size:")
+        self.table_header_font_size_entry = QLineEdit(self.default_settings.get("table_header_font_size", "12"))
+        table_header_font_size_layout.addWidget(table_header_font_size_label)
+        table_header_font_size_layout.addWidget(self.table_header_font_size_entry)
+        style_col.addLayout(table_header_font_size_layout)
+
+        table_header_bg_color_layout = QHBoxLayout()
+        table_header_bg_color_label = right_bold_label("Table Header BG Color:")
+        self.table_header_bg_color_entry = QLineEdit(self.default_settings.get("table_header_bg_color", "#1976d2"))
+        table_header_bg_color_layout.addWidget(table_header_bg_color_label)
+        table_header_bg_color_layout.addWidget(self.table_header_bg_color_entry)
+        style_col.addLayout(table_header_bg_color_layout)
+
+        table_header_fg_color_layout = QHBoxLayout()
+        table_header_fg_color_label = right_bold_label("Table Header Text Color:")
+        self.table_header_fg_color_entry = QLineEdit(self.default_settings.get("table_header_fg_color", "#ffffff"))
+        table_header_fg_color_layout.addWidget(table_header_fg_color_label)
+        table_header_fg_color_layout.addWidget(self.table_header_fg_color_entry)
+        style_col.addLayout(table_header_fg_color_layout)
+
+        # Table data font size and color
+        table_font_size_layout = QHBoxLayout()
+        table_font_size_label = right_bold_label("Table Data Font Size:")
+        self.table_font_size_entry = QLineEdit(self.default_settings.get("font_size", "12"))
+        table_font_size_layout.addWidget(table_font_size_label)
+        table_font_size_layout.addWidget(self.table_font_size_entry)
+        style_col.addLayout(table_font_size_layout)
+
+        table_fg_color_layout = QHBoxLayout()
+        table_fg_color_label = right_bold_label("Table Data Text Color:")
+        self.table_fg_color_entry = QLineEdit(self.default_settings.get("table_fg_color", "#222222"))
+        table_fg_color_layout.addWidget(table_fg_color_label)
+        table_fg_color_layout.addWidget(self.table_fg_color_entry)
+        style_col.addLayout(table_fg_color_layout)
+
+        # Form, button, table background colors
+        form_bg_layout = QHBoxLayout()
+        form_bg_label = right_bold_label("Form Background Color:")
+        self.form_bg_entry = QLineEdit(self.default_settings.get("form_bg_color", "#e3f2fd"))
+        form_bg_layout.addWidget(form_bg_label)
+        form_bg_layout.addWidget(self.form_bg_entry)
+        style_col.addLayout(form_bg_layout)
+
+        button_bg_layout = QHBoxLayout()
+        button_bg_label = right_bold_label("Button Background Color:")
+        self.button_bg_entry = QLineEdit(self.default_settings.get("button_bg_color", "#1976d2"))
+        button_bg_layout.addWidget(button_bg_label)
+        button_bg_layout.addWidget(self.button_bg_entry)
+        style_col.addLayout(button_bg_layout)
+
+        button_fg_layout = QHBoxLayout()
+        button_fg_label = right_bold_label("Button Text Color:")
+        self.button_fg_entry = QLineEdit(self.default_settings.get("button_fg_color", "#ffffff"))
+        button_fg_layout.addWidget(button_fg_label)
+        button_fg_layout.addWidget(self.button_fg_entry)
+        style_col.addLayout(button_fg_layout)
+
+        table_bg_layout = QHBoxLayout()
+        table_bg_label = right_bold_label("Table Background Color:")
+        self.table_bg_entry = QLineEdit(self.default_settings.get("table_bg_color", "#ffffff"))
+        table_bg_layout.addWidget(table_bg_label)
+        table_bg_layout.addWidget(self.table_bg_entry)
+        style_col.addLayout(table_bg_layout)
+
+        # Add a vertical line between columns
+        divider = QFrame()
+        divider.setFrameShape(QFrame.VLine)
+        divider.setFrameShadow(QFrame.Sunken)
+        divider.setLineWidth(2)
+        divider.setStyleSheet("background: #b0b0b0;")
+
+        # Set symmetrical margins for columns and outer layout
+        layout.setContentsMargins(20, 0, 20, 0)  # 20px left/right padding for the whole form
+        metadata_col.setContentsMargins(0, 0, 24, 0)  # right margin for left column
+        style_col.setContentsMargins(24, 0, 0, 0)     # left margin for right column
+
+        # Add columns to main layout, each with 50% stretch and padding
+        columns_layout.addLayout(metadata_col, 1)
+        columns_layout.addWidget(divider)
+        columns_layout.addLayout(style_col, 1)
+        columns_layout.setContentsMargins(0, 10, 0, 10)  # Remove horizontal margins
+        layout.addLayout(columns_layout)
 
         # Add a vertical expanding spacer so the form stays at the top
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # Buttons
         button_layout = QHBoxLayout()
+        button_layout.addStretch(1)  # Add stretch before buttons for spacing
         save_button = QPushButton("Save")
+        save_button.setMinimumWidth(90)
         save_button.clicked.connect(self.save_settings)
         cancel_button = QPushButton("Cancel")
+        cancel_button.setMinimumWidth(90)
         cancel_button.clicked.connect(self.reject)
         restore_defaults_button = QPushButton("Restore All Colors/Fonts")
+        restore_defaults_button.setMinimumWidth(150)
         restore_defaults_button.clicked.connect(self.restore_all_colors_fonts)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
         button_layout.addWidget(restore_defaults_button)
+        button_layout.addStretch(1)  # Add stretch after buttons for spacing
         layout.addLayout(button_layout)
+        layout.addSpacing(16)  # Add bottom margin below buttons
+
+        # For all QLineEdit and QComboBox in style_col, set minimum width
+        for i in range(style_col.count()):
+            layout_item = style_col.itemAt(i)
+            if isinstance(layout_item, QHBoxLayout):
+                for j in range(layout_item.count()):
+                    widget = layout_item.itemAt(j).widget()
+                    if isinstance(widget, (QLineEdit, QComboBox)):
+                        widget.setMinimumWidth(min_entry_width)
+
+        # Add right padding to data entry fields in column 1
+        for i in range(form_layout.rowCount()):
+            field_widget = form_layout.itemAt(i, QFormLayout.FieldRole)
+            if field_widget is not None:
+                widget = field_widget.widget()
+                if isinstance(widget, QLineEdit):
+                    widget.setStyleSheet("padding-right: 16px;")
 
     def save_settings(self):
         """Save the selected theme and default settings."""
