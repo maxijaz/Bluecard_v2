@@ -70,41 +70,73 @@ class SettingsForm(QDialog):
         font_size_layout.addWidget(self.font_size_dropdown)
         layout.addLayout(font_size_layout)
 
-        # Form background color
-        form_bg_layout = QHBoxLayout()
-        form_bg_label = QLabel("Form Background Color:")
-        form_bg_label.setFixedWidth(150)
-        self.form_bg_entry = QLineEdit(self.default_settings.get("form_bg_color", "#e3f2fd"))
-        form_bg_layout.addWidget(form_bg_label)
-        form_bg_layout.addWidget(self.form_bg_entry)
-        layout.addLayout(form_bg_layout)
+        # Metadata font size and color
+        metadata_font_size_layout = QHBoxLayout()
+        metadata_font_size_label = QLabel("Metadata Font Size:")
+        metadata_font_size_label.setFixedWidth(150)
+        self.metadata_font_size_entry = QLineEdit(self.default_settings.get("metadata_font_size", "12"))
+        metadata_font_size_layout.addWidget(metadata_font_size_label)
+        metadata_font_size_layout.addWidget(self.metadata_font_size_entry)
+        layout.addLayout(metadata_font_size_layout)
 
-        # Button background color
-        button_bg_layout = QHBoxLayout()
-        button_bg_label = QLabel("Button Background Color:")
-        button_bg_label.setFixedWidth(150)
-        self.button_bg_entry = QLineEdit(self.default_settings.get("button_bg_color", "#1976d2"))
-        button_bg_layout.addWidget(button_bg_label)
-        button_bg_layout.addWidget(self.button_bg_entry)
-        layout.addLayout(button_bg_layout)
+        metadata_fg_color_layout = QHBoxLayout()
+        metadata_fg_color_label = QLabel("Metadata Text Color:")
+        metadata_fg_color_label.setFixedWidth(150)
+        self.metadata_fg_color_entry = QLineEdit(self.default_settings.get("metadata_fg_color", "#222222"))
+        metadata_fg_color_layout.addWidget(metadata_fg_color_label)
+        metadata_fg_color_layout.addWidget(self.metadata_fg_color_entry)
+        layout.addLayout(metadata_fg_color_layout)
 
-        # Button foreground color
-        button_fg_layout = QHBoxLayout()
-        button_fg_label = QLabel("Button Text Color:")
-        button_fg_label.setFixedWidth(150)
-        self.button_fg_entry = QLineEdit(self.default_settings.get("button_fg_color", "#ffffff"))
-        button_fg_layout.addWidget(button_fg_label)
-        button_fg_layout.addWidget(self.button_fg_entry)
-        layout.addLayout(button_fg_layout)
+        # Button font size
+        button_font_size_layout = QHBoxLayout()
+        button_font_size_label = QLabel("Button Font Size:")
+        button_font_size_label.setFixedWidth(150)
+        self.button_font_size_entry = QLineEdit(self.default_settings.get("button_font_size", "11"))
+        button_font_size_layout.addWidget(button_font_size_label)
+        button_font_size_layout.addWidget(self.button_font_size_entry)
+        layout.addLayout(button_font_size_layout)
 
-        # Table background color
-        table_bg_layout = QHBoxLayout()
-        table_bg_label = QLabel("Table Background Color:")
-        table_bg_label.setFixedWidth(150)
-        self.table_bg_entry = QLineEdit(self.default_settings.get("table_bg_color", "#ffffff"))
-        table_bg_layout.addWidget(table_bg_label)
-        table_bg_layout.addWidget(self.table_bg_entry)
-        layout.addLayout(table_bg_layout)
+        # Table header font size and color
+        table_header_font_size_layout = QHBoxLayout()
+        table_header_font_size_label = QLabel("Table Header Font Size:")
+        table_header_font_size_label.setFixedWidth(150)
+        self.table_header_font_size_entry = QLineEdit(self.default_settings.get("table_header_font_size", "12"))
+        table_header_font_size_layout.addWidget(table_header_font_size_label)
+        table_header_font_size_layout.addWidget(self.table_header_font_size_entry)
+        layout.addLayout(table_header_font_size_layout)
+
+        table_header_bg_color_layout = QHBoxLayout()
+        table_header_bg_color_label = QLabel("Table Header BG Color:")
+        table_header_bg_color_label.setFixedWidth(150)
+        self.table_header_bg_color_entry = QLineEdit(self.default_settings.get("table_header_bg_color", "#1976d2"))
+        table_header_bg_color_layout.addWidget(table_header_bg_color_label)
+        table_header_bg_color_layout.addWidget(self.table_header_bg_color_entry)
+        layout.addLayout(table_header_bg_color_layout)
+
+        table_header_fg_color_layout = QHBoxLayout()
+        table_header_fg_color_label = QLabel("Table Header Text Color:")
+        table_header_fg_color_label.setFixedWidth(150)
+        self.table_header_fg_color_entry = QLineEdit(self.default_settings.get("table_header_fg_color", "#ffffff"))
+        table_header_fg_color_layout.addWidget(table_header_fg_color_label)
+        table_header_fg_color_layout.addWidget(self.table_header_fg_color_entry)
+        layout.addLayout(table_header_fg_color_layout)
+
+        # Table data font size and color
+        table_font_size_layout = QHBoxLayout()
+        table_font_size_label = QLabel("Table Data Font Size:")
+        table_font_size_label.setFixedWidth(150)
+        self.table_font_size_entry = QLineEdit(self.default_settings.get("font_size", "12"))
+        table_font_size_layout.addWidget(table_font_size_label)
+        table_font_size_layout.addWidget(self.table_font_size_entry)
+        layout.addLayout(table_font_size_layout)
+
+        table_fg_color_layout = QHBoxLayout()
+        table_fg_color_label = QLabel("Table Data Text Color:")
+        table_fg_color_label.setFixedWidth(150)
+        self.table_fg_color_entry = QLineEdit(self.default_settings.get("table_fg_color", "#222222"))
+        table_fg_color_layout.addWidget(table_fg_color_label)
+        table_fg_color_layout.addWidget(self.table_fg_color_entry)
+        layout.addLayout(table_fg_color_layout)
 
         # Default settings fields
         self.entries = {}
@@ -136,8 +168,11 @@ class SettingsForm(QDialog):
         save_button.clicked.connect(self.save_settings)
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
+        restore_defaults_button = QPushButton("Restore All Colors/Fonts")
+        restore_defaults_button.clicked.connect(self.restore_all_colors_fonts)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
+        button_layout.addWidget(restore_defaults_button)
         layout.addLayout(button_layout)
 
     def save_settings(self):
@@ -158,6 +193,14 @@ class SettingsForm(QDialog):
         updated_settings["button_bg_color"] = self.button_bg_entry.text()
         updated_settings["button_fg_color"] = self.button_fg_entry.text()
         updated_settings["table_bg_color"] = self.table_bg_entry.text()
+        updated_settings["metadata_font_size"] = self.metadata_font_size_entry.text()
+        updated_settings["metadata_fg_color"] = self.metadata_fg_color_entry.text()
+        updated_settings["button_font_size"] = self.button_font_size_entry.text()
+        updated_settings["table_header_font_size"] = self.table_header_font_size_entry.text()
+        updated_settings["table_header_bg_color"] = self.table_header_bg_color_entry.text()
+        updated_settings["table_header_fg_color"] = self.table_header_fg_color_entry.text()
+        updated_settings["table_fg_color"] = self.table_fg_color_entry.text()
+        updated_settings["table_font_size"] = self.table_font_size_entry.text()
         try:
             set_all_defaults(updated_settings)
         except Exception as e:
@@ -168,6 +211,31 @@ class SettingsForm(QDialog):
         if self.on_theme_change:
             self.on_theme_change(self.theme_dropdown.currentText())
         self.accept()  # Close the dialog
+
+    def restore_all_colors_fonts(self):
+        """Restore only color and font fields to factory defaults, leave other values untouched."""
+        FACTORY_DEFAULTS = {
+            "font_size": "12",
+            "form_bg_color": "#e3f2fd",
+            "form_fg_color": "#222222",
+            "button_bg_color": "#1976d2",
+            "button_fg_color": "#ffffff",
+            "button_font_size": "11",
+            "table_bg_color": "#ffffff",
+            "table_fg_color": "#222222",
+            "table_header_bg_color": "#1976d2",
+            "table_header_fg_color": "#ffffff",
+        }
+        self.font_size_dropdown.setCurrentText(FACTORY_DEFAULTS["font_size"])
+        if hasattr(self, 'form_bg_entry'):
+            self.form_bg_entry.setText(FACTORY_DEFAULTS["form_bg_color"])
+        if hasattr(self, 'button_bg_entry'):
+            self.button_bg_entry.setText(FACTORY_DEFAULTS["button_bg_color"])
+        if hasattr(self, 'button_fg_entry'):
+            self.button_fg_entry.setText(FACTORY_DEFAULTS["button_fg_color"])
+        if hasattr(self, 'table_bg_entry'):
+            self.table_bg_entry.setText(FACTORY_DEFAULTS["table_bg_color"])
+        # Add more fields as you add them to the form (e.g., table header, fg, etc.)
 
     def closeEvent(self, event):
         """Restore the initial size when the settings form is reopened."""

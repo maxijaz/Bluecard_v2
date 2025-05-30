@@ -248,12 +248,26 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         defaults["font_size"] = "12"
     if "form_bg_color" not in defaults:
         defaults["form_bg_color"] = "#e3f2fd"  # Light blue
+    if "form_fg_color" not in defaults:
+        defaults["form_fg_color"] = "#222222"  # Main text color
     if "button_bg_color" not in defaults:
         defaults["button_bg_color"] = "#1976d2"  # Blue
     if "button_fg_color" not in defaults:
         defaults["button_fg_color"] = "#ffffff"  # White
+    if "button_font_size" not in defaults:
+        defaults["button_font_size"] = "11"
     if "table_bg_color" not in defaults:
         defaults["table_bg_color"] = "#ffffff"  # White
+    if "table_fg_color" not in defaults:
+        defaults["table_fg_color"] = "#222222"  # Table text color
+    if "table_header_bg_color" not in defaults:
+        defaults["table_header_bg_color"] = "#1976d2"  # Table header bg
+    if "table_header_fg_color" not in defaults:
+        defaults["table_header_fg_color"] = "#ffffff"  # Table header fg
+    if "metadata_font_size" not in defaults:
+        defaults["metadata_font_size"] = "12"
+    if "metadata_fg_color" not in defaults:
+        defaults["metadata_fg_color"] = "#222222"
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
