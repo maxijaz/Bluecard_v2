@@ -174,7 +174,7 @@ class Mainform(QMainWindow):
 
         # --- FONT SIZE PATCH: Set default font size from settings or fallback ---
         self.default_settings = self.load_default_settings()
-        self.font_size = int(self.default_settings.get("font_size", 12))
+        self.font_size = int(self.default_settings.get("font_size", self.default_settings.get("button_font_size", 12)))
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
         QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
@@ -189,6 +189,10 @@ class Mainform(QMainWindow):
             student_row["attendance"] = attendance
             self.students[student_id] = student_row
         self.metadata = self.class_data  # All fields are now top-level
+
+        # --- PATCH: Get metadata font size from settings ---
+        self.metadata_font_size = int(self.default_settings.get("metadata_font_size", 12))
+        self.metadata_font = QFont("Segoe UI", self.metadata_font_size)
 
         # Ensure self.metadata["dates"] is set
         if "dates" not in self.metadata or not self.metadata["dates"]:
@@ -290,47 +294,42 @@ class Mainform(QMainWindow):
         metadata_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         metadata_layout.setHorizontalSpacing(5)  # Reduce horizontal spacing
         metadata_layout.setVerticalSpacing(5)  # Reduce vertical spacing
-
-        # Set the fixed width for the metadata widget
-        metadata_widget.setFixedWidth(600)  # Total width: 100 + 150 + 100 + 150 + spacing
+        metadata_widget.setFixedWidth(600)
 
         metadata_fields = [
-            ("Company:", self.metadata.get("company", ""), "Course Hours:", 
-             f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
+            ("Company:", self.metadata.get("company", ""), "Course Hours:", f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
             ("Room:", self.metadata.get("room", ""), "Start Date:", self.metadata.get("start_date", "")),
             ("Consultant:", self.metadata.get("consultant", ""), "Finish Date:", self.metadata.get("finish_date", "")),
             ("Teacher:", self.metadata.get("teacher", ""), "Days:", self.metadata.get("days", "")),
             ("CourseBook:", self.metadata.get("course_book", ""), "Time:", self.metadata.get("time", "")),
-            ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),  # Combine Notes and COD/CIA/HOL
+            ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),
         ]
 
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
             # Label 1
             label1_widget = QLabel(label1)
             label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
-            label1_widget.setFixedWidth(100)  # Set fixed width for labels
+            label1_widget.setFixedWidth(100)
+            label1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(label1_widget, row, 0)
-
             # Value 1
             value1_widget = QLabel(value1)
             value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
-            value1_widget.setFixedWidth(200)  # Set fixed width for fields
+            value1_widget.setFixedWidth(200)
+            value1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(value1_widget, row, 1)
-
             if label2:
-                # Label 2
                 label2_widget = QLabel(label2)
                 label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
-                label2_widget.setFixedWidth(100)  # Set fixed width for labels
+                label2_widget.setFixedWidth(100)
+                label2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(label2_widget, row, 2)
-
             if value2:
-                # Value 2
                 value2_widget = QLabel(value2)
                 value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
-                value2_widget.setFixedWidth(200)  # Set fixed width for fields
+                value2_widget.setFixedWidth(200)
+                value2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(value2_widget, row, 3)
-
         # Add the metadata widget to the main layout
         self.layout.addWidget(metadata_widget)
 
@@ -1002,12 +1001,14 @@ QTableView::item:selected {
             label1_widget = QLabel(label1)
             label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
             label1_widget.setFixedWidth(100)  # Set fixed width for labels
+            label1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(label1_widget, row, 0)
 
             # Value 1
             value1_widget = QLabel(value1)
             value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
             value1_widget.setFixedWidth(200)  # Set fixed width for fields
+            value1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(value1_widget, row, 1)
 
             if label2:
@@ -1015,6 +1016,7 @@ QTableView::item:selected {
                 label2_widget = QLabel(label2)
                 label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
                 label2_widget.setFixedWidth(100)  # Set fixed width for labels
+                label2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(label2_widget, row, 2)
 
             if value2:
@@ -1022,6 +1024,7 @@ QTableView::item:selected {
                 value2_widget = QLabel(value2)
                 value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
                 value2_widget.setFixedWidth(200)  # Set fixed width for fields
+                value2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(value2_widget, row, 3)
 
     def open_calendar_view(self):

@@ -243,9 +243,9 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     ]:
         if color_key not in defaults:
             defaults[color_key] = color_val
-    # PATCH: Add font_size and global color defaults if not present
-    if "font_size" not in defaults:
-        defaults["font_size"] = "12"
+    # PATCH: Add font size and global color defaults if not present
+    # Remove font_size (global) from defaults, only use specific font sizes
+    # Ensure all settings fields used in the UI are present in defaults
     if "form_bg_color" not in defaults:
         defaults["form_bg_color"] = "#e3f2fd"  # Light blue
     if "form_fg_color" not in defaults:
@@ -255,7 +255,7 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     if "button_fg_color" not in defaults:
         defaults["button_fg_color"] = "#ffffff"  # White
     if "button_font_size" not in defaults:
-        defaults["button_font_size"] = "11"
+        defaults["button_font_size"] = "12"
     if "table_bg_color" not in defaults:
         defaults["table_bg_color"] = "#ffffff"  # White
     if "table_fg_color" not in defaults:
@@ -268,6 +268,24 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         defaults["metadata_font_size"] = "12"
     if "metadata_fg_color" not in defaults:
         defaults["metadata_fg_color"] = "#222222"
+    if "table_font_size" not in defaults:
+        defaults["table_font_size"] = "12"
+    # --- Add any new settings fields from settings.py ---
+    # These are the metadata fields (default values can be blank)
+    for meta_key in [
+        "def_teacher", "def_teacher_no", "def_coursehours", "def_classtime", "def_rate", "def_ccp", "def_travel", "def_bonus"
+    ]:
+        if meta_key not in defaults:
+            defaults[meta_key] = ""
+    # Add any new color/font fields from settings.py if missing
+    for k, v in [
+        ("table_header_font_size", "12"),
+    ]:
+        if k not in defaults:
+            defaults[k] = v
+    # Remove any old global font_size if present
+    if "font_size" in defaults:
+        del defaults["font_size"]
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

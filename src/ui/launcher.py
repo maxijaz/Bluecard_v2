@@ -43,7 +43,7 @@ class Launcher(QMainWindow):
         from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
-        font_size = int(default_settings.get("font_size", 12))
+        font_size = int(default_settings.get("font_size", default_settings.get("button_font_size", 12)))
         form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
         button_bg_color = default_settings.get("button_bg_color", "#1976d2")
         button_fg_color = default_settings.get("button_fg_color", "#ffffff")
@@ -52,7 +52,7 @@ class Launcher(QMainWindow):
         # --- Apply global stylesheet for form and button colors ---
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
-            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {max(font_size-2, 10)}pt; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {font_size}pt; }}
             QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
@@ -262,7 +262,7 @@ class Launcher(QMainWindow):
         from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
-        font_size = int(default_settings.get("font_size", 12))
+        font_size = int(default_settings.get("font_size", default_settings.get("button_font_size", 12)))
         form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
         button_bg_color = default_settings.get("button_bg_color", "#1976d2")
         button_fg_color = default_settings.get("button_fg_color", "#ffffff")
@@ -270,7 +270,7 @@ class Launcher(QMainWindow):
         QApplication.instance().setFont(QFont("Segoe UI", font_size))
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
-            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {max(font_size-2, 10)}pt; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {font_size}pt; }}
             QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
