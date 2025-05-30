@@ -29,10 +29,19 @@ class MetadataForm(QDialog):
         # --- PATCH: Load defaults from DB, not JSON ---
         if not self.is_edit:
             self.defaults = get_all_defaults()
-            # --- PATCH: Set cod_cia_hol in metadata for new class ---
-            self.cod_cia_hol_default = self.defaults.get("cod_cia_hol", "0 COD / 0 CIA / 0 HOL")
+            self.form_font_size = int(self.defaults.get("form_font_size", 12))
         else:
             self.defaults = {}
+            self.form_font_size = 12
+        self.form_font = None
+        from PyQt5.QtGui import QFont
+        self.form_font = QFont("Segoe UI", self.form_font_size)
+
+        # --- PATCH: Set cod_cia_hol in metadata for new class ---
+        if not self.is_edit:
+            self.cod_cia_hol_default = self.defaults.get("cod_cia_hol", "0 COD / 0 CIA / 0 HOL")
+        else:
+            self.cod_cia_hol_default = ""
 
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
         self.resize(700, 600)
@@ -68,7 +77,9 @@ class MetadataForm(QDialog):
             ("Bonus", "bonus"),
         ]:
             field_label = QLabel(label)
+            field_label.setFont(self.form_font)
             field_input = QLineEdit()
+            field_input.setFont(self.form_font)
             if not self.is_edit:
                 default_key = f"def_{key}"
                 field_input.setText(self.defaults.get(default_key, ""))
@@ -78,6 +89,7 @@ class MetadataForm(QDialog):
             # Add "Pick" button for Start Date
             if key == "start_date":
                 pick_button = QPushButton("Pick")
+                pick_button.setFont(self.form_font)
                 pick_button.clicked.connect(self.pick_start_date)
                 row_layout = QHBoxLayout()
                 row_layout.addWidget(field_input)
@@ -90,10 +102,12 @@ class MetadataForm(QDialog):
 
         # Days Field (Checkboxes)
         self.days_label = QLabel("Days:")
+        self.days_label.setFont(self.form_font)
         self.days_checkboxes = {}
         days_layout = QHBoxLayout()
         for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
             checkbox = QCheckBox(day)
+            checkbox.setFont(self.form_font)
             self.days_checkboxes[day] = checkbox
             days_layout.addWidget(checkbox)
 
@@ -108,7 +122,9 @@ class MetadataForm(QDialog):
 
         # Course Hours
         self.class_hours_label = QLabel("Course Hours:")
+        self.class_hours_label.setFont(self.form_font)
         self.class_hours_input = QLineEdit()
+        self.class_hours_input.setFont(self.form_font)
         if self.is_edit and metadata.get("course_hours"):
             self.class_hours_input.setText(str(metadata.get("course_hours")))
         else:
@@ -117,7 +133,9 @@ class MetadataForm(QDialog):
 
         # Class Time
         self.class_time_label = QLabel("Class Time:")
+        self.class_time_label.setFont(self.form_font)
         self.class_time_input = QLineEdit()
+        self.class_time_input.setFont(self.form_font)
         if self.is_edit and metadata.get("class_time"):
             self.class_time_input.setText(str(metadata.get("class_time")))
         else:
@@ -126,7 +144,9 @@ class MetadataForm(QDialog):
 
         # Max Classes
         self.max_classes_label = QLabel("Max Classes:")
+        self.max_classes_label.setFont(self.form_font)
         self.max_classes_input = QLineEdit()
+        self.max_classes_input.setFont(self.form_font)
         self.max_classes_input.setReadOnly(True)
         if self.is_edit and metadata.get("max_classes"):
             self.max_classes_input.setText(str(metadata.get("max_classes")))
@@ -142,10 +162,12 @@ class MetadataForm(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
+        save_button.setFont(self.form_font)
         save_button.clicked.connect(self.save_metadata)
         button_layout.addWidget(save_button)
 
         cancel_button = QPushButton("Cancel")
+        cancel_button.setFont(self.form_font)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
 

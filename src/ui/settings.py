@@ -337,6 +337,7 @@ class SettingsForm(QDialog):
         updated_settings["table_header_bg_color"] = self.table_header_bg_color_entry.text()
         updated_settings["table_header_fg_color"] = self.table_header_fg_color_entry.text()
         updated_settings["table_fg_color"] = self.table_fg_color_entry.text()
+        updated_settings["form_font_size"] = self.form_font_size_dropdown.currentText()
         try:
             set_all_defaults(updated_settings)
         except Exception as e:
@@ -363,11 +364,13 @@ class SettingsForm(QDialog):
             "table_fg_color": "#222222",
             "table_header_bg_color": "#1976d2",
             "table_header_fg_color": "#ffffff",
+            "form_font_size": "12",
         }
         self.metadata_font_size_dropdown.setCurrentText(FACTORY_DEFAULTS["metadata_font_size"])
         self.button_font_size_dropdown.setCurrentText(FACTORY_DEFAULTS["button_font_size"])
         self.table_header_font_size_dropdown.setCurrentText(FACTORY_DEFAULTS["table_header_font_size"])
         self.table_font_size_dropdown.setCurrentText(FACTORY_DEFAULTS["table_font_size"])
+        self.form_font_size_dropdown.setCurrentText(FACTORY_DEFAULTS.get("form_font_size", "12"))
         if hasattr(self, 'form_bg_entry'):
             self.form_bg_entry.setText(FACTORY_DEFAULTS["form_bg_color"])
         if hasattr(self, 'button_bg_entry'):

@@ -270,6 +270,8 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         defaults["metadata_fg_color"] = "#222222"
     if "table_font_size" not in defaults:
         defaults["table_font_size"] = "12"
+    if "form_font_size" not in defaults:
+        defaults["form_font_size"] = "12"
     # --- Add any new settings fields from settings.py ---
     # These are the metadata fields (default values can be blank)
     for meta_key in [
@@ -286,6 +288,19 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     # Remove any old global font_size if present
     if "font_size" in defaults:
         del defaults["font_size"]
+    # Metadata section
+    if "metadata_bg_color" not in defaults:
+        defaults["metadata_bg_color"] = "#e3f2fd"  # or your preferred color
+
+    # (Optional) Button hover/border color
+    if "button_border_color" not in defaults:
+        defaults["button_border_color"] = "#1976d2"  # or your preferred color
+
+    # (Optional) Form border/title color
+    if "form_border_color" not in defaults:
+        defaults["form_border_color"] = "#1976d2"
+    if "form_title_color" not in defaults:
+        defaults["form_title_color"] = "#222222"
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

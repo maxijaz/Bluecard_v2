@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
-from logic.db_interface import insert_student, update_student, get_students_by_class
+from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
@@ -14,6 +14,12 @@ class StudentForm(QDialog):
         self.student_id = student_id
         self.student_data = student_data or {}
         self.default_attendance = default_attendance
+
+        # --- PATCH: Load form font size from settings ---
+        defaults = get_all_defaults()
+        from PyQt5.QtGui import QFont
+        self.form_font_size = int(defaults.get("form_font_size", 12))
+        self.form_font = QFont("Segoe UI", self.form_font_size)
 
         self.setWindowTitle("Edit Student" if student_id else "Add Student")
         self.setFixedSize(300, 350)
@@ -29,23 +35,28 @@ class StudentForm(QDialog):
         # Row 0
         grid.addWidget(self.bold_label("Name:"), 0, 0, alignment=Qt.AlignTop)
         self.name_entry = QLineEdit(student_data.get("name", "") if student_data else "")
+        self.name_entry.setFont(self.form_font)
         grid.addWidget(self.name_entry, 0, 1, alignment=Qt.AlignTop)
 
         # Row 1
         grid.addWidget(self.bold_label("Nickname:"), 1, 0, alignment=Qt.AlignTop)
         self.nickname_entry = QLineEdit(student_data.get("nickname", "") if student_data else "")
+        self.nickname_entry.setFont(self.form_font)
         grid.addWidget(self.nickname_entry, 1, 1, alignment=Qt.AlignTop)
 
         # Row 2
         grid.addWidget(self.bold_label("Company No:"), 2, 0, alignment=Qt.AlignTop)
         self.company_no_entry = QLineEdit(student_data.get("company_no", "") if student_data else "")
+        self.company_no_entry.setFont(self.form_font)
         grid.addWidget(self.company_no_entry, 2, 1, alignment=Qt.AlignTop)
 
         # Row 3
         grid.addWidget(self.bold_label("Gender:"), 3, 0, alignment=Qt.AlignVCenter)
         gender_layout = QHBoxLayout()
         self.male_radio = QRadioButton("Male")
+        self.male_radio.setFont(self.form_font)
         self.female_radio = QRadioButton("Female")
+        self.female_radio.setFont(self.form_font)
         if student_data:
             if student_data.get("gender", "Female") == "Male":
                 self.male_radio.setChecked(True)
@@ -63,28 +74,34 @@ class StudentForm(QDialog):
         # Row 4
         grid.addWidget(self.bold_label("Score:"), 4, 0, alignment=Qt.AlignTop)
         self.score_entry = QLineEdit(student_data.get("score", "") if student_data else "")
+        self.score_entry.setFont(self.form_font)
         grid.addWidget(self.score_entry, 4, 1, alignment=Qt.AlignTop)
 
         # Row 5
         grid.addWidget(self.bold_label("Pre-Test:"), 5, 0, alignment=Qt.AlignTop)
         self.pre_test_entry = QLineEdit(student_data.get("pre_test", "") if student_data else "")
+        self.pre_test_entry.setFont(self.form_font)
         grid.addWidget(self.pre_test_entry, 5, 1, alignment=Qt.AlignTop)
 
         # Row 6
         grid.addWidget(self.bold_label("Post-Test:"), 6, 0, alignment=Qt.AlignTop)
         self.post_test_entry = QLineEdit(student_data.get("post_test", "") if student_data else "")
+        self.post_test_entry.setFont(self.form_font)
         grid.addWidget(self.post_test_entry, 6, 1, alignment=Qt.AlignTop)
 
         # Row 7
         grid.addWidget(self.bold_label("Note:"), 7, 0, alignment=Qt.AlignTop)
         self.note_entry = QLineEdit(student_data.get("note", "") if student_data else "")
+        self.note_entry.setFont(self.form_font)
         grid.addWidget(self.note_entry, 7, 1, alignment=Qt.AlignTop)
 
         # Row 8
         grid.addWidget(self.bold_label("Active:"), 8, 0, alignment=Qt.AlignVCenter)
         active_layout = QHBoxLayout()
         self.active_yes = QRadioButton("Yes")
+        self.active_yes.setFont(self.form_font)
         self.active_no = QRadioButton("No")
+        self.active_no.setFont(self.form_font)
         if student_data:
             if student_data.get("active", "Yes") == "Yes":
                 self.active_yes.setChecked(True)
@@ -104,14 +121,17 @@ class StudentForm(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
+        save_button.setFont(self.form_font)
         save_button.clicked.connect(self.save_student)
         button_layout.addWidget(save_button)
 
         cancel_button = QPushButton("Cancel")
+        cancel_button.setFont(self.form_font)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
 
         bulk_import_button = QPushButton("Bulk Import")
+        bulk_import_button.setFont(self.form_font)
         bulk_import_button.clicked.connect(self.open_bulk_import_dialog)
         button_layout.addWidget(bulk_import_button)
 
@@ -128,6 +148,7 @@ class StudentForm(QDialog):
         label = QLabel(text)
         font = label.font()
         font.setBold(True)
+        font.setPointSize(self.form_font_size)
         label.setFont(font)
         return label
 
