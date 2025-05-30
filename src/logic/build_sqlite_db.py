@@ -243,6 +243,9 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     ]:
         if color_key not in defaults:
             defaults[color_key] = color_val
+    # PATCH: Add font_size default if not present
+    if "font_size" not in defaults:
+        defaults["font_size"] = "12"
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

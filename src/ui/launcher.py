@@ -39,6 +39,13 @@ class Launcher(QMainWindow):
         self.resize(395, 300)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
+        # --- FONT SIZE PATCH: Set global font size from settings ---
+        from logic.db_interface import get_all_defaults
+        from PyQt5.QtGui import QFont
+        default_settings = get_all_defaults()
+        font_size = int(default_settings.get("font_size", 12))
+        QApplication.instance().setFont(QFont("Segoe UI", font_size))
+
         # Load class data from DB
         self.classes = {row["class_no"]: row for row in get_all_classes()}
 
@@ -233,13 +240,19 @@ class Launcher(QMainWindow):
 
     def open_settings(self):
         """Open the Settings dialog."""
-        settings_form = SettingsForm(self, self.theme, self.refresh_theme)
+        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme)
         if settings_form.exec_() == QDialog.Accepted:
-            pass  # Handle settings update
+            pass  # Handled in apply_settings_and_theme
 
-    def refresh_theme(self, new_theme):
-        """Refresh the theme in the Launcher."""
+    def apply_settings_and_theme(self, new_theme):
+        """Apply theme and font size after settings are changed."""
         self.theme = new_theme
+        # Apply font size globally
+        from logic.db_interface import get_all_defaults
+        from PyQt5.QtGui import QFont
+        default_settings = get_all_defaults()
+        font_size = int(default_settings.get("font_size", 12))
+        QApplication.instance().setFont(QFont("Segoe UI", font_size))
 
     def refresh_table(self):
         """Refresh the table with updated class data."""

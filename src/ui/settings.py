@@ -58,6 +58,18 @@ class SettingsForm(QDialog):
         theme_layout.addWidget(self.theme_dropdown)
         layout.addLayout(theme_layout)
 
+        # Font size selection
+        font_size_layout = QHBoxLayout()
+        font_size_label = QLabel("Font Size:")
+        font_size_label.setFixedWidth(100)
+        self.font_size_dropdown = QComboBox()
+        self.font_size_dropdown.addItems(["10", "12", "14", "16", "18", "20", "22", "24"])
+        current_font_size = str(self.default_settings.get("font_size", "12"))
+        self.font_size_dropdown.setCurrentText(current_font_size)
+        font_size_layout.addWidget(font_size_label)
+        font_size_layout.addWidget(self.font_size_dropdown)
+        layout.addLayout(font_size_layout)
+
         # Default settings fields
         self.entries = {}
         form_layout = QFormLayout()
@@ -105,6 +117,7 @@ class SettingsForm(QDialog):
 
         # Save default settings to the database
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
+        updated_settings["font_size"] = self.font_size_dropdown.currentText()
         try:
             set_all_defaults(updated_settings)
         except Exception as e:
