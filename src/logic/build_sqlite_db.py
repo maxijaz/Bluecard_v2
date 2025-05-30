@@ -243,9 +243,17 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     ]:
         if color_key not in defaults:
             defaults[color_key] = color_val
-    # PATCH: Add font_size default if not present
+    # PATCH: Add font_size and global color defaults if not present
     if "font_size" not in defaults:
         defaults["font_size"] = "12"
+    if "form_bg_color" not in defaults:
+        defaults["form_bg_color"] = "#e3f2fd"  # Light blue
+    if "button_bg_color" not in defaults:
+        defaults["button_bg_color"] = "#1976d2"  # Blue
+    if "button_fg_color" not in defaults:
+        defaults["button_fg_color"] = "#ffffff"  # White
+    if "table_bg_color" not in defaults:
+        defaults["table_bg_color"] = "#ffffff"  # White
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

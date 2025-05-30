@@ -70,6 +70,42 @@ class SettingsForm(QDialog):
         font_size_layout.addWidget(self.font_size_dropdown)
         layout.addLayout(font_size_layout)
 
+        # Form background color
+        form_bg_layout = QHBoxLayout()
+        form_bg_label = QLabel("Form Background Color:")
+        form_bg_label.setFixedWidth(150)
+        self.form_bg_entry = QLineEdit(self.default_settings.get("form_bg_color", "#e3f2fd"))
+        form_bg_layout.addWidget(form_bg_label)
+        form_bg_layout.addWidget(self.form_bg_entry)
+        layout.addLayout(form_bg_layout)
+
+        # Button background color
+        button_bg_layout = QHBoxLayout()
+        button_bg_label = QLabel("Button Background Color:")
+        button_bg_label.setFixedWidth(150)
+        self.button_bg_entry = QLineEdit(self.default_settings.get("button_bg_color", "#1976d2"))
+        button_bg_layout.addWidget(button_bg_label)
+        button_bg_layout.addWidget(self.button_bg_entry)
+        layout.addLayout(button_bg_layout)
+
+        # Button foreground color
+        button_fg_layout = QHBoxLayout()
+        button_fg_label = QLabel("Button Text Color:")
+        button_fg_label.setFixedWidth(150)
+        self.button_fg_entry = QLineEdit(self.default_settings.get("button_fg_color", "#ffffff"))
+        button_fg_layout.addWidget(button_fg_label)
+        button_fg_layout.addWidget(self.button_fg_entry)
+        layout.addLayout(button_fg_layout)
+
+        # Table background color
+        table_bg_layout = QHBoxLayout()
+        table_bg_label = QLabel("Table Background Color:")
+        table_bg_label.setFixedWidth(150)
+        self.table_bg_entry = QLineEdit(self.default_settings.get("table_bg_color", "#ffffff"))
+        table_bg_layout.addWidget(table_bg_label)
+        table_bg_layout.addWidget(self.table_bg_entry)
+        layout.addLayout(table_bg_layout)
+
         # Default settings fields
         self.entries = {}
         form_layout = QFormLayout()
@@ -118,6 +154,10 @@ class SettingsForm(QDialog):
         # Save default settings to the database
         updated_settings = {key: entry.text() for key, entry in self.entries.items()}
         updated_settings["font_size"] = self.font_size_dropdown.currentText()
+        updated_settings["form_bg_color"] = self.form_bg_entry.text()
+        updated_settings["button_bg_color"] = self.button_bg_entry.text()
+        updated_settings["button_fg_color"] = self.button_fg_entry.text()
+        updated_settings["table_bg_color"] = self.table_bg_entry.text()
         try:
             set_all_defaults(updated_settings)
         except Exception as e:

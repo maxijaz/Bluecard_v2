@@ -44,7 +44,18 @@ class Launcher(QMainWindow):
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
         font_size = int(default_settings.get("font_size", 12))
+        form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
+        button_bg_color = default_settings.get("button_bg_color", "#1976d2")
+        button_fg_color = default_settings.get("button_fg_color", "#ffffff")
+        table_bg_color = default_settings.get("table_bg_color", "#ffffff")
         QApplication.instance().setFont(QFont("Segoe UI", font_size))
+        # --- Apply global stylesheet for form and button colors ---
+        style = f"""
+            QWidget {{ background-color: {form_bg_color}; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {max(font_size-2, 10)}pt; }}
+            QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
+        """
+        QApplication.instance().setStyleSheet(style)
 
         # Load class data from DB
         self.classes = {row["class_no"]: row for row in get_all_classes()}
@@ -247,12 +258,22 @@ class Launcher(QMainWindow):
     def apply_settings_and_theme(self, new_theme):
         """Apply theme and font size after settings are changed."""
         self.theme = new_theme
-        # Apply font size globally
+        # Apply font size and colors globally
         from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
         font_size = int(default_settings.get("font_size", 12))
+        form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
+        button_bg_color = default_settings.get("button_bg_color", "#1976d2")
+        button_fg_color = default_settings.get("button_fg_color", "#ffffff")
+        table_bg_color = default_settings.get("table_bg_color", "#ffffff")
         QApplication.instance().setFont(QFont("Segoe UI", font_size))
+        style = f"""
+            QWidget {{ background-color: {form_bg_color}; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {max(font_size-2, 10)}pt; }}
+            QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
+        """
+        QApplication.instance().setStyleSheet(style)
 
     def refresh_table(self):
         """Refresh the table with updated class data."""
@@ -288,14 +309,17 @@ class Launcher(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Backup Database",
-            "Would you like to backup the database before exiting?",
-            QMessageBox.Yes | QMessageBox.No
+            "Do you want to backup the database before exiting?",
+            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
         )
         if reply == QMessageBox.Yes:
+            from ui.launcher import backup_sqlite_db
             backup_sqlite_db()
-        self.resize(395, 300)
-        super().closeEvent(event)
-
+            event.accept()
+        elif reply == QMessageBox.No:
+            event.accept()
+        else:  # Cancel
+            event.ignore()  # Do not close the launcher
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""
