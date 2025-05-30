@@ -96,13 +96,22 @@ class SettingsForm(QDialog):
         metadata_col.addLayout(form_layout)
         metadata_col.addStretch(1)
 
-        # --- Column 2: Stylesheet (Colors/Fonts) ---
-        style_col = QVBoxLayout()
-        style_col.setContentsMargins(24, 0, 0, 0)
+        # --- Column 2 & 3: Stylesheet (Colors/Fonts) split into two columns ---
+        style_col2 = QVBoxLayout()
+        style_col2.setContentsMargins(24, 0, 0, 0)
+        style_col3 = QVBoxLayout()
+        style_col3.setContentsMargins(0, 0, 0, 0)
         style_heading = QLabel("Stylesheet")
         style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
-        style_col.addWidget(style_heading)
+        style_col2.addWidget(style_heading)
 
+        # Helper to add a blank label for alignment
+        def blank_label():
+            lbl = QLabel("")
+            lbl.setFixedHeight(8)
+            return lbl
+
+        # --- Stylesheet helpers ---
         from PyQt5.QtWidgets import QColorDialog, QMenu
         def color_picker_row(label_text, entry, pick_btn):
             row = QHBoxLayout()
@@ -114,7 +123,6 @@ class SettingsForm(QDialog):
             color = QColorDialog.getColor()
             if color.isValid():
                 entry.setText(color.name())
-
         font_sizes = ["6", "8", "10", "11", "12", "13", "14", "15", "16", "18", "20", "22", "24"]
         def font_size_picker_row(label_text, entry, pick_btn):
             row = QHBoxLayout()
@@ -129,62 +137,87 @@ class SettingsForm(QDialog):
                 action.triggered.connect(lambda checked, s=size: entry.setText(s))
             menu.exec_(entry.mapToGlobal(entry.rect().bottomRight()))
 
-        # Helper to create color picker row and font size row for each area
-        def add_style_row(area, label_prefix, bg_key, fg_key, font_key, default_bg, default_fg, default_font):
-            bg_entry = QLineEdit(self.default_settings.get(bg_key, default_bg))
-            bg_btn = QPushButton("…")
-            bg_btn.setFixedWidth(28)
-            bg_btn.clicked.connect(lambda: pick_color(bg_entry))
-            fg_entry = QLineEdit(self.default_settings.get(fg_key, default_fg))
-            fg_btn = QPushButton("…")
-            fg_btn.setFixedWidth(28)
-            fg_btn.clicked.connect(lambda: pick_color(fg_entry))
-            font_entry = QLineEdit(str(self.default_settings.get(font_key, default_font)))
-            font_btn = QPushButton("…")
-            font_btn.setFixedWidth(28)
-            font_btn.clicked.connect(lambda: pick_font_size(font_entry))
-            setattr(self, f"{area}_bg_entry", bg_entry)
-            setattr(self, f"{area}_fg_entry", fg_entry)
-            setattr(self, f"{area}_font_entry", font_entry)
-            style_col.addLayout(color_picker_row(f"{label_prefix} BG Color:", bg_entry, bg_btn))
-            style_col.addLayout(color_picker_row(f"{label_prefix} Text Color:", fg_entry, fg_btn))
-            style_col.addLayout(font_size_picker_row(f"{label_prefix} Font Size:", font_entry, font_btn))
+        # --- Column 2 & 3: Stylesheet (Colors/Fonts) split into two columns ---
+        style_col2 = QVBoxLayout()
+        style_col2.setContentsMargins(24, 0, 0, 0)
+        style_col3 = QVBoxLayout()
+        style_col3.setContentsMargins(0, 0, 0, 0)
+        style_heading = QLabel("Stylesheet")
+        style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
+        style_col2.addWidget(style_heading)
 
-        add_style_row("form", "Form", "form_bg_color", "form_fg_color", "form_font_size", "#e3f2fd", "#222222", "12")
-        add_style_row("button", "Button", "button_bg_color", "button_fg_color", "button_font_size", "#1976d2", "#ffffff", "12")
-        add_style_row("table", "Table", "table_bg_color", "table_fg_color", "table_font_size", "#ffffff", "#222222", "12")
-        add_style_row("table_header", "Table Header", "table_header_bg_color", "table_header_fg_color", "table_header_font_size", "#1976d2", "#ffffff", "12")
-        add_style_row("metadata", "Metadata", "metadata_bg_color", "metadata_fg_color", "metadata_font_size", "#e3f2fd", "#222222", "12")
+        # Redefine add_style_row to allow for single color fields (border/title)
+        def add_style_row_v2(layout, label_text, area, bg_key, fg_key, font_key, default_bg, default_fg, default_font):
+            if fg_key and font_key:
+                # Normal area: bg, fg, font
+                bg_entry = QLineEdit(self.default_settings.get(bg_key, default_bg))
+                bg_btn = QPushButton("…")
+                bg_btn.setFixedWidth(28)
+                bg_btn.clicked.connect(lambda: pick_color(bg_entry))
+                fg_entry = QLineEdit(self.default_settings.get(fg_key, default_fg))
+                fg_btn = QPushButton("…")
+                fg_btn.setFixedWidth(28)
+                fg_btn.clicked.connect(lambda: pick_color(fg_entry))
+                font_entry = QLineEdit(str(self.default_settings.get(font_key, default_font)))
+                font_btn = QPushButton("…")
+                font_btn.setFixedWidth(28)
+                font_btn.clicked.connect(lambda: pick_font_size(font_entry))
+                setattr(self, f"{area}_bg_entry", bg_entry)
+                setattr(self, f"{area}_fg_entry", fg_entry)
+                setattr(self, f"{area}_font_entry", font_entry)
+                layout.addLayout(color_picker_row(f"{label_text.split(' ')[0]} BG Color:", bg_entry, bg_btn))
+                layout.addLayout(color_picker_row(f"{label_text.split(' ')[0]} Text Color:", fg_entry, fg_btn))
+                layout.addLayout(font_size_picker_row(f"{label_text.split(' ')[0]} Font Size:", font_entry, font_btn))
+            else:
+                # Single color field (border/title)
+                entry = QLineEdit(self.default_settings.get(bg_key, default_bg))
+                btn = QPushButton("…")
+                btn.setFixedWidth(28)
+                btn.clicked.connect(lambda: pick_color(entry))
+                setattr(self, f"{area}_entry", entry)
+                layout.addLayout(color_picker_row(label_text + ":", entry, btn))
 
-        # Form border and title color
-        self.form_border_color_entry = QLineEdit(self.default_settings.get("form_border_color", "#1976d2"))
-        form_border_btn = QPushButton("…")
-        form_border_btn.setFixedWidth(28)
-        form_border_btn.clicked.connect(lambda: pick_color(self.form_border_color_entry))
-        style_col.addLayout(color_picker_row("Form Border Color:", self.form_border_color_entry, form_border_btn))
-        self.form_title_color_entry = QLineEdit(self.default_settings.get("form_title_color", "#222222"))
-        form_title_btn = QPushButton("…")
-        form_title_btn.setFixedWidth(28)
-        form_title_btn.clicked.connect(lambda: pick_color(self.form_title_color_entry))
-        style_col.addLayout(color_picker_row("Form Title Color:", self.form_title_color_entry, form_title_btn))
+        # List of all style rows (label, area, label_prefix, bg_key, fg_key, font_key, default_bg, default_fg, default_font)
+        style_rows = [
+            ("Form BG Color", "form", "Form", "form_bg_color", "form_fg_color", "form_font_size", "#e3f2fd", "#222222", "12"),
+            ("Form Text Color", "form", "Form", "form_bg_color", "form_fg_color", "form_font_size", "#e3f2fd", "#222222", "12"),
+            ("Form Font Size", "form", "Form", "form_bg_color", "form_fg_color", "form_font_size", "#e3f2fd", "#222222", "12"),
+            ("Button BG Color", "button", "Button", "button_bg_color", "button_fg_color", "button_font_size", "#1976d2", "#ffffff", "12"),
+            ("Button Text Color", "button", "Button", "button_bg_color", "button_fg_color", "button_font_size", "#1976d2", "#ffffff", "12"),
+            ("Button Font Size", "button", "Button", "button_bg_color", "button_fg_color", "button_font_size", "#1976d2", "#ffffff", "12"),
+            ("Table BG Color", "table", "Table", "table_bg_color", "table_fg_color", "table_font_size", "#ffffff", "#222222", "12"),
+            ("Table Text Color", "table", "Table", "table_bg_color", "table_fg_color", "table_font_size", "#ffffff", "#222222", "12"),
+            ("Table Font Size", "table", "Table", "table_bg_color", "table_fg_color", "table_font_size", "#ffffff", "#222222", "12"),
+            ("Table Header BG Color", "table_header", "Table Header", "table_header_bg_color", "table_header_fg_color", "table_header_font_size", "#1976d2", "#ffffff", "12"),
+            ("Table Header Text Color", "table_header", "Table Header", "table_header_bg_color", "table_header_fg_color", "table_header_font_size", "#1976d2", "#ffffff", "12"),
+            ("Table Header Font Size", "table_header", "Table Header", "table_header_bg_color", "table_header_fg_color", "table_header_font_size", "#1976d2", "#ffffff", "12"),
+            ("Metadata BG Color", "metadata", "Metadata", "metadata_bg_color", "metadata_fg_color", "metadata_font_size", "#e3f2fd", "#222222", "12"),
+            ("Metadata Text Color", "metadata", "Metadata", "metadata_bg_color", "metadata_fg_color", "metadata_font_size", "#e3f2fd", "#222222", "12"),
+            ("Metadata Font Size", "metadata", "Metadata", "metadata_bg_color", "metadata_fg_color", "metadata_font_size", "#e3f2fd", "#222222", "12"),
+            ("Form Border Color", "form_border", "Form Border", "form_border_color", None, None, "#1976d2", None, None),
+            ("Form Title Color", "form_title", "Form Title", "form_title_color", None, None, "#222222", None, None),
+        ]
+        # For this example, we have 17 rows, so col2: 9 rows (0-8), col3: 8 rows (9-16)
 
-        # Add a vertical line between columns
-        divider = QFrame()
-        divider.setFrameShape(QFrame.VLine)
-        divider.setFrameShadow(QFrame.Sunken)
-        divider.setLineWidth(2)
-        divider.setStyleSheet("background: #b0b0b0;")
+        # Add rows to col2 (rows 0-8)
+        for i in range(9):
+            label_text, area, label_prefix, bg_key, fg_key, font_key, default_bg, default_fg, default_font = style_rows[i]
+            add_style_row_v2(style_col2, label_text, area, bg_key, fg_key, font_key, default_bg, default_fg, default_font)
+        # Add rows to col3 (rows 9-16)
+        for i in range(9, len(style_rows)):
+            label_text, area, label_prefix, bg_key, fg_key, font_key, default_bg, default_fg, default_font = style_rows[i]
+            add_style_row_v2(style_col3, label_text, area, bg_key, fg_key, font_key, default_bg, default_fg, default_font)
 
-        # Set symmetrical margins for columns and outer layout
-        layout.setContentsMargins(20, 0, 20, 0)  # 20px left/right padding for the whole form
-        metadata_col.setContentsMargins(0, 0, 24, 0)  # right margin for left column
-        style_col.setContentsMargins(24, 0, 0, 0)     # left margin for right column
+        # --- Layout: Add columns to main layout ---
+        style_cols_layout = QHBoxLayout()
+        style_cols_layout.addLayout(style_col2, 1)
+        style_cols_layout.addLayout(style_col3, 1)
+        style_cols_layout.setContentsMargins(0, 0, 0, 0)
 
         # Add columns to main layout, each with 50% stretch and padding
         columns_layout.addLayout(metadata_col, 1)
-        columns_layout.addWidget(divider)
-        columns_layout.addLayout(style_col, 1)
-        columns_layout.setContentsMargins(0, 10, 0, 10)  # Remove horizontal margins
+        columns_layout.addLayout(style_cols_layout, 1)
+        columns_layout.setContentsMargins(0, 10, 0, 10)
         layout.addLayout(columns_layout)
 
         # Add a vertical expanding spacer so the form stays at the top
@@ -210,8 +243,15 @@ class SettingsForm(QDialog):
         layout.addSpacing(16)  # Add bottom margin below buttons
 
         # For all QLineEdit and QComboBox in style_col, set minimum width
-        for i in range(style_col.count()):
-            layout_item = style_col.itemAt(i)
+        for i in range(style_col2.count()):
+            layout_item = style_col2.itemAt(i)
+            if isinstance(layout_item, QHBoxLayout):
+                for j in range(layout_item.count()):
+                    widget = layout_item.itemAt(j).widget()
+                    if isinstance(widget, (QLineEdit, QComboBox)):
+                        widget.setMinimumWidth(min_entry_width)
+        for i in range(style_col3.count()):
+            layout_item = style_col3.itemAt(i)
             if isinstance(layout_item, QHBoxLayout):
                 for j in range(layout_item.count()):
                     widget = layout_item.itemAt(j).widget()
