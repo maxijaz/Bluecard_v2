@@ -462,31 +462,22 @@ class Mainform(QMainWindow):
         lambda col: self.open_pal_cod_form(col)
         )
 
-        # Set a 1px solid right border for the frozen table
-        self.frozen_table.setStyleSheet("""
-            QTableView {
-                border-right: 1px solid #ccc;
-                border-top: none;
-                border-bottom: none;
-                border-left: none;
-            }
-        """)
+        # Set a 1px solid right border for the frozen table (keep border only)
+        self.frozen_table.setStyleSheet("QTableView { border-right: 1px solid #ccc; border-top: none; border-bottom: none; border-left: none; }")
 
-        # Set a 1px solid left border for the scrollable table (optional, for contrast)
-        self.scrollable_table.setStyleSheet("""
-            QTableView {
-                border-left: 0px solid #ccc;
-                border-top: none;
-                border-bottom: none;
-                border-right: none;
-            }
-        """)
+        # Set a 1px solid left border for the scrollable table (keep border only)
+        self.scrollable_table.setStyleSheet("QTableView { border-left: 0px solid #ccc; border-top: none; border-bottom: none; border-right: none; }")
 
         # Set the minimum section size for the horizontal header
         self.scrollable_table.horizontalHeader().setMinimumSectionSize(5)  # Set minimum width to 5 pixels
 
         # Set the AttendanceDelegate for the scrollable table
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
+
+        # Remove any setStyleSheet calls that override table font/color for rows/items
+        # Table font size and color will be controlled globally by the stylesheet settings
+        self.frozen_table.horizontalHeader().setStyleSheet("")
+        self.scrollable_table.horizontalHeader().setStyleSheet("")
 
         # Set the CenterAlignDelegate for the scrollable table
         # self.scrollable_table.setItemDelegate(CenterAlignDelegate(self.scrollable_table))

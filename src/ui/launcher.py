@@ -43,17 +43,27 @@ class Launcher(QMainWindow):
         from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
-        font_size = int(default_settings.get("font_size", default_settings.get("button_font_size", 12)))
+        form_font_size = int(default_settings.get("form_font_size", 12))
+        button_font_size = int(default_settings.get("button_font_size", form_font_size))
+        table_font_size = int(default_settings.get("table_font_size", form_font_size))
+        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
         form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
         button_bg_color = default_settings.get("button_bg_color", "#1976d2")
         button_fg_color = default_settings.get("button_fg_color", "#ffffff")
         table_bg_color = default_settings.get("table_bg_color", "#ffffff")
-        QApplication.instance().setFont(QFont("Segoe UI", font_size))
-        # --- Apply global stylesheet for form and button colors ---
+        table_fg_color = default_settings.get("table_fg_color", "#222222")
+        table_header_bg_color = default_settings.get("table_header_bg_color", "#1976d2")
+        table_header_fg_color = default_settings.get("table_header_fg_color", "#ffffff")
+        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
+        # Set the default font for general UI (form/metadata)
+        QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
-            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {font_size}pt; }}
-            QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
+            QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {button_font_size}pt; }}
+            QTableView, QTableWidget {{ background-color: {table_bg_color}; }}
+            QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
+            QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
 
@@ -250,10 +260,13 @@ class Launcher(QMainWindow):
         dlg.exec_()
 
     def open_settings(self):
-        """Open the Settings dialog."""
-        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme)
-        if settings_form.exec_() == QDialog.Accepted:
-            pass  # Handled in apply_settings_and_theme
+        from ui.settings import SettingsForm
+        from ui.stylesheet import StylesheetForm
+        def open_stylesheet():
+            stylesheet_form = StylesheetForm(self)
+            stylesheet_form.exec_()
+        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme, open_stylesheet)
+        settings_form.exec_()
 
     def apply_settings_and_theme(self, new_theme):
         """Apply theme and font size after settings are changed."""
@@ -262,16 +275,27 @@ class Launcher(QMainWindow):
         from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
-        font_size = int(default_settings.get("font_size", default_settings.get("button_font_size", 12)))
+        form_font_size = int(default_settings.get("form_font_size", 12))
+        button_font_size = int(default_settings.get("button_font_size", form_font_size))
+        table_font_size = int(default_settings.get("table_font_size", form_font_size))
+        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
         form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
         button_bg_color = default_settings.get("button_bg_color", "#1976d2")
         button_fg_color = default_settings.get("button_fg_color", "#ffffff")
         table_bg_color = default_settings.get("table_bg_color", "#ffffff")
-        QApplication.instance().setFont(QFont("Segoe UI", font_size))
+        table_fg_color = default_settings.get("table_fg_color", "#222222")
+        table_header_bg_color = default_settings.get("table_header_bg_color", "#1976d2")
+        table_header_fg_color = default_settings.get("table_header_fg_color", "#ffffff")
+        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
+        # Set the default font for general UI (form/metadata)
+        QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
-            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {font_size}pt; }}
-            QTableView, QTableWidget {{ background-color: {table_bg_color}; font-size: {font_size}pt; }}
+            QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {button_font_size}pt; }}
+            QTableView, QTableWidget {{ background-color: {table_bg_color}; }}
+            QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
+            QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
 
