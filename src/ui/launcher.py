@@ -34,7 +34,7 @@ BACKUP_DIR = os.path.join("data", "backup")
 class Launcher(QMainWindow):
     def __init__(self, theme):
         super().__init__()
-        print("[DEBUG] Launcher __init__ start")
+        # print("[DEBUG] Launcher __init__ start")
         self.theme = theme
         self.font_prompt_shown = False  # Track if font size prompt has been shown this session
         self.setWindowTitle("Bluecard Launcher")
@@ -82,7 +82,7 @@ class Launcher(QMainWindow):
 
         # Center the window on startup
         self.center_window()
-        print("[DEBUG] Launcher __init__ end")
+        # print("[DEBUG] Launcher __init__ end")
 
     def create_widgets(self):
         """Create the table and buttons."""
@@ -179,16 +179,16 @@ class Launcher(QMainWindow):
         """Set both columns to fixed width 180 and update resize mode (accounts for vertical scrollbar)."""
         self.table.setColumnWidth(0, 180)
         self.table.setColumnWidth(1, 180)
-        print(f"[DEBUG] Actual column widths after set: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
-        print(f"[DEBUG] Table widget size: {self.table.size()}, minimumSize: {self.table.minimumSize()}, sizePolicy: {self.table.sizePolicy()}")
-        print(f"[DEBUG] Main window size: {self.size()}, minimumSize: {self.minimumSize()}")
+        # print(f"[DEBUG] Actual column widths after set: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        # print(f"[DEBUG] Table widget size: {self.table.size()}, minimumSize: {self.table.minimumSize()}, sizePolicy: {self.table.sizePolicy()}")
+        # print(f"[DEBUG] Main window size: {self.size()}, minimumSize: {self.minimumSize()}")
         self.col_widths = [180, 180]
         header = self.table.horizontalHeader()
         for col in range(self.table.columnCount()):
             header.setSectionResizeMode(col, QHeaderView.Fixed)
 
     def populate_table(self):
-        print("[DEBUG] populate_table start")
+        # print("[DEBUG] populate_table start")
         """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
         self.table.setRowCount(0)  # Clear the table before repopulating
         sorted_classes = sorted(
@@ -216,8 +216,8 @@ class Launcher(QMainWindow):
             self.table.setRowHeight(row, row_height)
         # --- Set column widths and resize mode using dedicated method ---
         self.set_table_column_widths()
-        print(f"[DEBUG] Columns set to fixed width {self.col_widths}")
-        print("[DEBUG] populate_table end")
+        # print(f"[DEBUG] Columns set to fixed width {self.col_widths}")
+        # print("[DEBUG] populate_table end")
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""
@@ -447,8 +447,8 @@ class Launcher(QMainWindow):
         # Always stretch columns to fill available width when window is maximized or wide
         for col in range(self.table.columnCount()):
             header.setSectionResizeMode(col, QHeaderView.Stretch)
-        print(f"[DEBUG] resizeEvent: window size={self.size()}, table size={self.table.size()}, col_widths={[self.table.columnWidth(0), self.table.columnWidth(1)]}")
-        print(f"[DEBUG] After resizeEvent: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        # print(f"[DEBUG] resizeEvent: window size={self.size()}, table size={self.table.size()}, col_widths={[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        # print(f"[DEBUG] After resizeEvent: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""
