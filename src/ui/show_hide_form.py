@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.db_interface import update_class, get_class_by_id
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
@@ -92,6 +93,17 @@ class ShowHideForm(QDialog):
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
+
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
 
     def toggle_columns(self):
         # Toggle all checkboxes: if any unchecked, check all; else uncheck all

@@ -2,7 +2,8 @@ import json
 import os
 from datetime import datetime
 from collections import defaultdict
-from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student
+from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 def is_attended(value):
     """Check if an attendance value counts as a class held."""
@@ -97,6 +98,19 @@ def get_summary_text(teacher_name="Paul R"):
         row = summary[month]
         lines.append(f"{month:<10} {row['total_hours']:<6} {row['total_travel']:<8} {row['total_bonus']:<7} {row['total_pay']:<10} {row['notes']}")
     return "\n".join(lines)
+
+class MonthlySummaryWindow:
+    def __init__(self, ...):
+        super().__init__(...)
+        display_settings = get_all_defaults()
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
 
 if __name__ == "__main__":
     print(get_summary_text("Paul R"))

@@ -1,5 +1,5 @@
 """
-ui_display.py
+ui_display.py (now logic/display.py)
 
 Utility functions for handling window display behavior in Bluecard,
 including centering, scaling, and enforcing size policies.

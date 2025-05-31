@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCalendarWidget, QPushButton, QMessageBox, QHBoxLayout
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QTextCharFormat, QColor
+from logic.display import center_widget, scale_and_center, apply_window_flags
+from logic.db_interface import get_all_defaults
 
 
 class CalendarView(QDialog):
@@ -56,6 +58,17 @@ class CalendarView(QDialog):
 
         button_row.addLayout(button_layout)
         layout.addLayout(button_row)
+
+        # Apply display preferences
+        display_settings = get_all_defaults()
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
 
     def highlight_today(self):
         """Highlight today's date in red without showing the blue selection box."""

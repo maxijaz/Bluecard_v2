@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
 from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
@@ -143,6 +144,18 @@ class StudentForm(QDialog):
         # If adding a new student and default_attendance is provided, set it
         if self.student_id is None and self.default_attendance is not None:
             self.student_data["attendance"] = dict(self.default_attendance)
+
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        from logic.display import center_widget, scale_and_center, apply_window_flags
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
 
     def bold_label(self, text):
         label = QLabel(text)

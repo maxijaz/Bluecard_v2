@@ -253,6 +253,20 @@ class Mainform(QMainWindow):
         QShortcut(QKeySequence("Ctrl+-"), self, self.zoom_out)
         QShortcut(QKeySequence("Ctrl+0"), self, self.reset_zoom)
 
+        # --- Apply display preferences ---
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        from logic.display import center_widget, scale_and_center, apply_window_flags
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
+        # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
+
     def zoom_in(self):
         self.font_size = min(self.font_size + 1, 32)
         from PyQt5.QtWidgets import QApplication

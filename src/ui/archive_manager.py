@@ -17,6 +17,20 @@ class ArchiveManager(QDialog):
         self.resize(395, 300)  # Set the initial size without fixing it
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
+        # --- Apply display preferences ---
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        from logic.display import center_widget, scale_and_center, apply_window_flags
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
+        # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
+
         # Main layout
         layout = QVBoxLayout(self)
 

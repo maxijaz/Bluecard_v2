@@ -5,6 +5,20 @@ from PyQt5.QtCore import Qt
 class PALCODForm(QDialog):
     def __init__(self, parent, column_index, update_column_callback, current_value, date, student_name=None, show_cod_cia=True, show_student_name=False, refresh_cell_callback=None, row=None):
         super().__init__(parent)
+        # --- Apply display preferences ---
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        from logic.display import center_widget, scale_and_center, apply_window_flags
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
+        # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
+
         self._blocked = False
         # --- Prevent single-cell edit if column contains CIA/COD/HOL ---
         if row is not None:

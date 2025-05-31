@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QSpacerItem, QSizePolicy, QWidget
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QSpacerItem, QSizePolicy, QWidget, QCheckBox, QDoubleSpinBox
 )
 from PyQt5.QtCore import Qt
 import json
@@ -113,10 +113,71 @@ class SettingsForm(QDialog):
                 if isinstance(widget, QLineEdit):
                     widget.setStyleSheet("padding-right: 16px;")
 
+        # --- Display Management Controls ---
+        display_heading = QLabel("Window Display Management")
+        display_heading.setStyleSheet("font-weight: bold; font-size: 13pt; margin-top: 12px;")
+        layout.addWidget(display_heading)
+        display_layout = QFormLayout()
+        display_layout.setLabelAlignment(Qt.AlignRight)
+        display_layout.setFormAlignment(Qt.AlignLeft)
+        display_layout.setHorizontalSpacing(16)
+        # Center windows checkbox
+        center_cb = QCheckBox("Center windows on open")
+        center_cb.setChecked(str(self.default_settings.get("center_windows", "1")) == "1")
+        self.entries["center_windows"] = center_cb
+        display_layout.addRow(center_cb)
+        # Scale windows checkbox
+        scale_cb = QCheckBox("Scale windows to screen size")
+        scale_cb.setChecked(str(self.default_settings.get("scale_windows", "1")) == "1")
+        self.entries["scale_windows"] = scale_cb
+        display_layout.addRow(scale_cb)
+        # Width ratio spinbox
+        width_spin = QDoubleSpinBox()
+        width_spin.setRange(0.1, 1.0)
+        width_spin.setSingleStep(0.05)
+        width_spin.setDecimals(2)
+        width_spin.setValue(float(self.default_settings.get("window_width_ratio", 0.6)))
+        width_spin.setSuffix(" (width ratio)")
+        self.entries["window_width_ratio"] = width_spin
+        display_layout.addRow("Width ratio:", width_spin)
+        # Height ratio spinbox
+        height_spin = QDoubleSpinBox()
+        height_spin.setRange(0.1, 1.0)
+        height_spin.setSingleStep(0.05)
+        height_spin.setDecimals(2)
+        height_spin.setValue(float(self.default_settings.get("window_height_ratio", 0.6)))
+        height_spin.setSuffix(" (height ratio)")
+        self.entries["window_height_ratio"] = height_spin
+        display_layout.addRow("Height ratio:", height_spin)
+        layout.addLayout(display_layout)
+
     def save_settings(self):
-        updated_settings = {key: entry.text() for key, entry in self.entries.items()}
+        updated_settings = {}
+        for key, entry in self.entries.items():
+            if isinstance(entry, QLineEdit):
+                updated_settings[key] = entry.text()
+            elif isinstance(entry, QCheckBox):
+                updated_settings[key] = "1" if entry.isChecked() else "0"
+            elif isinstance(entry, QDoubleSpinBox):
+                updated_settings[key] = str(entry.value())
+            else:
+                updated_settings[key] = str(entry.text()) if hasattr(entry, 'text') else str(entry)
         try:
             set_all_defaults(updated_settings)
+            # --- Live update: apply display settings immediately if parent is a main window ---
+            parent = self.parent()
+            if parent is not None:
+                from logic.db_interface import get_all_defaults
+                from logic.display import center_widget, scale_and_center
+                display_settings = get_all_defaults()
+                scale = str(display_settings.get("scale_windows", "1")) == "1"
+                center = str(display_settings.get("center_windows", "1")) == "1"
+                width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+                height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+                if scale:
+                    scale_and_center(parent, width_ratio, height_ratio)
+                elif center:
+                    center_widget(parent)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save default settings: {e}")
             return

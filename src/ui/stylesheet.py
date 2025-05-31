@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.db_interface import get_all_defaults, set_all_defaults
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 class StylesheetForm(QDialog):
     def __init__(self, parent=None):
@@ -17,6 +18,17 @@ class StylesheetForm(QDialog):
         self.init_ui()
         # --- Track initial state for change detection (after UI fields are created) ---
         self._initial_values = self._get_current_values()
+        from logic.db_interface import get_all_defaults
+        display_settings = get_all_defaults()
+        from logic.display import center_widget, scale_and_center, apply_window_flags
+        scale = str(display_settings.get("scale_windows", "1")) == "1"
+        center = str(display_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+        if scale:
+            scale_and_center(self, width_ratio, height_ratio)
+        elif center:
+            center_widget(self)
 
     def load_default_settings(self):
         return get_all_defaults()
