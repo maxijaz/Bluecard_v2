@@ -93,9 +93,10 @@ class Launcher(QMainWindow):
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
-        self.layout.addWidget(self.table)
+        self.layout.addWidget(self.table, stretch=1)  # Make table expand with window
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { padding-left: 18px; padding-right: 18px; }")
-        self.table.setMaximumWidth(376)  # 180+180+16 for scrollbar
+        # Remove or comment out setMaximumWidth, so table can stretch
+        # self.table.setMaximumWidth(376)  # 180+180+16 for scrollbar
 
         # Dynamically set initial window size based on widest entry in each column
         from PyQt5.QtGui import QFontMetrics, QFont
