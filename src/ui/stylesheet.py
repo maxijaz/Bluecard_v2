@@ -126,7 +126,6 @@ class StylesheetForm(QDialog):
         toggle_color_button.setMinimumWidth(150)
         toggle_color_button.setCheckable(True)
         toggle_color_button.setChecked(self.color_toggle)
-        # Set initial text based on value
         if self.color_toggle:
             toggle_color_button.setText("Toggle Color On")
         else:
@@ -227,9 +226,8 @@ class StylesheetForm(QDialog):
     def toggle_color_on_off(self, init=False):
         from logic.db_interface import set_all_defaults, get_all_defaults
         from PyQt5.QtWidgets import QApplication
-        print(f"[DEBUG] toggle_color_on_off called. Checked: {self.toggle_color_button.isChecked()}, init={init}")
         if self.toggle_color_button.isChecked():
-            self.toggle_color_button.setText("Toggle Color On")
+            # Toggle ON: set all fields to white/black/font 12
             toggle_on = self.get_toggle_on_values()
             for key, value in toggle_on.items():
                 attr = key.replace('_color', '_entry').replace('_size', '_entry').replace('_font', '_font_entry')
@@ -237,15 +235,14 @@ class StylesheetForm(QDialog):
                 if entry:
                     entry.setText(value)
             QApplication.processEvents()
-            print("[DEBUG] After setting fields for ON, current values:", self._get_current_values())
             self.save_settings(close_dialog=False)
-            print("[DEBUG] After save_settings (ON), DB values:", get_all_defaults())
-            self._apply_global_stylesheet()
-            print("[DEBUG] After _apply_global_stylesheet (ON)")
+            self.toggle_color_button.setChecked(True)
+            self.toggle_color_button.setText("Toggle Color On")
+            self._apply_global_stylesheet(self._get_current_values())
             if not init:
                 set_all_defaults({"color_toggle": "yes"})
         else:
-            self.toggle_color_button.setText("Toggle Color Off")
+            # Toggle OFF: restore factory defaults
             factory = self.get_factory_defaults()
             for key, value in factory.items():
                 attr = key.replace('_color', '_entry').replace('_size', '_entry').replace('_font', '_font_entry')
@@ -253,11 +250,10 @@ class StylesheetForm(QDialog):
                 if entry:
                     entry.setText(value)
             QApplication.processEvents()
-            print("[DEBUG] After setting fields for OFF, current values:", self._get_current_values())
             self.save_settings(close_dialog=False)
-            print("[DEBUG] After save_settings (OFF), DB values:", get_all_defaults())
-            self._apply_global_stylesheet()
-            print("[DEBUG] After _apply_global_stylesheet (OFF)")
+            self.toggle_color_button.setChecked(False)
+            self.toggle_color_button.setText("Toggle Color Off")
+            self._apply_global_stylesheet(self._get_current_values())
             if not init:
                 set_all_defaults({"color_toggle": "no"})
 
@@ -266,7 +262,6 @@ class StylesheetForm(QDialog):
         from PyQt5.QtGui import QFont
         if updated_settings is None:
             updated_settings = self._get_current_values()
-        print("[DEBUG] _apply_global_stylesheet called with:", updated_settings)
         form_font_size = int(updated_settings.get("form_font_size") or 12)
         button_font_size = int(updated_settings.get("button_font_size") or form_font_size)
         table_font_size = int(updated_settings.get("table_font_size") or form_font_size)
@@ -290,10 +285,8 @@ class StylesheetForm(QDialog):
             QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
             QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
-        print("[DEBUG] Stylesheet string applied:\n", style)
         QApplication.instance().setStyleSheet(style)
         QApplication.instance().setStyle(QApplication.instance().style())
-        print("[DEBUG] Forced style refresh with QApplication.setStyle.")
 
     def save_settings(self, close_dialog=True):
         updated_settings = {}
@@ -327,31 +320,8 @@ class StylesheetForm(QDialog):
             from PyQt5.QtCore import QTimer
             set_all_defaults(updated_settings)
             # --- Instant update: reapply global stylesheet and font size ---
-            form_font_size = int(updated_settings.get("form_font_size") or 12)
-            button_font_size = int(updated_settings.get("button_font_size") or form_font_size)
-            table_font_size = int(updated_settings.get("table_font_size") or form_font_size)
-            table_header_font_size = int(updated_settings.get("table_header_font_size") or form_font_size)
-            form_bg_color = updated_settings.get("form_bg_color", "#e3f2fd")
-            button_bg_color = updated_settings.get("button_bg_color", "#1976d2")
-            button_fg_color = updated_settings.get("button_fg_color", "#ffffff")
-            table_bg_color = updated_settings.get("table_bg_color", "#ffffff")
-            table_fg_color = updated_settings.get("table_fg_color", "#222222")
-            table_header_bg_color = updated_settings.get("table_header_bg_color", "#1976d2")
-            table_header_fg_color = updated_settings.get("table_header_fg_color", "#ffffff")
-            form_title_color = updated_settings.get("form_title_color", "#222222")
-            form_border_color = updated_settings.get("form_border_color", "#1976d2")
-            QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
-            style = f"""
-                QWidget {{ background-color: {form_bg_color}; }}
-                QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
-                QLabel#formTitle {{ color: {form_title_color}; }}
-                QLineEdit, QComboBox {{ border: 1px solid {form_border_color}; }}
-                QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {button_font_size}pt; }}
-                QTableView, QTableWidget {{ background-color: {table_bg_color}; }}
-                QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
-                QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
-            """
-            QApplication.instance().setStyleSheet(style)
+            QApplication.instance().setFont(QFont("Segoe UI", int(updated_settings.get("form_font_size") or 12)))
+            self._apply_global_stylesheet(updated_settings)
             if close_dialog:
                 self._show_flash_message("Stylesheet settings saved!", duration=1800)
                 QTimer.singleShot(1800, self.accept)
@@ -388,10 +358,8 @@ class StylesheetForm(QDialog):
                 entry.setText(value)
         from PyQt5.QtWidgets import QApplication
         QApplication.processEvents()
-        print("[DEBUG] After restore_all_colors_fonts, current values:", self._get_current_values())
         self.save_settings(close_dialog=False)
         self._apply_global_stylesheet()
-        print("[DEBUG] After restore_all_colors_fonts: save_settings and _apply_global_stylesheet called.")
 
     def close_with_prompt(self):
         if not self._has_changes():
