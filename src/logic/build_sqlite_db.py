@@ -304,6 +304,9 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     # PATCH: Add color_toggle default if not present
     if "color_toggle" not in defaults:
         defaults["color_toggle"] = "yes"
+    # Remove theme from defaults if present
+    if "theme" in defaults:
+        del defaults["theme"]
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

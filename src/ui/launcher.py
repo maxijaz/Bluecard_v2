@@ -39,7 +39,7 @@ class Launcher(QMainWindow):
         self.font_prompt_shown = False  # Track if font size prompt has been shown this session
         self.setWindowTitle("Bluecard Launcher")
         # self.resize(395, 300)  # Set the initial size without fixing it
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
         # --- FONT SIZE PATCH: Set global font size from settings ---
         from logic.db_interface import get_all_defaults
@@ -95,6 +95,7 @@ class Launcher(QMainWindow):
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.layout.addWidget(self.table)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { padding-left: 18px; padding-right: 18px; }")
+        self.table.setMaximumWidth(376)  # 180+180+16 for scrollbar
 
         # Dynamically set initial window size based on widest entry in each column
         from PyQt5.QtGui import QFontMetrics, QFont
@@ -113,20 +114,20 @@ class Launcher(QMainWindow):
         col_widths = [class_no_width, company_width]
         min_width = sum(col_widths) + 80
         min_height = int(table_header_font_size * 10) + 300
-        self.setMinimumWidth(min_width)
-        self.setMinimumHeight(min_height)
-        self.resize(min_width, min_height)
+        # Remove or reduce minimum size constraints to allow shrinking
+        self.setMinimumWidth(300)
+        self.setMinimumHeight(200)
+        # Optionally, you can remove these lines entirely if you want no minimum size at all
+        # self.setMinimumSize(300, 200)
+        # self.resize(395, 300)  # You can uncomment and adjust this for a default size, but it won't block resizing
+        # ...existing code...
+        # self.resize(min_width, min_height)  # You can keep this for initial size, but it won't block shrinking
 
         # Connect double-click event to open_class
         self.table.doubleClicked.connect(self.open_class)
 
         # Populate the table
         self.populate_table()
-
-        # After populating the table, set columns to Stretch for even distribution
-        header = self.table.horizontalHeader()
-        for col in range(self.table.columnCount()):
-            header.setSectionResizeMode(col, QHeaderView.Stretch)
 
         # Buttons - Row 1
         button_layout_row1 = QHBoxLayout()
@@ -173,6 +174,18 @@ class Launcher(QMainWindow):
 
         self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
 
+    def set_table_column_widths(self):
+        """Set both columns to fixed width 180 and update resize mode (accounts for vertical scrollbar)."""
+        self.table.setColumnWidth(0, 180)
+        self.table.setColumnWidth(1, 180)
+        print(f"[DEBUG] Actual column widths after set: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        print(f"[DEBUG] Table widget size: {self.table.size()}, minimumSize: {self.table.minimumSize()}, sizePolicy: {self.table.sizePolicy()}")
+        print(f"[DEBUG] Main window size: {self.size()}, minimumSize: {self.minimumSize()}")
+        self.col_widths = [180, 180]
+        header = self.table.horizontalHeader()
+        for col in range(self.table.columnCount()):
+            header.setSectionResizeMode(col, QHeaderView.Fixed)
+
     def populate_table(self):
         print("[DEBUG] populate_table start")
         """Populate the table with class data where archive = 'No', sorted by company (A-Z)."""
@@ -200,15 +213,16 @@ class Launcher(QMainWindow):
         row_height = int(table_font_size * 2.4)
         for row in range(self.table.rowCount()):
             self.table.setRowHeight(row, row_height)
-        # --- Set both columns to fixed width 250 ---
-        self.table.setColumnWidth(0, 250)
-        self.table.setColumnWidth(1, 250)
-        self.col_widths = [250, 250]
-        header = self.table.horizontalHeader()
-        for col in range(self.table.columnCount()):
-            header.setSectionResizeMode(col, QHeaderView.Fixed)
-        print("[DEBUG] Columns set to fixed width 250")
+        # --- Set column widths and resize mode using dedicated method ---
+        self.set_table_column_widths()
+        print(f"[DEBUG] Columns set to fixed width {self.col_widths}")
         print("[DEBUG] populate_table end")
+
+    def refresh_data(self):
+        """Refresh the data and table in the Launcher."""
+        self.classes = {row["class_no"]: row for row in get_all_classes()}
+        self.populate_table()  # Refresh the table with the updated data
+        self.set_table_column_widths()  # Ensure columns are always reset after repopulating
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -332,7 +346,7 @@ class Launcher(QMainWindow):
 
     def open_settings(self):
         from ui.settings import SettingsForm
-        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme)
+        settings_form = SettingsForm(self)
         settings_form.exec_()
 
     def apply_settings_and_theme(self, new_theme):
@@ -406,6 +420,7 @@ class Launcher(QMainWindow):
         """Refresh the data and table in the Launcher."""
         self.classes = {row["class_no"]: row for row in get_all_classes()}
         self.populate_table()  # Refresh the table with the updated data
+        self.set_table_column_widths()  # Ensure columns are always reset after repopulating
 
     def closeEvent(self, event):
         """Prompt for DB backup when closing the launcher."""
@@ -426,17 +441,13 @@ class Launcher(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # Proportional column resizing on window resize
-        if hasattr(self, 'table') and hasattr(self, 'col_widths'):
-            table_width = self.table.viewport().width() or sum(self.col_widths)
-            total_width = sum(self.col_widths)
-            for col, width in enumerate(self.col_widths):
-                if total_width > 0:
-                    proportion = width / total_width
-                    stretch_width = int(proportion * table_width)
-                    self.table.setColumnWidth(col, stretch_width)
-                else:
-                    self.table.setColumnWidth(col, width)
+        table_width = self.table.viewport().width()
+        header = self.table.horizontalHeader()
+        # Always stretch columns to fill available width when window is maximized or wide
+        for col in range(self.table.columnCount()):
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
+        print(f"[DEBUG] resizeEvent: window size={self.size()}, table size={self.table.size()}, col_widths={[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        print(f"[DEBUG] After resizeEvent: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""

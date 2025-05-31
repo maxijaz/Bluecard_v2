@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu, QWidget
 )
 from PyQt5.QtCore import Qt
 from logic.db_interface import get_all_defaults, set_all_defaults
@@ -9,6 +9,8 @@ class StylesheetForm(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Stylesheet Settings")
         self.setWindowModality(Qt.ApplicationModal)
+        # Add minimize, maximize, and close buttons
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         self.default_settings = self.load_default_settings()
         # --- PATCH: Read color_toggle from defaults and set toggle state ---
         self.color_toggle = self.default_settings.get("color_toggle", "yes").lower() in ("yes", "on", "true", "1")
@@ -22,9 +24,25 @@ class StylesheetForm(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         style_heading = QLabel("Stylesheet")
-        style_heading.setObjectName("formTitle")  # Set objectName for targeted styling
+        style_heading.setObjectName("formTitle")
         style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
         layout.addWidget(style_heading)
+        # Separator 1: under heading
+        heading_sep = QWidget()
+        heading_sep.setFixedHeight(4)
+        heading_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(heading_sep)
+        # Instructional text under heading
+        info_label = QLabel("Change values by clicking [...] to change the colours of forms and size of fonts here.\nRestore all colours and fonts button for factory restore. Toggle colours on or off")
+        info_label.setStyleSheet("font-size: 9.5pt; color: #444444;")
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+        # Separator 2: under info text
+        info_sep = QWidget()
+        info_sep.setFixedHeight(4)
+        info_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(info_sep)
+        layout.addSpacing(12)
         style_grid = QGridLayout()
         style_grid.setHorizontalSpacing(16)
         style_grid.setVerticalSpacing(6)
@@ -108,7 +126,17 @@ class StylesheetForm(QDialog):
                 style_grid.addWidget(entry, i-9, 4)
                 style_grid.addWidget(btn, i-9, 5)
         layout.addLayout(style_grid)
+        # Add a 20px vertical spacer under both columns
+        spacer = QWidget()
+        spacer.setFixedHeight(20)
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        layout.addWidget(spacer)
         layout.addStretch(1)
+        # Separator 3: above buttons
+        above_btn_sep = QWidget()
+        above_btn_sep.setFixedHeight(4)
+        above_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(above_btn_sep)
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
         save_button = QPushButton("Save")
@@ -120,7 +148,6 @@ class StylesheetForm(QDialog):
         close_button = QPushButton("Close")
         close_button.setMinimumWidth(90)
         close_button.clicked.connect(self._debug_close_with_prompt)
-
         # --- Add Toggle Color On/Off Button ---
         toggle_color_button = QPushButton()
         toggle_color_button.setMinimumWidth(150)
@@ -132,15 +159,18 @@ class StylesheetForm(QDialog):
             toggle_color_button.setText("Toggle Color Off")
         toggle_color_button.clicked.connect(self._debug_toggle_color_on_off)
         self.toggle_color_button = toggle_color_button
-
         button_layout.addWidget(save_button)
         button_layout.addWidget(restore_defaults_button)
         button_layout.addWidget(toggle_color_button)
         button_layout.addWidget(close_button)
         button_layout.addStretch(1)
         layout.addLayout(button_layout)
+        # Separator 4: below buttons
+        below_btn_sep = QWidget()
+        below_btn_sep.setFixedHeight(4)
+        below_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(below_btn_sep)
         layout.addSpacing(16)
-
         # --- PATCH: Apply color mode at form open ---
         if not self.color_toggle:
             self.toggle_color_on_off(init=True)
