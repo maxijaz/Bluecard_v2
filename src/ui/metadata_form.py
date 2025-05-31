@@ -44,7 +44,7 @@ class MetadataForm(QDialog):
             self.cod_cia_hol_default = ""
 
         self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
-        self.resize(700, 600)
+        self.resize(830, 580)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # --- Apply display preferences ---
@@ -169,34 +169,40 @@ class MetadataForm(QDialog):
                     grid_layout.addWidget(field_input, idx - num_rows, 3)
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
-        # --- Tickboxes (Days) and Color Toggle at bottom ---
+        # --- Tickboxes (Days) at bottom ---
         bottom_row = QHBoxLayout()
-        # Days checkboxes
+        # Days toggle buttons
         self.days_label = QLabel("Days:")
         self.days_label.setFont(self.form_font)
-        self.days_checkboxes = {}
+        self.days_buttons = {}
         days_layout = QHBoxLayout()
-        for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
-            checkbox = QCheckBox(day)
-            checkbox.setFont(self.form_font)
-            self.days_checkboxes[day] = checkbox
-            days_layout.addWidget(checkbox)
-        # Prepopulate checkboxes if editing
+        day_map = [
+            ("Mon", "Monday"), ("Tue", "Tuesday"), ("Wed", "Wednesday"),
+            ("Thu", "Thursday"), ("Fri", "Friday"), ("Sat", "Saturday"), ("Sun", "Sunday")
+        ]
+        for short, full in day_map:
+            btn = QPushButton(short)
+            btn.setCheckable(True)
+            btn.setFont(self.form_font)
+            btn.setMinimumWidth(44)
+            btn.setMaximumWidth(60)
+            btn.setStyleSheet(
+                "QPushButton { border-radius: 12px; padding: 4px 12px; background: #e3f2fd; color: #222; border: 1.5px solid #1976d2; } "
+                "QPushButton:checked { background: #1976d2; color: white; border: 2px solid #1976d2; } "
+                "QPushButton:hover { background: #bbdefb; }"
+            )
+            self.days_buttons[full] = btn
+            days_layout.addWidget(btn)
+        # Prepopulate toggles if editing
         if self.is_edit:
             selected_days = metadata.get("days", "").split(", ")
             for day in selected_days:
-                if day in self.days_checkboxes:
-                    self.days_checkboxes[day].setChecked(True)
+                if day in self.days_buttons:
+                    self.days_buttons[day].setChecked(True)
         days_widget = QWidget()
         days_widget.setLayout(days_layout)
         bottom_row.addWidget(self.days_label)
         bottom_row.addWidget(days_widget)
-        # Color toggle (styled like stylesheet)
-        self.color_toggle = QPushButton("Toggle Colors")
-        self.color_toggle.setCheckable(True)
-        self.color_toggle.setFont(self.form_font)
-        self.color_toggle.setStyleSheet("QPushButton:checked { background: #4caf50; color: white; }")
-        bottom_row.addWidget(self.color_toggle)
         # Add a stretch to push toggle to the right
         bottom_row.addStretch()
         # Add a styled frame for bottom row
@@ -311,8 +317,8 @@ class MetadataForm(QDialog):
         metadata["class_time"] = self.class_time_input.text()
         metadata["max_classes"] = self.max_classes_input.text()
 
-        # Combine selected days into a comma-separated string
-        selected_days = [day for day, checkbox in self.days_checkboxes.items() if checkbox.isChecked()]
+        # Combine selected days into a comma-separated string (from toggled buttons)
+        selected_days = [day for day, btn in self.days_buttons.items() if btn.isChecked()]
         metadata["days"] = ", ".join(selected_days)
 
         # --- PATCH: Set default COD/CIA/HOL for new class ---
@@ -448,7 +454,7 @@ class MetadataForm(QDialog):
 
     def warn_if_start_date_not_in_days(self):
         start_date_str = self.fields["start_date"].text().strip()
-        days_str = ", ".join([day for day, cb in self.days_checkboxes.items() if cb.isChecked()])
+        days_str = ", ".join([day for day, cb in self.days_buttons.items() if cb.isChecked()])
         return warn_if_start_date_not_in_days(self, start_date_str, days_str)
 
 def generate_dates(start_date_str, days_str, max_classes):
