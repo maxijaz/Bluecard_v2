@@ -100,7 +100,7 @@ def get_summary_text(teacher_name="Paul R"):
     return "\n".join(lines)
 
 class MonthlySummaryWindow:
-    def __init__(self, ...):
+    def __init__(self):
         super().__init__(...)
         display_settings = get_all_defaults()
         scale = str(display_settings.get("scale_windows", "1")) == "1"

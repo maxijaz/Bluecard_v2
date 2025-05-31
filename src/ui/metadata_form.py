@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime  # Import datetime
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox, QCheckBox
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox, QCheckBox, QGridLayout, QFrame
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from logic.parser import save_data
@@ -48,7 +48,6 @@ class MetadataForm(QDialog):
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
 
         # --- Apply display preferences ---
-        from logic.db_interface import get_all_defaults
         display_settings = get_all_defaults()
         from logic.display import center_widget, scale_and_center, apply_window_flags
         scale = str(display_settings.get("scale_windows", "1")) == "1"
@@ -59,48 +58,91 @@ class MetadataForm(QDialog):
             scale_and_center(self, width_ratio, height_ratio)
         elif center:
             center_widget(self)
-        # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
 
         # Main layout
         layout = QVBoxLayout(self)
+
+        # Add heading and info text to match StylesheetForm
+        heading = QLabel("Add New Class")
+        heading.setObjectName("formTitle")
+        heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
+        layout.addWidget(heading)
+        heading_sep = QWidget()
+        heading_sep.setFixedHeight(4)
+        heading_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(heading_sep)
+        info_label = QLabel("Text blah blah blah\nblah blah blah")
+        info_label.setStyleSheet("font-size: 9.5pt; color: #444444;")
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+        info_sep = QWidget()
+        info_sep.setFixedHeight(4)
+        info_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
+        layout.addWidget(info_sep)
+        layout.addSpacing(12)
 
         # Scrollable area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_content = QWidget()
-        scroll_layout = QFormLayout(scroll_content)
+        grid_layout = QGridLayout(scroll_content)
+        grid_layout.setHorizontalSpacing(24)
+        grid_layout.setVerticalSpacing(10)
 
-        # Fields
+        # --- Data entry fields ---
         self.fields = {}
         metadata = self.data["classes"][self.class_id]["metadata"] if self.is_edit else {}
-        for label, key in [
-            ("Class No*", "class_no"),
-            ("Company*", "company"),
-            ("Consultant", "consultant"),
-            ("Teacher", "teacher"),
-            ("Teacher No", "teacher_no"),
-            ("Room", "room"),
-            ("Course Book", "course_book"),
-            ("Start Date", "start_date"),
-            ("Finish Date", "finish_date"),
-            ("Time", "time"),
-            ("Notes", "notes"),
-            ("Rate", "rate"),
-            ("CCP", "ccp"),
-            ("Travel", "travel"),
-            ("Bonus", "bonus"),
-        ]:
+        field_defs = [
+            ("Class No: *", "class_no"),
+            ("Company: *", "company"),
+            ("Room:", "room"),
+            ("Course Book:", "course_book"),
+            ("Course Hours:", "course_hours"),
+            ("Time:", "time"),
+            ("Start Date:", "start_date"),
+            ("Finish Date:", "finish_date"),
+            ("Notes:", "notes"),
+            ("Consultant:", "consultant"),
+            ("Teacher:", "teacher"),
+            ("Teacher No:", "teacher_no"),
+            ("Rate:", "rate"),
+            ("CCP:", "ccp"),
+            ("Travel:", "travel"),
+            ("Bonus:", "bonus"),
+            ("Class Time:", "class_time"),
+            ("Max Classes:", "max_classes"),
+        ]
+        # Place fields in 2 columns, 9 rows, in the order given (lines 77-94)
+        num_fields = len(field_defs)
+        num_rows = (num_fields + 1) // 2
+        for idx, (label, key) in enumerate(field_defs):
             field_label = QLabel(label)
             field_label.setFont(self.form_font)
             field_input = QLineEdit()
             field_input.setFont(self.form_font)
-            if not self.is_edit:
-                default_key = f"def_{key}"
-                field_input.setText(self.defaults.get(default_key, ""))
+            # Set defaults and fallbacks for important fields
+            if key == "course_hours":
+                val = str(metadata.get(key, self.defaults.get("def_coursehours", "40")))
+                if not val or not val.replace('.', '', 1).isdigit():
+                    val = "40"
+                field_input.setText(val)
+            elif key == "class_time":
+                val = str(metadata.get(key, self.defaults.get("def_classtime", "2")))
+                if not val or not val.replace('.', '', 1).isdigit():
+                    val = "2"
+                field_input.setText(val)
+            elif key == "max_classes":
+                val = str(metadata.get(key, self.defaults.get("def_maxclasses", "20")))
+                if not val or not val.isdigit():
+                    val = "20"
+                field_input.setText(val)
+                field_input.setReadOnly(True)
             else:
-                field_input.setText(str(metadata.get(key, "")))
-
-            # Add "Pick" button for Start Date
+                if not self.is_edit:
+                    default_key = f"def_{key}"
+                    field_input.setText(self.defaults.get(default_key, ""))
+                else:
+                    field_input.setText(str(metadata.get(key, "")))
             if key == "start_date":
                 pick_button = QPushButton("Pick")
                 pick_button.setFont(self.form_font)
@@ -108,13 +150,28 @@ class MetadataForm(QDialog):
                 row_layout = QHBoxLayout()
                 row_layout.addWidget(field_input)
                 row_layout.addWidget(pick_button)
+                row_widget = QWidget()
+                row_widget.setLayout(row_layout)
                 self.fields[key] = field_input
-                scroll_layout.addRow(field_label, row_layout)
+                if idx < num_rows:
+                    grid_layout.addWidget(field_label, idx, 0)
+                    grid_layout.addWidget(row_widget, idx, 1)
+                else:
+                    grid_layout.addWidget(field_label, idx - num_rows, 2)
+                    grid_layout.addWidget(row_widget, idx - num_rows, 3)
             else:
                 self.fields[key] = field_input
-                scroll_layout.addRow(field_label, field_input)
-
-        # Days Field (Checkboxes)
+                if idx < num_rows:
+                    grid_layout.addWidget(field_label, idx, 0)
+                    grid_layout.addWidget(field_input, idx, 1)
+                else:
+                    grid_layout.addWidget(field_label, idx - num_rows, 2)
+                    grid_layout.addWidget(field_input, idx - num_rows, 3)
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
+        # --- Tickboxes (Days) and Color Toggle at bottom ---
+        bottom_row = QHBoxLayout()
+        # Days checkboxes
         self.days_label = QLabel("Days:")
         self.days_label.setFont(self.form_font)
         self.days_checkboxes = {}
@@ -124,96 +181,68 @@ class MetadataForm(QDialog):
             checkbox.setFont(self.form_font)
             self.days_checkboxes[day] = checkbox
             days_layout.addWidget(checkbox)
-
         # Prepopulate checkboxes if editing
         if self.is_edit:
             selected_days = metadata.get("days", "").split(", ")
             for day in selected_days:
                 if day in self.days_checkboxes:
                     self.days_checkboxes[day].setChecked(True)
-
-        scroll_layout.addRow(self.days_label, days_layout)
-
-        # Course Hours
-        self.class_hours_label = QLabel("Course Hours:")
-        self.class_hours_label.setFont(self.form_font)
-        self.class_hours_input = QLineEdit()
-        self.class_hours_input.setFont(self.form_font)
-        if self.is_edit and metadata.get("course_hours"):
-            self.class_hours_input.setText(str(metadata.get("course_hours")))
-        else:
-            self.class_hours_input.setText(self.defaults.get("def_coursehours", "40"))
-        scroll_layout.addRow(self.class_hours_label, self.class_hours_input)
-
-        # Class Time
-        self.class_time_label = QLabel("Class Time:")
-        self.class_time_label.setFont(self.form_font)
-        self.class_time_input = QLineEdit()
-        self.class_time_input.setFont(self.form_font)
-        if self.is_edit and metadata.get("class_time"):
-            self.class_time_input.setText(str(metadata.get("class_time")))
-        else:
-            self.class_time_input.setText(self.defaults.get("def_classtime", "2"))
-        scroll_layout.addRow(self.class_time_label, self.class_time_input)
-
-        # Max Classes
-        self.max_classes_label = QLabel("Max Classes:")
-        self.max_classes_label.setFont(self.form_font)
-        self.max_classes_input = QLineEdit()
-        self.max_classes_input.setFont(self.form_font)
-        self.max_classes_input.setReadOnly(True)
-        if self.is_edit and metadata.get("max_classes"):
-            self.max_classes_input.setText(str(metadata.get("max_classes")))
-        elif self.is_edit and "dates" in metadata:
-            self.max_classes_input.setText(str(len(metadata["dates"])))
-        else:
-            self.update_max_classes()
-        scroll_layout.addRow(self.max_classes_label, self.max_classes_input)
-
-        scroll_area.setWidget(scroll_content)
-        layout.addWidget(scroll_area)
-
-        # Buttons
+        days_widget = QWidget()
+        days_widget.setLayout(days_layout)
+        bottom_row.addWidget(self.days_label)
+        bottom_row.addWidget(days_widget)
+        # Color toggle (styled like stylesheet)
+        self.color_toggle = QPushButton("Toggle Colors")
+        self.color_toggle.setCheckable(True)
+        self.color_toggle.setFont(self.form_font)
+        self.color_toggle.setStyleSheet("QPushButton:checked { background: #4caf50; color: white; }")
+        bottom_row.addWidget(self.color_toggle)
+        # Add a stretch to push toggle to the right
+        bottom_row.addStretch()
+        # Add a styled frame for bottom row
+        bottom_frame = QFrame()
+        bottom_frame.setFrameShape(QFrame.StyledPanel)
+        bottom_frame.setLayout(bottom_row)
+        layout.addWidget(bottom_frame)
+        # --- Buttons ---
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
         save_button.setFont(self.form_font)
         save_button.clicked.connect(self.save_metadata)
         button_layout.addWidget(save_button)
-
         cancel_button = QPushButton("Cancel")
         cancel_button.setFont(self.form_font)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
-
         layout.addLayout(button_layout)
 
-        # Connect signals
-        self.class_hours_input.textChanged.connect(self.update_max_classes)
-        self.class_time_input.textChanged.connect(self.update_max_classes)
+        # Connect signals for live max_classes update
+        self.fields["course_hours"].textChanged.connect(self.update_max_classes)
+        self.fields["class_time"].textChanged.connect(self.update_max_classes)
         self.fields["start_date"].editingFinished.connect(self.validate_start_date)
-
         # Initialize MaxClasses
         self.update_max_classes()
 
     def update_max_classes(self):
-        """Recalculate MaxClasses based on CourseHours and ClassTime, supporting decimals."""
+        """Recalculate Max Classes based on Course Hours and Class Time. Always fallback to safe defaults. Add note if remainder exists."""
         try:
-            course_hours = float(self.class_hours_input.text())
-            class_time = float(self.class_time_input.text())
-
-            if class_time > 0:
-                max_classes = int(course_hours // class_time)
-                total_time_used = max_classes * class_time
-                remainder = course_hours - total_time_used
-
-                if remainder > 0:
-                    self.max_classes_input.setText(f"{max_classes} x {class_time} = {total_time_used:.1f} ({remainder:.1f} hour remains)")
-                else:
-                    self.max_classes_input.setText(f"{max_classes} x {class_time} = {total_time_used:.1f}")
-            else:
-                self.max_classes_input.setText("0")
-        except ValueError:
-            self.max_classes_input.setText("Invalid input")
+            course_hours = float(self.fields["course_hours"].text())
+        except Exception:
+            course_hours = 40.0
+        try:
+            class_time = float(self.fields["class_time"].text())
+        except Exception:
+            class_time = 2.0
+        if class_time <= 0:
+            class_time = 2.0
+        max_classes = int(course_hours // class_time)
+        remainder = course_hours - (max_classes * class_time)
+        if max_classes <= 0:
+            max_classes = 20
+        if remainder > 0:
+            self.fields["max_classes"].setText(f"{max_classes} classes ({remainder:g} hour remains)")
+        else:
+            self.fields["max_classes"].setText(f"{max_classes} classes")
 
     def save_metadata(self):
         """Save metadata for the class."""
@@ -396,6 +425,10 @@ class MetadataForm(QDialog):
     def closeEvent(self, event):
         self.resize(500, 600)
         super().closeEvent(event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        print(f"[DEBUG] Window size: width={self.width()}, height={self.height()}")
 
     def validate_start_date(self):
         start_date = self.fields["start_date"].text().strip()
