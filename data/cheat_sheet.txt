@@ -1,0 +1,50 @@
+🧠 GitHub Copilot Cheat Sheet – Ask & Agent (Edit) Combo
+VS Code | By Paul
+
+==============================
+🔍 ASK COPILOT (Chat prompts)
+==============================
+Use this panel to *understand*, *ask for advice*, or *explore improvements*.
+
+💬 Common questions:
+- How can I improve this function?
+- Can you explain what this code does?
+- What’s a more efficient way to write this?
+- How do I make this more readable?
+- What’s a cleaner structure for this class/module?
+- Suggest better error handling here.
+- Help me implement backup rotation logic.
+
+===================================
+✏️ COPILOT AGENT (Edit instructions)
+===================================
+Use this mode to *apply changes* or *modify code directly*.
+
+🛠️ Common edit commands:
+- Refactor this function.
+- Add error handling.
+- Simplify this logic.
+- Apply your previous suggestion.
+- Replace if-else with a dictionary.
+- Add comments explaining each step.
+- Convert this into a class.
+- Rename variables for clarity.
+
+=================================================
+🔄 TRANSITION FROM ASK → AGENT (Clear References)
+=================================================
+To help the Agent know what you mean, refer clearly to the last answer.
+
+🧠 Examples:
+- Use your last suggestion to update the code.
+- Apply the optimization you just described.
+- Implement point #2 from your advice.
+- Make the change you suggested above.
+- Modify the function with your recommended fix.
+- Based on your last response, add the early return.
+
+⚙️ Add context for accuracy (optional):
+- In `db_interface.py`, apply your last suggestion.
+- Update `SettingsForm` per your previous edit idea.
+- Modify the backup logic you mentioned, in this method.
+

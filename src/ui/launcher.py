@@ -164,6 +164,11 @@ class Launcher(QMainWindow):
         ttr_button.clicked.connect(self.open_ttr)
         button_layout_row2.addWidget(ttr_button)
 
+        # Add Stylesheet button after TTR
+        stylesheet_button = QPushButton("Stylesheet")
+        stylesheet_button.clicked.connect(self.open_stylesheet)
+        button_layout_row2.addWidget(stylesheet_button)
+
         self.layout.addLayout(button_layout_row2)
 
         self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
@@ -244,6 +249,7 @@ class Launcher(QMainWindow):
             self.refresh_table,
             defaults
         )
+        metadata_form.class_saved.connect(self.refresh_data)  # Live update on save
         metadata_form.exec_()
 
     def add_new_class(self):
@@ -272,22 +278,30 @@ class Launcher(QMainWindow):
             return
 
         class_id = self.table.item(selected_row, 0).text()
+        company = self.table.item(selected_row, 1).text()
         set_class_archived(class_id, archived=True)
         self.refresh_data()
-        # Show a non-blocking confirmation dialog for 3 seconds
+        # Show a non-blocking confirmation dialog for 2 seconds
         from PyQt5.QtCore import QTimer
         from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel
+        from PyQt5.QtGui import QFontMetrics, QFont
         dlg = QDialog(self)
         dlg.setWindowTitle("Archived")
         dlg.setWindowFlags(dlg.windowFlags() | Qt.FramelessWindowHint | Qt.Tool)
         layout = QVBoxLayout(dlg)
-        label = QLabel(f"Class {class_id} has been archived.")
+        label_text = f"Class {class_id} ({company}) has been archived."
+        label = QLabel(label_text)
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
         dlg.setLayout(layout)
-        dlg.setFixedSize(300, 80)
+        # Dynamically set dialog width based on label text
+        font = label.font() if hasattr(label, 'font') else QFont()
+        metrics = QFontMetrics(font)
+        text_width = metrics.width(label_text)
+        dlg_width = max(text_width + 60, 400)  # 60px padding, min 400px
+        dlg.setFixedSize(dlg_width, 80)
         dlg.show()
-        QTimer.singleShot(3000, dlg.accept)
+        QTimer.singleShot(2000, dlg.accept)
 
     def open_archive_manager(self):
         """Open the Archive Manager for all archived classes."""
@@ -301,7 +315,8 @@ class Launcher(QMainWindow):
             QMessageBox.information(self, "No Archived Classes", "There are no archived classes to manage.")
             return
 
-        archive_manager = ArchiveManager(self, {"classes": archived_classes}, archived_classes, self.refresh_table)
+        # Pass self.refresh_data as the callback for instant launcher refresh
+        archive_manager = ArchiveManager(self, {"classes": archived_classes}, archived_classes, self.refresh_data)
         archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):
@@ -310,13 +325,14 @@ class Launcher(QMainWindow):
         dlg = MonthlySummaryDialog(summary_text, self)
         dlg.exec_()
 
+    def open_stylesheet(self):
+        from ui.stylesheet import StylesheetForm
+        stylesheet_form = StylesheetForm(self)
+        stylesheet_form.exec_()
+
     def open_settings(self):
         from ui.settings import SettingsForm
-        from ui.stylesheet import StylesheetForm
-        def open_stylesheet():
-            stylesheet_form = StylesheetForm(self)
-            stylesheet_form.exec_()
-        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme, open_stylesheet)
+        settings_form = SettingsForm(self, self.theme, self.apply_settings_and_theme)
         settings_form.exec_()
 
     def apply_settings_and_theme(self, new_theme):

@@ -157,7 +157,7 @@ def get_all_defaults():
     return {row["key"]: row["value"] for row in rows}
 
 def set_default(key, value):
-    """Set or update a default value in the database."""
+    """Set or update a default value in the database (including color_toggle)."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -167,8 +167,9 @@ def set_default(key, value):
     conn.commit()
     conn.close()
 
+
 def set_all_defaults(defaults_dict):
-    """Set or update multiple defaults in the database."""
+    """Set or update multiple defaults in the database (including color_toggle)."""
     conn = get_connection()
     cursor = conn.cursor()
     for key, value in defaults_dict.items():

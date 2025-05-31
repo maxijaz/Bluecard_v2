@@ -301,6 +301,9 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         defaults["form_border_color"] = "#1976d2"
     if "form_title_color" not in defaults:
         defaults["form_title_color"] = "#222222"
+    # PATCH: Add color_toggle default if not present
+    if "color_toggle" not in defaults:
+        defaults["color_toggle"] = "yes"
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))

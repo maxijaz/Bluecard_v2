@@ -63,21 +63,37 @@ class ArchiveManager(QDialog):
             self.table.setItem(row_position, 2, QTableWidgetItem(class_data.get("archive", "Yes")))
 
     def restore_class(self):
-        """Restore the selected archived class."""
+        """Restore the selected archived class immediately (no Y/N confirmation, auto-closing message)."""
         selected_row = self.table.currentRow()
         if selected_row == -1:
             QMessageBox.warning(self, "No Selection", "Please select a class to restore.")
             return
 
         class_id = self.table.item(selected_row, 0).text()
-        confirm = QMessageBox.question(
-            self, "Restore Class",
-            f"Are you sure you want to restore class {class_id}?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if confirm == QMessageBox.Yes:
-            set_class_archived(class_id, archived=False)
-            self.refresh_data()
+        company = self.table.item(selected_row, 1).text()
+        set_class_archived(class_id, archived=False)
+        self.refresh_data()
+        # Show a non-blocking confirmation dialog for 2 seconds
+        from PyQt5.QtCore import QTimer
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel
+        from PyQt5.QtGui import QFontMetrics, QFont
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Restored")
+        dlg.setWindowFlags(dlg.windowFlags() | Qt.FramelessWindowHint | Qt.Tool)
+        layout = QVBoxLayout(dlg)
+        label_text = f"Class {class_id} ({company}) has been restored."
+        label = QLabel(label_text)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        dlg.setLayout(layout)
+        # Dynamically set dialog width based on label text
+        font = label.font() if hasattr(label, 'font') else QFont()
+        metrics = QFontMetrics(font)
+        text_width = metrics.width(label_text)
+        dlg_width = max(text_width + 60, 400)  # 60px padding, min 400px
+        dlg.setFixedSize(dlg_width, 80)
+        dlg.show()
+        QTimer.singleShot(2000, dlg.accept)
 
     def delete_class(self):
         """Delete the selected archived class."""
