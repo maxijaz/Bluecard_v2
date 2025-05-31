@@ -26,7 +26,6 @@ from logic.db_interface import (
     set_class_archived,
     get_all_defaults,
 )
-from ui.ui_display import center_widget, scale_and_center, apply_window_flags
 
 DB_PATH = os.path.join("data", "001attendance.db")
 BACKUP_DIR = os.path.join("data", "backup")
@@ -406,8 +405,14 @@ class Launcher(QMainWindow):
         return get_all_defaults()
 
     def center_window(self):
-        """Center the Launcher window on the screen using the display utility."""
-        center_widget(self)
+        """Center the Launcher window on the screen (using availableGeometry for multi-monitor support)."""
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry() if screen else QApplication.desktop().screenGeometry()
+        window_geometry = self.frameGeometry()
+        center_point = screen_geometry.center()
+        window_geometry.moveCenter(center_point)
+        self.move(window_geometry.topLeft())
+        # Debug print for window location on open
         print(f"[DEBUG] Window location on open: x={self.x()}, y={self.y()}, width={self.width()}, height={self.height()}")
 
     def open_mainform_after_save(self, class_id):

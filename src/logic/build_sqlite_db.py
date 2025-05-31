@@ -307,6 +307,15 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     # Remove theme from defaults if present
     if "theme" in defaults:
         del defaults["theme"]
+    # --- Add display management defaults for window centering/scaling ---
+    if "center_windows" not in defaults:
+        defaults["center_windows"] = "1"
+    if "scale_windows" not in defaults:
+        defaults["scale_windows"] = "1"
+    if "window_width_ratio" not in defaults:
+        defaults["window_width_ratio"] = "0.6"
+    if "window_height_ratio" not in defaults:
+        defaults["window_height_ratio"] = "0.6"
     cursor = conn.cursor()
     for key, value in defaults.items():
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
