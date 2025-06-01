@@ -392,23 +392,25 @@ class Launcher(QMainWindow):
     def apply_settings_and_theme(self, new_theme):
         """Apply theme and font size after settings are changed."""
         self.theme = new_theme
-        # Apply font size and colors globally
+        # --- PATCH: Use per-form settings if available, fallback to global defaults ---
         from PyQt5.QtGui import QFont
+        form_settings = get_form_settings("Launcher") or {}
         default_settings = get_all_defaults()
-        form_font_size = int(default_settings.get("form_font_size", 12))
-        button_font_size = int(default_settings.get("button_font_size", form_font_size))
-        table_font_size = int(default_settings.get("table_font_size", form_font_size))
-        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
-        form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
-        button_bg_color = default_settings.get("button_bg_color", "#1976d2")
-        button_fg_color = default_settings.get("button_fg_color", "#ffffff")
-        table_bg_color = default_settings.get("table_bg_color", "#ffffff")
-        table_fg_color = default_settings.get("table_fg_color", "#222222")
-        table_header_bg_color = default_settings.get("table_header_bg_color", "#1976d2")
-        table_header_fg_color = default_settings.get("table_header_fg_color", "#ffffff")
-        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
-        # Set the default font for general UI (form/metadata)
-        QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
+        def get_setting(key, fallback):
+            return form_settings.get(key) if form_settings.get(key) not in (None, "") else default_settings.get(key, fallback)
+        form_font_size = int(get_setting("font_size", 12))
+        button_font_size = int(get_setting("button_font_size", form_font_size))
+        table_font_size = int(get_setting("table_font_size", form_font_size))
+        table_header_font_size = int(get_setting("table_header_font_size", form_font_size))
+        form_bg_color = get_setting("bg_color", "#e3f2fd")
+        button_bg_color = get_setting("button_bg_color", "#1976d2")
+        button_fg_color = get_setting("button_fg_color", "#ffffff")
+        table_bg_color = get_setting("table_bg_color", "#ffffff")
+        table_fg_color = get_setting("table_fg_color", "#222222")
+        table_header_bg_color = get_setting("table_header_bg_color", "#1976d2")
+        table_header_fg_color = get_setting("table_header_fg_color", "#ffffff")
+        table_header_font_size = int(get_setting("table_header_font_size", form_font_size))
+        QApplication.instance().setFont(QFont(get_setting("font_family", "Segoe UI"), form_font_size))
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
             QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
@@ -420,14 +422,13 @@ class Launcher(QMainWindow):
         QApplication.instance().setStyleSheet(style)
         # --- Force update of table data font size for instant effect ---
         if hasattr(self, 'table'):
-            from PyQt5.QtGui import QFont
             for row in range(self.table.rowCount()):
                 for col in range(self.table.columnCount()):
                     item = self.table.item(row, col)
                     if item:
-                        item.setFont(QFont("Segoe UI", table_font_size))
+                        item.setFont(QFont(get_setting("font_family", "Segoe UI"), table_font_size))
             # Adjust row heights to fit new font size (more vertical padding)
-            row_height = int(table_font_size * 2.4)  # 2.4x font size for more padding
+            row_height = int(table_font_size * 2.4)
             for row in range(self.table.rowCount()):
                 self.table.setRowHeight(row, row_height)
 

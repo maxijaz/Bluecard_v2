@@ -183,13 +183,24 @@ class Mainform(QMainWindow):
         max_h = form_settings.get("max_height")
         if max_w and max_h:
             self.setMaximumSize(int(max_w), int(max_h))
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
-        self.default_settings = self.load_default_settings()
-        font_size = int(form_settings.get("font_size") or self.default_settings.get("font_size", self.default_settings.get("button_font_size", 12)))
+        self.default_settings = get_all_defaults()
+        font_size = int(form_settings.get("font_size") or self.default_settings.get("form_font_size", self.default_settings.get("button_font_size", 12)))
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
         QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        if not win_w or not win_h:
+            from logic.display import center_widget, scale_and_center, apply_window_flags
+            scale = str(self.default_settings.get("scale_windows", "1")) == "1"
+            center = str(self.default_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(self.default_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(self.default_settings.get("window_height_ratio", 0.6))
+            if scale:
+                scale_and_center(self, width_ratio, height_ratio)
+            elif center:
+                center_widget(self)
 
         super().__init__()
         self.class_id = class_id

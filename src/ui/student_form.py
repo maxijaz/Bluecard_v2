@@ -27,7 +27,7 @@ class StudentForm(QDialog):
         if win_w and win_h:
             self.resize(int(win_w), int(win_h))
         else:
-            self.setFixedSize(300, 350)
+            self.setFixedSize(650, 500)
         # Min/max size
         min_w = form_settings.get("min_width")
         min_h = form_settings.get("min_height")
@@ -38,7 +38,7 @@ class StudentForm(QDialog):
         if max_w and max_h:
             self.setMaximumSize(int(max_w), int(max_h))
         # Window flags
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
             from logic.display import center_widget, scale_and_center, apply_window_flags

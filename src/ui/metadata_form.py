@@ -28,9 +28,8 @@ class MetadataForm(QDialog):
 
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("MetadataForm") or {}
-        # Fallback to global defaults if not set
-        self.defaults = get_all_defaults() if not self.is_edit else {}
-        self.form_font_size = int(form_settings.get("font_size") or self.defaults.get("form_font_size", 12))
+        defaults = get_all_defaults()
+        self.form_font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
         from PyQt5.QtGui import QFont
         self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
         # Window size/geometry
@@ -50,15 +49,14 @@ class MetadataForm(QDialog):
         if max_w and max_h:
             self.setMaximumSize(int(max_w), int(max_h))
         # Window flags
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
-            display_settings = self.defaults
             from logic.display import center_widget, scale_and_center, apply_window_flags
-            scale = str(display_settings.get("scale_windows", "1")) == "1"
-            center = str(display_settings.get("center_windows", "1")) == "1"
-            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+            scale = str(defaults.get("scale_windows", "1")) == "1"
+            center = str(defaults.get("center_windows", "1")) == "1"
+            width_ratio = float(defaults.get("window_width_ratio", 0.6))
+            height_ratio = float(defaults.get("window_height_ratio", 0.6))
             if scale:
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
