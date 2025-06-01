@@ -212,3 +212,30 @@ def set_attendance(class_no, student_id, date, status):
     )
     conn.commit()
     conn.close()
+
+def get_form_settings(form_name):
+    """Fetch per-form settings as a dict for the given form_name (e.g., 'MetadataForm')."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM form_settings WHERE form_name = ?", (form_name,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def set_form_settings(form_name, settings_dict):
+    """Insert or update per-form settings for the given form_name. settings_dict keys must match table columns (except form_name)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    # Remove form_name if present in dict
+    settings = dict(settings_dict)
+    settings.pop("form_name", None)
+    columns = ["form_name"] + list(settings.keys())
+    placeholders = ["?"] * len(columns)
+    values = [form_name] + [settings[k] for k in settings.keys()]
+    assignments = ', '.join([f"{k}=?" for k in settings.keys()])
+    # Try update first, then insert if not exists
+    cursor.execute(f"UPDATE form_settings SET {assignments} WHERE form_name = ?", values[1:] + [form_name])
+    if cursor.rowcount == 0:
+        cursor.execute(f"INSERT INTO form_settings ({', '.join(columns)}) VALUES ({', '.join(placeholders)})", values)
+    conn.commit()
+    conn.close()

@@ -11,7 +11,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
-from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id
+from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id, get_form_settings
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -26,38 +26,44 @@ class MetadataForm(QDialog):
         self.is_read_only = is_read_only
         self.single_date_mode = single_date_mode
 
-        # --- PATCH: Load defaults from DB, not JSON ---
-        if not self.is_edit:
-            self.defaults = get_all_defaults()
-            self.form_font_size = int(self.defaults.get("form_font_size", 12))
-        else:
-            self.defaults = {}
-            self.form_font_size = 12
-        self.form_font = None
+        # --- PATCH: Load per-form settings from DB ---
+        form_settings = get_form_settings("MetadataForm") or {}
+        # Fallback to global defaults if not set
+        self.defaults = get_all_defaults() if not self.is_edit else {}
+        self.form_font_size = int(form_settings.get("font_size") or self.defaults.get("form_font_size", 12))
         from PyQt5.QtGui import QFont
-        self.form_font = QFont("Segoe UI", self.form_font_size)
-
-        # --- PATCH: Set cod_cia_hol in metadata for new class ---
-        if not self.is_edit:
-            self.cod_cia_hol_default = self.defaults.get("cod_cia_hol", "0 COD / 0 CIA / 0 HOL")
+        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
+        # Window size/geometry
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        if win_w and win_h:
+            self.resize(int(win_w), int(win_h))
         else:
-            self.cod_cia_hol_default = ""
-
-        self.setWindowTitle("Edit Metadata" if self.is_edit else "Add New Class")
-        self.resize(830, 580)
+            self.resize(830, 580)
+        # Min/max size
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        if min_w and min_h:
+            self.setMinimumSize(int(min_w), int(min_h))
+        max_w = form_settings.get("max_width")
+        max_h = form_settings.get("max_height")
+        if max_w and max_h:
+            self.setMaximumSize(int(max_w), int(max_h))
+        # Window flags
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
-
-        # --- Apply display preferences ---
-        display_settings = get_all_defaults()
-        from logic.display import center_widget, scale_and_center, apply_window_flags
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
+        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        if not win_w or not win_h:
+            display_settings = self.defaults
+            from logic.display import center_widget, scale_and_center, apply_window_flags
+            scale = str(display_settings.get("scale_windows", "1")) == "1"
+            center = str(display_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+            if scale:
+                scale_and_center(self, width_ratio, height_ratio)
+            elif center:
+                center_widget(self)
+        # --- PATCH END ---
 
         # Main layout
         layout = QVBoxLayout(self)

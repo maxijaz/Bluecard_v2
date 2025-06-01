@@ -3,8 +3,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from logic.parser import save_data
-from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults
-from logic.display import center_widget, scale_and_center, apply_window_flags
+from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults, get_form_settings
 
 class StudentForm(QDialog):
     def __init__(self, parent, class_id, data, refresh_callback, student_id=None, student_data=None, default_attendance=None):
@@ -16,22 +15,42 @@ class StudentForm(QDialog):
         self.student_data = student_data or {}
         self.default_attendance = default_attendance
 
-        # --- PATCH: Load form font size from settings ---
+        # --- PATCH: Load per-form settings from DB ---
+        form_settings = get_form_settings("StudentForm") or {}
         defaults = get_all_defaults()
         from PyQt5.QtGui import QFont
-        self.form_font_size = int(defaults.get("form_font_size", 12))
-        self.form_font = QFont("Segoe UI", self.form_font_size)
-
-        self.setWindowTitle("Edit Student" if student_id else "Add Student")
-        self.setFixedSize(300, 350)
-
-        main_layout = QVBoxLayout()
-        main_layout.setSpacing(10)
-
-        grid = QGridLayout()
-        grid.setSpacing(8)
-        grid.setColumnStretch(0, 0)
-        grid.setColumnStretch(1, 0)
+        self.form_font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
+        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
+        # Window size/geometry
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        if win_w and win_h:
+            self.resize(int(win_w), int(win_h))
+        else:
+            self.setFixedSize(300, 350)
+        # Min/max size
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        if min_w and min_h:
+            self.setMinimumSize(int(min_w), int(min_h))
+        max_w = form_settings.get("max_width")
+        max_h = form_settings.get("max_height")
+        if max_w and max_h:
+            self.setMaximumSize(int(max_w), int(max_h))
+        # Window flags
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        if not win_w or not win_h:
+            from logic.display import center_widget, scale_and_center, apply_window_flags
+            scale = str(defaults.get("scale_windows", "1")) == "1"
+            center = str(defaults.get("center_windows", "1")) == "1"
+            width_ratio = float(defaults.get("window_width_ratio", 0.6))
+            height_ratio = float(defaults.get("window_height_ratio", 0.6))
+            if scale:
+                scale_and_center(self, width_ratio, height_ratio)
+            elif center:
+                center_widget(self)
+        # --- PATCH END ---
 
         # Row 0
         grid.addWidget(self.bold_label("Name:"), 0, 0, alignment=Qt.AlignTop)
@@ -144,18 +163,6 @@ class StudentForm(QDialog):
         # If adding a new student and default_attendance is provided, set it
         if self.student_id is None and self.default_attendance is not None:
             self.student_data["attendance"] = dict(self.default_attendance)
-
-        from logic.db_interface import get_all_defaults
-        display_settings = get_all_defaults()
-        from logic.display import center_widget, scale_and_center, apply_window_flags
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
 
     def bold_label(self, text):
         label = QLabel(text)

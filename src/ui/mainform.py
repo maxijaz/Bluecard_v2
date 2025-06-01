@@ -29,6 +29,7 @@ from logic.db_interface import (
     update_student,
     get_all_defaults,
     set_attendance,
+    get_form_settings,
 )
 
 # Add the src directory to the Python path
@@ -163,21 +164,36 @@ class Mainform(QMainWindow):
     closed = pyqtSignal()  # Signal to notify when the Mainform is closed
 
     def __init__(self, class_id, data, theme):
-        super().__init__()
+        # --- PATCH: Load per-form settings from DB ---
+        form_settings = get_form_settings("Mainform") or {}
         self.setWindowTitle(f"Class Information - {class_id}")
-        self.resize(1280, 720)
-        self.setMinimumSize(800, 600)
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        if win_w and win_h:
+            self.resize(int(win_w), int(win_h))
+        else:
+            self.resize(1280, 720)
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        if min_w and min_h:
+            self.setMinimumSize(int(min_w), int(min_h))
+        else:
+            self.setMinimumSize(800, 600)
+        max_w = form_settings.get("max_width")
+        max_h = form_settings.get("max_height")
+        if max_w and max_h:
+            self.setMaximumSize(int(max_w), int(max_h))
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
-
-        self.class_id = class_id
-        self.theme = theme
-
-        # --- FONT SIZE PATCH: Set default font size from settings or fallback ---
+        # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         self.default_settings = self.load_default_settings()
-        self.font_size = int(self.default_settings.get("font_size", self.default_settings.get("button_font_size", 12)))
+        font_size = int(form_settings.get("font_size") or self.default_settings.get("font_size", self.default_settings.get("button_font_size", 12)))
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
-        QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
+        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+
+        super().__init__()
+        self.class_id = class_id
+        self.theme = theme
 
         # --- PATCH: Load from DB ---
         self.class_data = get_class_by_id(self.class_id)

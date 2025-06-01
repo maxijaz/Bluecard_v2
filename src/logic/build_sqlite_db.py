@@ -124,6 +124,38 @@ def recreate_db(db_path=DB_PATH):
         key TEXT PRIMARY KEY,
         value TEXT
     );
+    -- --- NEW: Per-form settings table for full customization ---
+    CREATE TABLE form_settings (
+        form_name TEXT PRIMARY KEY, -- e.g. 'MetadataForm', 'StudentForm', etc.
+        window_width INTEGER,
+        window_height INTEGER,
+        min_width INTEGER,
+        min_height INTEGER,
+        max_width INTEGER,
+        max_height INTEGER,
+        resizable TEXT DEFAULT 'yes', -- 'yes' or 'no'
+        font_family TEXT,
+        font_size INTEGER,
+        font_bold TEXT, -- 'yes' or 'no'
+        font_italic TEXT, -- 'yes' or 'no'
+        fg_color TEXT, -- main text color
+        bg_color TEXT, -- main background color
+        border_color TEXT,
+        title_color TEXT,
+        button_bg_color TEXT,
+        button_fg_color TEXT,
+        button_font_size INTEGER,
+        button_border_color TEXT,
+        table_bg_color TEXT,
+        table_fg_color TEXT,
+        table_font_size INTEGER,
+        table_header_bg_color TEXT,
+        table_header_fg_color TEXT,
+        table_header_font_size INTEGER,
+        icon_path TEXT,
+        extra_json TEXT, -- for future extensibility (JSON-encoded dict)
+        last_modified TEXT -- ISO timestamp
+    );
     """)
     print("Created tables")
 
@@ -322,6 +354,23 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     conn.commit()
     print("Imported defaults from default.json")
 
+def import_form_settings(conn, form_settings_path=os.path.join(DATA_DIR, "001form_settings.json")):
+    """Import per-form settings from JSON and insert into form_settings table."""
+    if not os.path.exists(form_settings_path):
+        print(f"No 001form_settings.json found at {form_settings_path}")
+        return
+    with open(form_settings_path, "r", encoding="utf-8") as f:
+        form_settings_list = json.load(f)
+    cursor = conn.cursor()
+    for entry in form_settings_list:
+        columns = list(entry.keys())
+        placeholders = ["?"] * len(columns)
+        values = [entry[k] for k in columns]
+        sql = f"INSERT OR REPLACE INTO form_settings ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
+        cursor.execute(sql, values)
+    conn.commit()
+    print(f"Imported per-form settings from {form_settings_path}")
+
 def main():
     if not os.path.exists(JSON_PATH):
         print(f"Error: Dataset file not found: {JSON_PATH}")
@@ -333,6 +382,7 @@ def main():
     conn = recreate_db()
     import_data(conn, data)
     import_defaults(conn)
+    import_form_settings(conn)  # <-- NEW: Import per-form settings
 
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM holidays ORDER BY date")
