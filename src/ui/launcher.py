@@ -110,9 +110,7 @@ class Launcher(QMainWindow):
         # Center the window on startup
         self.center_window()
         # --- Apply display preferences ---
-        from logic.db_interface import get_all_defaults
         display_settings = get_all_defaults()
-        from logic.display import center_widget, scale_and_center, apply_window_flags
         scale = str(display_settings.get("scale_windows", "1")) == "1"
         center = str(display_settings.get("center_windows", "1")) == "1"
         width_ratio = float(display_settings.get("window_width_ratio", 0.6))
@@ -240,7 +238,6 @@ class Launcher(QMainWindow):
                 self.table.insertRow(row_position)
                 item0 = QTableWidgetItem(class_row["class_no"])
                 item1 = QTableWidgetItem(class_row.get("company", "Unknown"))
-                from logic.db_interface import get_all_defaults
                 from PyQt5.QtGui import QFont
                 table_font_size = int(get_all_defaults().get("table_font_size", 12))
                 font = QFont("Segoe UI", table_font_size)
@@ -396,7 +393,6 @@ class Launcher(QMainWindow):
         """Apply theme and font size after settings are changed."""
         self.theme = new_theme
         # Apply font size and colors globally
-        from logic.db_interface import get_all_defaults
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
         form_font_size = int(default_settings.get("form_font_size", 12))
