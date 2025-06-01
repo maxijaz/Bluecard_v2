@@ -25,6 +25,7 @@ from logic.db_interface import (
     update_class,
     set_class_archived,
     get_all_defaults,
+    get_form_settings,
 )
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
@@ -35,31 +36,44 @@ BACKUP_DIR = os.path.join("data", "backup")
 class Launcher(QMainWindow):
     def __init__(self, theme):
         super().__init__()
-        # print("[DEBUG] Launcher __init__ start")
         self.theme = theme
-        self.font_prompt_shown = False  # Track if font size prompt has been shown this session
+        self.font_prompt_shown = False
+        # --- PATCH: Load per-form settings from DB ---
+        form_settings = get_form_settings("Launcher") or {}
         self.setWindowTitle("Bluecard Launcher")
-        # self.resize(395, 300)  # Set the initial size without fixing it
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        if win_w and win_h:
+            self.resize(int(win_w), int(win_h))
+        else:
+            self.resize(650, 500)
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        if min_w and min_h:
+            self.setMinimumSize(int(min_w), int(min_h))
+        max_w = form_settings.get("max_width")
+        max_h = form_settings.get("max_height")
+        if max_w and max_h:
+            self.setMaximumSize(int(max_w), int(max_h))
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-
-        # --- FONT SIZE PATCH: Set global font size from settings ---
-        from logic.db_interface import get_all_defaults
+        # --- FONT SIZE PATCH: Set global font size from per-form or global settings ---
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
-        form_font_size = int(default_settings.get("form_font_size", 12))
-        button_font_size = int(default_settings.get("button_font_size", form_font_size))
-        table_font_size = int(default_settings.get("table_font_size", form_font_size))
-        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
-        form_bg_color = default_settings.get("form_bg_color", "#e3f2fd")
-        button_bg_color = default_settings.get("button_bg_color", "#1976d2")
-        button_fg_color = default_settings.get("button_fg_color", "#ffffff")
-        table_bg_color = default_settings.get("table_bg_color", "#ffffff")
-        table_fg_color = default_settings.get("table_fg_color", "#222222")
-        table_header_bg_color = default_settings.get("table_header_bg_color", "#1976d2")
-        table_header_fg_color = default_settings.get("table_header_fg_color", "#ffffff")
-        table_header_font_size = int(default_settings.get("table_header_font_size", form_font_size))
-        # Set the default font for general UI (form/metadata)
-        QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
+        def get_setting(key, fallback):
+            return form_settings.get(key) if form_settings.get(key) not in (None, "") else default_settings.get(key, fallback)
+        form_font_size = int(get_setting("font_size", 12))
+        button_font_size = int(get_setting("button_font_size", form_font_size))
+        table_font_size = int(get_setting("table_font_size", form_font_size))
+        table_header_font_size = int(get_setting("table_header_font_size", form_font_size))
+        form_bg_color = get_setting("bg_color", "#e3f2fd")
+        button_bg_color = get_setting("button_bg_color", "#1976d2")
+        button_fg_color = get_setting("button_fg_color", "#ffffff")
+        table_bg_color = get_setting("table_bg_color", "#ffffff")
+        table_fg_color = get_setting("table_fg_color", "#222222")
+        table_header_bg_color = get_setting("table_header_bg_color", "#1976d2")
+        table_header_fg_color = get_setting("table_header_fg_color", "#ffffff")
+        table_header_font_size = int(get_setting("table_header_font_size", form_font_size))
+        QApplication.instance().setFont(QFont(get_setting("font_family", "Segoe UI"), form_font_size))
         style = f"""
             QWidget {{ background-color: {form_bg_color}; }}
             QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
@@ -69,6 +83,18 @@ class Launcher(QMainWindow):
             QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
+        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        if not win_w or not win_h:
+            display_settings = default_settings
+            scale = str(display_settings.get("scale_windows", "1")) == "1"
+            center = str(display_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+            if scale:
+                scale_and_center(self, width_ratio, height_ratio)
+            elif center:
+                center_widget(self)
+        # --- PATCH END ---
 
         # Load class data from DB
         self.classes = {row["class_no"]: row for row in get_all_classes()}
@@ -115,7 +141,6 @@ class Launcher(QMainWindow):
 
         # Dynamically set initial window size based on widest entry in each column
         from PyQt5.QtGui import QFontMetrics, QFont
-        from logic.db_interface import get_all_defaults
         table_font_size = int(get_all_defaults().get("table_font_size", 12))
         table_header_font_size = int(get_all_defaults().get("table_header_font_size", 16))
         font = QFont("Segoe UI", table_font_size)
@@ -136,7 +161,6 @@ class Launcher(QMainWindow):
         # Optionally, you can remove these lines entirely if you want no minimum size at all
         # self.setMinimumSize(300, 200)
         # self.resize(395, 300)  # You can uncomment and adjust this for a default size, but it won't block resizing
-        # ...existing code...
         # self.resize(min_width, min_height)  # You can keep this for initial size, but it won't block shrinking
 
         # Connect double-click event to open_class

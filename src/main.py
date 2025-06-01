@@ -20,6 +20,7 @@ import shutil
 import sys
 from PyQt5.QtWidgets import QApplication
 from logic import parser
+from logic.db_interface import get_form_settings, get_all_defaults
 from ui.launcher import Launcher
 
 # Add the project root to sys.path
@@ -58,9 +59,41 @@ def start_launcher():
     """Start the Launcher form."""
     theme = load_theme()
     app = QApplication(sys.argv)
-    launcher = Launcher(theme)
+    # --- PATCH: Load per-form settings for Launcher ---
+    try:
+        form_settings = get_form_settings("Launcher") or {}
+        from PyQt5.QtGui import QFont
+        default_settings = get_all_defaults()
+        def get_setting(key, fallback):
+            val = form_settings.get(key)
+            if val is not None and str(val).strip() != "":
+                return val
+            return default_settings.get(key, fallback)
+        form_font_size = int(get_setting("font_size", 12))
+        font_family = get_setting("font_family", "Segoe UI")
+        app.setFont(QFont(font_family, form_font_size))
+    except Exception as e:
+        print(f"[WARN] Could not apply per-form settings for Launcher: {e}")
+    try:
+        launcher = Launcher(theme)
+    except Exception as e:
+        print(f"[ERROR] Failed to create Launcher: {e}")
+        from PyQt5.QtWidgets import QMainWindow, QLabel
+        class FallbackWindow(QMainWindow):
+            def __init__(self):
+                super().__init__()
+                self.setWindowTitle("Bluecard Fallback Window")
+                label = QLabel("Launcher failed to load.\nError: {}".format(e), self)
+                label.setStyleSheet("color: red; font-size: 16px;")
+                self.setCentralWidget(label)
+        launcher = FallbackWindow()
+    global _launcher_ref
+    _launcher_ref = launcher  # Prevent garbage collection
     launcher.show()
-    sys.exit(app.exec_())
+    print("[INFO] Launcher (or fallback) window shown.")
+    exit_code = app.exec_()
+    print(f"[INFO] QApplication exited with code {exit_code}")
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     try:

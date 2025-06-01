@@ -52,6 +52,14 @@ class StudentForm(QDialog):
                 center_widget(self)
         # --- PATCH END ---
 
+        # --- Layouts ---
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(10)
+        grid = QGridLayout()
+        grid.setSpacing(8)
+        grid.setColumnStretch(0, 0)
+        grid.setColumnStretch(1, 0)
+
         # Row 0
         grid.addWidget(self.bold_label("Name:"), 0, 0, alignment=Qt.AlignTop)
         self.name_entry = QLineEdit(student_data.get("name", "") if student_data else "")
