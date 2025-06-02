@@ -3,7 +3,11 @@ from PyQt5.QtWidgets import (
     QPushButton, QMessageBox, QHeaderView
 )
 from PyQt5.QtCore import Qt
-from logic.db_interface import set_class_archived, get_all_classes, get_class_by_id, update_class, delete_class
+from logic.db_interface import (
+    set_class_archived, get_all_classes, get_class_by_id, update_class, delete_class,
+    get_form_settings, get_all_defaults
+)
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 
 class ArchiveManager(QDialog):
@@ -14,21 +18,43 @@ class ArchiveManager(QDialog):
         self.refresh_callback = refresh_callback  # Store the callback
 
         self.setWindowTitle("Archived Classes")
-        self.resize(395, 300)  # Set the initial size without fixing it
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        form_settings = get_form_settings("ArchiveManager") or {}
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        if win_w and win_h:
+            self.resize(int(win_w), int(win_h))
+        else:
+            self.resize(800, 600)
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        if min_w and min_h:
+            self.setMinimumSize(int(min_w), int(min_h))
+        else:
+            self.setMinimumSize(300, 200)
+        max_w = form_settings.get("max_width")
+        max_h = form_settings.get("max_height")
+        if max_w and max_h:
+            self.setMaximumSize(int(max_w), int(max_h))
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
-        # --- Apply display preferences ---
-        from logic.db_interface import get_all_defaults
-        display_settings = get_all_defaults()
-        from logic.display import center_widget, scale_and_center, apply_window_flags
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
+        # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
+        default_settings = get_all_defaults()
+        font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+
+        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        if not win_w or not win_h:
+            display_settings = get_all_defaults()
+            scale = str(display_settings.get("scale_windows", "1")) == "1"
+            center = str(display_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+            if scale:
+                scale_and_center(self, width_ratio, height_ratio)
+            elif center:
+                center_widget(self)
         # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
 
         # Main layout

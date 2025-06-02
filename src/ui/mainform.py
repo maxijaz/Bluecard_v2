@@ -32,6 +32,8 @@ from logic.db_interface import (
     get_form_settings,
 )
 
+from logic.display import center_widget, scale_and_center, apply_window_flags
+
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -172,13 +174,13 @@ class Mainform(QMainWindow):
         if win_w and win_h:
             self.resize(int(win_w), int(win_h))
         else:
-            self.resize(1280, 720)
+            self.resize(800, 600)
         min_w = form_settings.get("min_width")
         min_h = form_settings.get("min_height")
         if min_w and min_h:
             self.setMinimumSize(int(min_w), int(min_h))
         else:
-            self.setMinimumSize(800, 600)
+            self.setMinimumSize(300, 200)
         max_w = form_settings.get("max_width")
         max_h = form_settings.get("max_height")
         if max_w and max_h:
@@ -192,11 +194,11 @@ class Mainform(QMainWindow):
         QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
-            from logic.display import center_widget, scale_and_center, apply_window_flags
-            scale = str(self.default_settings.get("scale_windows", "1")) == "1"
-            center = str(self.default_settings.get("center_windows", "1")) == "1"
-            width_ratio = float(self.default_settings.get("window_width_ratio", 0.6))
-            height_ratio = float(self.default_settings.get("window_height_ratio", 0.6))
+            display_settings = get_all_defaults()
+            scale = str(display_settings.get("scale_windows", "1")) == "1"
+            center = str(display_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
             if scale:
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:

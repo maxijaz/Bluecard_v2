@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
 from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id, get_form_settings
+from logic.display import center_widget, scale_and_center, apply_window_flags
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -28,35 +29,36 @@ class MetadataForm(QDialog):
 
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("MetadataForm") or {}
-        defaults = get_all_defaults()
-        self.form_font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
-        from PyQt5.QtGui import QFont
-        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
-        # Window size/geometry
         win_w = form_settings.get("window_width")
         win_h = form_settings.get("window_height")
         if win_w and win_h:
             self.resize(int(win_w), int(win_h))
         else:
-            self.resize(830, 580)
-        # Min/max size
+            self.resize(800, 600)
         min_w = form_settings.get("min_width")
         min_h = form_settings.get("min_height")
         if min_w and min_h:
             self.setMinimumSize(int(min_w), int(min_h))
+        else:
+            self.setMinimumSize(300, 200)
         max_w = form_settings.get("max_width")
         max_h = form_settings.get("max_height")
         if max_w and max_h:
             self.setMaximumSize(int(max_w), int(max_h))
-        # Window flags
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
+        default_settings = get_all_defaults()
+        font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
-            from logic.display import center_widget, scale_and_center, apply_window_flags
-            scale = str(defaults.get("scale_windows", "1")) == "1"
-            center = str(defaults.get("center_windows", "1")) == "1"
-            width_ratio = float(defaults.get("window_width_ratio", 0.6))
-            height_ratio = float(defaults.get("window_height_ratio", 0.6))
+            display_settings = get_all_defaults()
+            scale = str(display_settings.get("scale_windows", "1")) == "1"
+            center = str(display_settings.get("center_windows", "1")) == "1"
+            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
+            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
             if scale:
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
