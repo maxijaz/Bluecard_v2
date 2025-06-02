@@ -11,7 +11,7 @@ import sys
 import os
 import json
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QScrollArea
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit, QPushButton, QFormLayout, QMessageBox, QScrollArea, QGridLayout
 )
 from PyQt5.QtCore import Qt
 from src.logic.db_interface import get_form_settings, set_form_settings
@@ -75,23 +75,145 @@ class FormSettingsEditor(QWidget):
         self.setLayout(layout)
         self.on_form_changed(self.form_combo.currentText())
 
+    def add_color_picker(self, entry):
+        from PyQt5.QtWidgets import QColorDialog
+        color = QColorDialog.getColor()
+        if color.isValid():
+            entry.setText(color.name())
+
+    def add_fontsize_picker(self, entry):
+        from PyQt5.QtWidgets import QMenu
+        font_sizes = ["6", "8", "10", "11", "12", "13", "14", "15", "16", "18", "20", "22", "24", "26", "28", "30"]
+        menu = QMenu()
+        for size in font_sizes:
+            action = menu.addAction(size)
+            action.triggered.connect(lambda checked, s=size: entry.setText(s))
+        menu.exec_(entry.mapToGlobal(entry.rect().bottomRight()))
+
     def on_form_changed(self, form_name):
         self.current_form = form_name
-        # Clear old fields
-        for i in reversed(range(self.form_layout.count())):
-            self.form_layout.itemAt(i).widget().setParent(None)
+        print(f"[DEBUG] Selected form: {form_name}")
+        # Replace the form_widget with a new QWidget to ensure no layout conflicts
+        self.form_widget = QWidget()
+        self.scroll.setWidget(self.form_widget)
         self.fields.clear()
         # Load settings (prefer DB, fallback to JSON)
         db_settings = get_form_settings(form_name) or {}
         json_settings = self.all_settings.get(form_name, {})
         merged = dict(json_settings)
         merged.update({k: v for k, v in db_settings.items() if v not in (None, "")})
-        # Show all fields
-        for key in sorted(json_settings.keys()):
+        print(f"[DEBUG] json_settings: {json_settings}")
+        print(f"[DEBUG] db_settings: {db_settings}")
+        print(f"[DEBUG] merged: {merged}")
+        # --- 2-column grid, tight vertical spacing ---
+        keys = sorted(json_settings.keys())
+        grid = QGridLayout()
+        grid.setSpacing(2)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(2)
+        grid.setContentsMargins(8, 8, 8, 8)
+        for i, key in enumerate(keys):
+            print(f"[DEBUG] Adding row for key: {key}")
             val = merged.get(key, "")
             le = QLineEdit(str(val))
-            self.form_layout.addRow(QLabel(key), le)
+            row_layout = QHBoxLayout()
+            row_layout.setSpacing(2)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.addWidget(le)
+            if "color" in key:
+                btn = QPushButton("…")
+                btn.setFixedWidth(24)
+                btn.clicked.connect(lambda _, e=le: self.add_color_picker(e))
+                row_layout.addWidget(btn)
+            elif "font_size" in key:
+                btn = QPushButton("…")
+                btn.setFixedWidth(24)
+                btn.clicked.connect(lambda _, e=le: self.add_fontsize_picker(e))
+                row_layout.addWidget(btn)
+            container = QWidget()
+            container.setLayout(row_layout)
+            col = (i % 2) * 2
+            row = i // 2
+            grid.addWidget(QLabel(key), row, col)
+            grid.addWidget(container, row, col + 1)
             self.fields[key] = le
+        self.form_widget.setLayout(grid)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.apply_preview_stylesheet()
+        # Add toggle color button if not present
+        if not hasattr(self, 'toggle_color_button'):
+            self.toggle_color_button = QPushButton()
+            self.toggle_color_button.setMinimumWidth(150)
+            self.toggle_color_button.setCheckable(True)
+            self.toggle_color_button.setChecked(True)
+            self.toggle_color_button.setText("Toggle Color On")
+            self.toggle_color_button.clicked.connect(self.toggle_color_on_off)
+            self.layout().addWidget(self.toggle_color_button)
+        self.apply_preview_stylesheet()
+
+    def add_preview_button(self):
+        from PyQt5.QtWidgets import QPushButton, QColorDialog, QMenu
+        # Button to apply preview of current settings
+        btn = QPushButton("Preview Settings")
+        btn.clicked.connect(self.apply_preview_stylesheet)
+        self.layout().addWidget(btn)
+
+    def apply_preview_stylesheet(self):
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtGui import QFont
+        # Build a stylesheet from current field values
+        vals = {k: self.fields[k].text() for k in self.fields}
+        form_font_size = int(vals.get("font_size") or 12)
+        button_font_size = int(vals.get("button_font_size") or form_font_size)
+        table_font_size = int(vals.get("table_font_size") or form_font_size)
+        table_header_font_size = int(vals.get("table_header_font_size") or form_font_size)
+        form_bg_color = vals.get("bg_color", "#e3f2fd")
+        button_bg_color = vals.get("button_bg_color", "#1976d2")
+        button_fg_color = vals.get("button_fg_color", "#ffffff")
+        table_bg_color = vals.get("table_bg_color", "#ffffff")
+        table_fg_color = vals.get("table_fg_color", "#222222")
+        table_header_bg_color = vals.get("table_header_bg_color", "#1976d2")
+        table_header_fg_color = vals.get("table_header_fg_color", "#ffffff")
+        title_color = vals.get("title_color", "#1976d2")
+        border_color = vals.get("border_color", "#1976d2")
+        style = f"""
+            QWidget {{ background-color: {form_bg_color}; }}
+            QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
+            QLabel#formTitle {{ color: {title_color}; }}
+            QLineEdit, QComboBox {{ border: 1px solid {border_color}; }}
+            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {button_font_size}pt; }}
+            QTableView, QTableWidget {{ background-color: {table_bg_color}; }}
+            QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
+            QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
+        """
+        QApplication.instance().setStyleSheet(style)
+        QApplication.instance().setFont(QFont("Segoe UI", form_font_size))
+
+    def toggle_color_on_off(self):
+        # Toggle between factory defaults and all white/black
+        if self.toggle_color_button.isChecked():
+            # Toggle ON: set all color fields to white/black, font 12
+            for key, entry in self.fields.items():
+                if "color" in key:
+                    entry.setText("#000000" if "fg" in key or "header_fg" in key else "#ffffff")
+                elif "font_size" in key:
+                    entry.setText("12")
+            self.toggle_color_button.setText("Toggle Color On")
+        else:
+            # Toggle OFF: restore factory defaults for color/font fields
+            factory = {
+                "font_size": "12", "button_font_size": "12", "table_font_size": "12", "table_header_font_size": "12",
+                "fg_color": "#222222", "bg_color": "#e3f2fd", "border_color": "#1976d2", "title_color": "#1976d2",
+                "button_bg_color": "#1976d2", "button_fg_color": "#ffffff", "button_border_color": "#1976d2",
+                "table_bg_color": "#ffffff", "table_fg_color": "#222222", "table_header_bg_color": "#1976d2",
+                "table_header_fg_color": "#ffffff"
+            }
+            for key, entry in self.fields.items():
+                if key in factory:
+                    entry.setText(factory[key])
+            self.toggle_color_button.setText("Toggle Color Off")
+        self.apply_preview_stylesheet()
 
     def save_to_db(self):
         if not self.current_form:
@@ -99,6 +221,7 @@ class FormSettingsEditor(QWidget):
         settings = {k: self.fields[k].text() for k in self.fields}
         set_form_settings(self.current_form, settings)
         QMessageBox.information(self, "Saved", f"Settings for '{self.current_form}' saved to DB.")
+        self.apply_preview_stylesheet()
 
     def save_to_json(self):
         if not self.current_form:
@@ -107,6 +230,7 @@ class FormSettingsEditor(QWidget):
         self.all_settings[self.current_form] = {k: self.fields[k].text() for k in self.fields}
         save_all_form_settings(self.all_settings)
         QMessageBox.information(self, "Saved", f"Settings for '{self.current_form}' updated in 001form_settings.json.")
+        self.apply_preview_stylesheet()
 
     def open_selected_form(self):
         """Open the selected form for visual testing, using dummy or real data."""
