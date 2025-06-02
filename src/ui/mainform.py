@@ -166,6 +166,7 @@ class Mainform(QMainWindow):
     closed = pyqtSignal()  # Signal to notify when the Mainform is closed
 
     def __init__(self, class_id, data, theme):
+        super().__init__()
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("Mainform") or {}
         self.setWindowTitle(f"Class Information - {class_id}")

@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 import json
 import os
 
-from logic.db_interface import get_form_settings, get_all_defaults
+from logic.db_interface import get_form_settings, get_all_defaults, set_all_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 SETTINGS_PATH = "data/settings.json"
