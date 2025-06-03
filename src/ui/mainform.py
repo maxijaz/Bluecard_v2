@@ -602,6 +602,23 @@ QTableView::item:selected {
         # self.frozen_table.selectionModel().selectionChanged.connect(self.debug_frozen_selection)
         # self.scrollable_table.selectionModel().selectionChanged.connect(self.debug_scrollable_selection)
 
+        # Force a style update and geometry refresh to ensure the left border is visible on startup
+        self.frozen_table.setStyleSheet(
+            self.frozen_table.styleSheet() +
+            "QTableView { border-left: none; } "
+            "QTableView::item { border-left: 1px solid #000; } "
+            "QHeaderView::section { border-left: 1px solid #000 !important; }"
+        )
+        self.frozen_table.viewport().update()
+        self.frozen_table.horizontalHeader().repaint()
+        self.frozen_table.repaint()
+        # Also trigger a geometry/layout update for the table container
+        self.table_container.updateGeometry()
+        self.table_container.repaint()
+        QTimer.singleShot(0, lambda: self.frozen_table.updateGeometry())
+        QTimer.singleShot(0, lambda: self.frozen_table.viewport().update())
+        QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
+
     # Button Methods
     def run_html_output(self):
         """Run htmlbluecard.py to output HTML."""
@@ -1096,11 +1113,20 @@ QTableView::item:selected {
             + corner_style + highlight_style
         )
 
-        # Add a left border to the frozen table header and table rows for visual symmetry
+        # Only add a left border to the frozen table header and rows (not the whole table)
         self.frozen_table.setStyleSheet(
             self.frozen_table.styleSheet() +
-            "QTableView { border-left: 1px solid #000; } "
+            "QTableView { border-left: none; } "
             "QTableView::item { border-left: 1px solid #000; } "
             "QHeaderView::section { border-left: 1px solid #000 !important; }"
         )
+        self.frozen_table.viewport().update()
+        self.frozen_table.horizontalHeader().repaint()
+        self.frozen_table.repaint()
+        # Also trigger a geometry/layout update for the table container
+        self.table_container.updateGeometry()
+        self.table_container.repaint()
+        QTimer.singleShot(0, lambda: self.frozen_table.updateGeometry())
+        QTimer.singleShot(0, lambda: self.frozen_table.viewport().update())
+        QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
 
