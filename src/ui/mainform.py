@@ -399,28 +399,29 @@ class Mainform(QMainWindow):
             ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),
         ]
 
-        # --- Apply left padding to metadata data labels and frozen table left only ---
-        # Update metadata value labels (data fields) to have left padding
+        # --- Metadata Section - Add metadata fields ---
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
-            # Label 1
+            # Label 1 or Column 1 Metadata
             label1_widget = QLabel(label1)
             label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;") # padding-left: 5px;
             label1_widget.setFixedWidth(125)
             label1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(label1_widget, row, 0)
-            # Value 1
+            # Value 1 or Column 2 Metadata
             value1_widget = QLabel(value1)
             value1_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
             value1_widget.setFixedWidth(300)
             value1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(value1_widget, row, 1)
             if label2:
+                # Label 2 or Column 3 Metadata
                 label2_widget = QLabel(label2)
                 label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
                 label2_widget.setFixedWidth(125)
                 label2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(label2_widget, row, 2)
             if value2:
+                # Value 2 or Column 4 Metadata
                 value2_widget = QLabel(value2)
                 value2_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
                 value2_widget.setFixedWidth(300)
