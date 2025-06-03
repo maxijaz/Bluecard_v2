@@ -306,7 +306,7 @@ class Mainform(QMainWindow):
         self.default_settings = self.load_default_settings()
         self.column_visibility = {
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
-            "CompanyNo": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
+            "Company No": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
             "Score": (self.class_data.get("show_score") or self.default_settings.get("show_score", "Yes")) == "Yes",
             "PreTest": (self.class_data.get("show_prestest") or self.default_settings.get("show_prestest", "Yes")) == "Yes",
             "PostTest": (self.class_data.get("show_posttest") or self.default_settings.get("show_posttest", "Yes")) == "Yes",
@@ -466,7 +466,7 @@ class Mainform(QMainWindow):
         frozen_headers = ["#","Name"]
         if self.column_visibility.get("Nickname", True):
             frozen_headers.append("Nickname")
-        if self.column_visibility.get("CompanyNo", True):
+        if self.column_visibility.get("Company No", True):
             frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
             frozen_headers.append("Score")
@@ -543,17 +543,11 @@ class Mainform(QMainWindow):
             self.frozen_table.setColumnWidth(i, width)
             total_width += width
         self.frozen_table.setFixedWidth(total_width)
-        # print(f"[DEBUG] Set frozen_table fixed width to {total_width} (headers: {self.frozen_headers})")
+        print(f"[DEBUG] Set frozen_table fixed width to {total_width} (headers: {self.frozen_headers})")
+        print(f"[DEBUG] frozen_table visible: {self.frozen_table.isVisible()}, geometry: {self.frozen_table.geometry()}")
 
         # Set the FrozenTableDelegate for the frozen table
         self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
-
-        self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold;")
-
-        # Connect double-click signal to edit_student method
-        self.frozen_table.doubleClicked.connect(self.edit_student)
-
-        self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
 
         # Scrollable Table
         attendance_dates = self.get_attendance_dates()
@@ -572,7 +566,7 @@ class Mainform(QMainWindow):
         self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.scrollable_table.setSelectionMode(QAbstractItemView.SingleSelection)
-
+        print(f"[DEBUG] scrollable_table visible: {self.scrollable_table.isVisible()}, geometry: {self.scrollable_table.geometry()}")
         # Connect the sectionClicked signal to highlight the column
         self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
 
@@ -584,8 +578,8 @@ class Mainform(QMainWindow):
         # Remove frame and padding from both tables to eliminate gaps
         self.frozen_table.setFrameStyle(QFrame.NoFrame)
         self.scrollable_table.setFrameStyle(QFrame.NoFrame)
-        self.frozen_table.setStyleSheet("QTableView { border-right: 1px solid #ccc; border-top: none; border-bottom: none; border-left: none; margin: 0px; padding: 0px; }")
-        self.scrollable_table.setStyleSheet("QTableView { border-left: 0px solid #ccc; border-top: none; border-bottom: none; border-right: none; margin: 0px; padding: 0px; }")
+        self.frozen_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-left: none; margin: 0px; padding: 0px; }")
+        self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; margin: 0px; padding: 0px; }")
         # Ensure the table_layout has no spacing or margins
         self.table_layout.setSpacing(0)
         self.table_layout.setContentsMargins(0, 0, 0, 0)
@@ -593,9 +587,16 @@ class Mainform(QMainWindow):
         # Add tables to the layout
         self.table_layout.addWidget(self.frozen_table)
         self.table_layout.addWidget(self.scrollable_table)
-        # print("[DEBUG] Added frozen_table and scrollable_table to table_layout.")
-        # print(f"[DEBUG] frozen_table visible: {self.frozen_table.isVisible()}, geometry: {self.frozen_table.geometry()}")
-        # print(f"[DEBUG] scrollable_table visible: {self.scrollable_table.isVisible()}, geometry: {self.scrollable_table.geometry()}")
+        # Now set header and corner button styles (after both tables exist)
+        self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; border: none;")
+        self.scrollable_table.horizontalHeader().setStyleSheet("border: none;")
+        self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + "QTableCornerButton::section { border: none; }")
+        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + "QTableCornerButton::section { border: none; }")
+
+        # Connect double-click signal to edit_student method
+        self.frozen_table.doubleClicked.connect(self.edit_student)
+
+        self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
 
         # Set size policies and stretch factors for proper alignment
         from PyQt5.QtWidgets import QSizePolicy
@@ -878,7 +879,7 @@ QTableView::item:selected {
         frozen_headers = ["#", "Name"]
         if self.column_visibility.get("Nickname", True):
             frozen_headers.append("Nickname")
-        if self.column_visibility.get("CompanyNo", True):
+        if self.column_visibility.get("Company No", True):
             frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
             frozen_headers.append("Score")
@@ -1121,3 +1122,11 @@ QTableView::item:selected {
             self.reset_column_widths()
             self.reset_scrollable_column_widths()
             self.adjust_frozen_table_width()  # Ensure width is recalculated after show/hide
+
+        # Overlap scrollable_table over frozen_table by setting a negative left margin
+        # self.table_layout.setContentsMargins(20, 0, 0, 0)
+        self.scrollable_table.setStyleSheet(
+            self.scrollable_table.styleSheet() +
+            "QTableView { margin-left: 20px; }"
+        )
+

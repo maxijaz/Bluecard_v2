@@ -81,13 +81,13 @@ def insert_class(class_data):
 
 def update_class(class_no, class_data):
     """Update an existing class in the database."""
-    print(f"[DEBUG] update_class: Attempting to update {class_no} with: {class_data}")
+    # print(f"[DEBUG] update_class: Attempting to update {class_no} with: {class_data}")
     conn = get_connection()
     cursor = conn.cursor()
     # Print current values before update
     cursor.execute("SELECT * FROM classes WHERE class_no = ?", (class_no,))
     before = cursor.fetchone()
-    print(f"[DEBUG] update_class: Before update: {before}")
+    # print(f"[DEBUG] update_class: Before update: {before}")
     assignments = ', '.join([f"{k}=?" for k in class_data.keys()])
     cursor.execute(
         f"UPDATE classes SET {assignments} WHERE class_no = ?",
@@ -97,7 +97,7 @@ def update_class(class_no, class_data):
     # Print values after update
     cursor.execute("SELECT * FROM classes WHERE class_no = ?", (class_no,))
     after = cursor.fetchone()
-    print(f"[DEBUG] update_class: After update: {after}")
+    # print(f"[DEBUG] update_class: After update: {after}")
     conn.close()
 
 def insert_student(student_data):
