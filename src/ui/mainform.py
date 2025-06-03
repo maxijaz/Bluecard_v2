@@ -1059,7 +1059,7 @@ QTableView::item:selected {
 """
         self.scrollable_table.setStyleSheet(
             "QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: none; margin: 0px; padding: 0px; }"
-            " QTableView::item { border-left: 1px solid #888; }"
+            " QTableView::item { border-left: 1px solid #000; }"
             " QHeaderView::section { border-left: none !important; }"
             + corner_style + highlight_style
         )
