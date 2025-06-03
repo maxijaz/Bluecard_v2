@@ -494,10 +494,15 @@ class Mainform(QMainWindow):
         self.layout.addWidget(self.table_container)
 
         # Remove frame and padding from both tables to eliminate gaps
+        # Make frozen_table 1px wider for a perfect join
         self.frozen_table.setFrameStyle(QFrame.NoFrame)
         self.scrollable_table.setFrameStyle(QFrame.NoFrame)
         self.frozen_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-left: none; margin: 0px; padding: 0px; }")
-        self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: 1px solid #888; margin: 0px; padding: 0px; }")
+        self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: none; margin: 0px; padding: 0px; }")
+        # Make frozen_table 1px wider
+        self.frozen_table.resize(self.frozen_table.width() + 1, self.frozen_table.height())
+        # Remove the vertical line (border-left) under the scrollable table
+        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + " QTableView::item { border-left: none; }")
         # Ensure the table_layout has no spacing or margins
         # self.table_layout.setSpacing(0)
         # self.table_layout.setContentsMargins(0, 0, 0, 0)
@@ -1043,5 +1048,19 @@ QTableView::item:selected {
         self.scrollable_table.setStyleSheet(
             self.scrollable_table.styleSheet() +
             "QTableView { margin-left: 20px; }"
+        )
+
+        # Add back the left border only for the actual table rows (not header)
+        corner_style = "QTableCornerButton::section { background: transparent; border: none; }"
+        highlight_style = """
+QTableView::item:selected {
+    background: #b3d7ff;  /* Light blue highlight */
+}
+"""
+        self.scrollable_table.setStyleSheet(
+            "QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: none; margin: 0px; padding: 0px; }"
+            " QTableView::item { border-left: 1px solid #888; }"
+            " QHeaderView::section { border-left: none !important; }"
+            + corner_style + highlight_style
         )
 
