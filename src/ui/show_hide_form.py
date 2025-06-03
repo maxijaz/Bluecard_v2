@@ -33,7 +33,7 @@ class ShowHideForm(QDialog):
         self.setWindowTitle("Show / Hide Columns & Colour Scheme")
         self.class_id = class_id
         self.on_save_callback = on_save_callback
-        self.class_data = get_class_by_id(class_id)
+        self.class_data = get_class_by_id(class_id)  # <-- Load from classes table
         self.checkboxes = {}
         self.color_edits = {}
 
@@ -145,10 +145,20 @@ class ShowHideForm(QDialog):
         updates = {key: "Yes" if cb.isChecked() else "No" for key, cb in self.checkboxes.items()}
         for color_key, edit in self.color_edits.items():
             updates[color_key] = edit.text().strip()
+        print(f"[DEBUG] ShowHideForm.save: updates to save for class {self.class_id}: {updates}")
         try:
             update_class(self.class_id, updates)
+            print(f"[DEBUG] update_class called for {self.class_id} with: {updates}")
             if self.on_save_callback:
                 self.on_save_callback()
             self.accept()
         except Exception as e:
+            print(f"[DEBUG] ShowHideForm.save: Exception: {e}")
             QMessageBox.critical(self, "Error", f"Failed to save: {e}")
+
+    def get_selected_columns(self):
+        # Returns a dict mapping DB key (e.g. 'show_nickname') to True/False for checked/unchecked
+        result = {}
+        for key, cb in self.checkboxes.items():
+            result[key] = cb.isChecked()
+        return result

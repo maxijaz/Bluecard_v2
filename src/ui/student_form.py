@@ -38,9 +38,13 @@ class StudentForm(QDialog):
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
         font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
+        font_family = form_settings.get("font_family", "Segoe UI")
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
-        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+        QApplication.instance().setFont(QFont(font_family, font_size))
+        # Set form font attributes for use in widgets
+        self.form_font_size = font_size
+        self.form_font = QFont(font_family, font_size)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
             display_settings = get_all_defaults()

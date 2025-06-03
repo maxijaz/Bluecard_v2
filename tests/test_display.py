@@ -102,9 +102,9 @@ class FormSettingsEditor(QWidget):
         json_settings = self.all_settings.get(form_name, {})
         merged = dict(json_settings)
         merged.update({k: v for k, v in db_settings.items() if v not in (None, "")})
-        print(f"[DEBUG] json_settings: {json_settings}")
-        print(f"[DEBUG] db_settings: {db_settings}")
-        print(f"[DEBUG] merged: {merged}")
+        # print(f"[DEBUG] json_settings: {json_settings}")
+        # print(f"[DEBUG] db_settings: {db_settings}")
+        # print(f"[DEBUG] merged: {merged}")
         # --- 2-column grid, tight vertical spacing ---
         keys = sorted(json_settings.keys())
         grid = QGridLayout()
@@ -113,7 +113,7 @@ class FormSettingsEditor(QWidget):
         grid.setVerticalSpacing(2)
         grid.setContentsMargins(8, 8, 8, 8)
         for i, key in enumerate(keys):
-            print(f"[DEBUG] Adding row for key: {key}")
+            # print(f"[DEBUG] Adding row for key: {key}")
             val = merged.get(key, "")
             le = QLineEdit(str(val))
             row_layout = QHBoxLayout()
@@ -324,7 +324,7 @@ class FormSettingsEditor(QWidget):
                 class_id = "OLO123"
             win = FormClass(None, class_id)
         elif form_name == "Launcher":
-            win = FormClass()
+            win = FormClass(theme="default")
         elif form_name == "SettingsForm":
             win = FormClass(None)
         elif form_name == "CalendarView":
@@ -356,7 +356,16 @@ class FormSettingsEditor(QWidget):
                 data = {"classes": archived_classes}
             win = FormClass(None, data, archived_classes)
         elif form_name == "StudentManager":
-            win = FormClass(None, "OLO123")
+            try:
+                dbi = importlib.import_module("logic.db_interface")
+                class_ids = dbi.get_all_class_ids()
+                class_id = class_ids[0] if class_ids else "OLO123"
+                students = dbi.get_students_by_class(class_id)
+                data = {"classes": {class_id: {"students": {s["student_id"]: s for s in students}}}}
+            except Exception:
+                class_id = "OLO123"
+                data = {"classes": {class_id: {"students": {}}}}
+            win = FormClass(None, data, class_id, lambda: None)
         elif form_name == "MonthlySummary":
             win = FormClass(None)
         elif form_name == "StylesheetForm":

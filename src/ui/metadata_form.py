@@ -27,6 +27,8 @@ class MetadataForm(QDialog):
         self.is_read_only = is_read_only
         self.single_date_mode = single_date_mode
 
+        self.defaults = defaults or {}
+
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("MetadataForm") or {}
         win_w = form_settings.get("window_width")
@@ -51,7 +53,8 @@ class MetadataForm(QDialog):
         font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
-        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), font_size)
+        QApplication.instance().setFont(self.form_font)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
             display_settings = get_all_defaults()
