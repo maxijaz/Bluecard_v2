@@ -458,6 +458,13 @@ class Mainform(QMainWindow):
         self.layout.addLayout(buttons_layout)
 
         # Table Section (manual overlay for perfect join)
+        # Create both tables before referencing them
+        self.frozen_table = QTableView()
+        self.scrollable_table = QTableView()
+        self.frozen_table.verticalHeader().setVisible(False)
+        self.scrollable_table.verticalHeader().setVisible(False)
+
+        # Only create the container and set parents after both tables are created
         self.table_container = QWidget()
         self.table_container.setContentsMargins(0, 0, 0, 0)
         self.table_container.setStyleSheet("background: transparent;")
@@ -470,7 +477,17 @@ class Mainform(QMainWindow):
             frozen_width = self.frozen_table.width()
             height = self.table_container.height()
             self.frozen_table.setGeometry(0, 0, frozen_width, height)
-            self.scrollable_table.setGeometry(frozen_width - 2, 0, self.table_container.width() - frozen_width + 2, height)
+            # Move scrollable_table left by 1px for a perfect join
+            self.scrollable_table.setGeometry(frozen_width - 1, 0, self.table_container.width() - frozen_width + 1, height)
+            # Debug output for geometry
+            print("[DEBUG] table_container:", self.table_container.geometry())
+            print("[DEBUG] frozen_table:", self.frozen_table.geometry())
+            print("[DEBUG] scrollable_table:", self.scrollable_table.geometry())
+        
+        # Remove debug borders for production
+        # self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + "QTableView { border: 2px solid red !important; }")
+        # self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + "QTableView { border: 2px solid blue !important; }")
+        
         from PyQt5.QtCore import QTimer
         QTimer.singleShot(0, position_tables)
 
@@ -480,7 +497,7 @@ class Mainform(QMainWindow):
         self.frozen_table.setFrameStyle(QFrame.NoFrame)
         self.scrollable_table.setFrameStyle(QFrame.NoFrame)
         self.frozen_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-left: none; margin: 0px; padding: 0px; }")
-        self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; margin: 0px; padding: 0px; }")
+        self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: 1px solid #888; margin: 0px; padding: 0px; }")
         # Ensure the table_layout has no spacing or margins
         # self.table_layout.setSpacing(0)
         # self.table_layout.setContentsMargins(0, 0, 0, 0)
@@ -491,8 +508,9 @@ class Mainform(QMainWindow):
         # Now set header and corner button styles (after both tables exist)
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; border: none;")
         self.scrollable_table.horizontalHeader().setStyleSheet("border: none;")
-        self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + "QTableCornerButton::section { border: none; }")
-        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + "QTableCornerButton::section { border: none; }")
+        corner_style = "QTableCornerButton::section { background: transparent; border: none; }"
+        self.frozen_table.setStyleSheet(self.frozen_table.styleSheet() + corner_style)
+        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + corner_style)
 
         # Connect double-click signal to edit_student method
         self.frozen_table.doubleClicked.connect(self.edit_student)
@@ -507,7 +525,7 @@ class Mainform(QMainWindow):
         # self.table_layout.setStretch(1, 1)  # Scrollable table: expands
 
         # Add the table_layout to the main layout
-        self.layout.addLayout(self.table_layout)
+        # self.layout.addLayout(self.table_layout)
         # print("[DEBUG] Added table_layout to main layout.")
         # print(f"[DEBUG] layout count: {self.layout.count()}")
         # print(f"[DEBUG] container children: {[child.objectName() for child in self.findChildren(QWidget)]}")
@@ -517,10 +535,6 @@ class Mainform(QMainWindow):
         # Remove setFixedWidth for frozen_table
         # Remove setFixedWidth for scrollable_table (if any)
         # ...existing code...
-
-        # Reset column widths for the scrollable table
-        self.reset_scrollable_column_widths()
-
         # Synchronize vertical scrollbars
         self.frozen_table.verticalScrollBar().valueChanged.connect(
             self.scrollable_table.verticalScrollBar().setValue
