@@ -380,15 +380,15 @@ class Mainform(QMainWindow):
         container = QWidget()
         self.layout = QVBoxLayout(container)
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(5, 0, 0, 0)
 
         # Metadata Section (updated)
         metadata_widget = QWidget()  # Create a widget to contain the metadata layout
         metadata_layout = QGridLayout(metadata_widget)
         metadata_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         metadata_layout.setHorizontalSpacing(5)  # Reduce horizontal spacing
-        metadata_layout.setVerticalSpacing(5)  # Reduce vertical spacing
-        metadata_widget.setFixedWidth(600)
+        metadata_layout.setVerticalSpacing(2)  # Reduce vertical spacing
+        metadata_widget.setFixedWidth(850)
 
         metadata_fields = [
             ("Company:", self.metadata.get("company", ""), "Course Hours:", f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
@@ -399,29 +399,31 @@ class Mainform(QMainWindow):
             ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),
         ]
 
+        # --- Apply left padding to metadata data labels and frozen table left only ---
+        # Update metadata value labels (data fields) to have left padding
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
             # Label 1
             label1_widget = QLabel(label1)
-            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
-            label1_widget.setFixedWidth(100)
+            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;") # padding-left: 5px;
+            label1_widget.setFixedWidth(125)
             label1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(label1_widget, row, 0)
             # Value 1
             value1_widget = QLabel(value1)
-            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
-            value1_widget.setFixedWidth(200)
+            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
+            value1_widget.setFixedWidth(300)
             value1_widget.setFont(self.metadata_font)
             metadata_layout.addWidget(value1_widget, row, 1)
             if label2:
                 label2_widget = QLabel(label2)
                 label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
-                label2_widget.setFixedWidth(100)
+                label2_widget.setFixedWidth(125)
                 label2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(label2_widget, row, 2)
             if value2:
                 value2_widget = QLabel(value2)
-                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; border-style: sunken;")
-                value2_widget.setFixedWidth(200)
+                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
+                value2_widget.setFixedWidth(300)
                 value2_widget.setFont(self.metadata_font)
                 metadata_layout.addWidget(value2_widget, row, 3)
         # Add the metadata widget to the main layout
