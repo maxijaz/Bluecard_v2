@@ -457,123 +457,24 @@ class Mainform(QMainWindow):
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
 
-        # Table Section
-        self.table_layout = QHBoxLayout()
-        self.table_layout.setSpacing(0)
-        self.table_layout.setContentsMargins(0, 0, 0, 0)
+        # Table Section (manual overlay for perfect join)
+        self.table_container = QWidget()
+        self.table_container.setContentsMargins(0, 0, 0, 0)
+        self.table_container.setStyleSheet("background: transparent;")
+        self.table_container.setMinimumHeight(300)  # Adjust as needed
 
-        # Frozen Table
-        frozen_headers = ["#","Name"]
-        if self.column_visibility.get("Nickname", True):
-            frozen_headers.append("Nickname")
-        if self.column_visibility.get("Company No", True):
-            frozen_headers.append("Company No")
-        if self.column_visibility.get("Score", True):
-            frozen_headers.append("Score")
-        if self.column_visibility.get("PreTest", True):
-            frozen_headers.append("PreTest")
-        if self.column_visibility.get("PostTest", True):
-            frozen_headers.append("PostTest")
-        if self.column_visibility.get("Attn", True):
-            frozen_headers.append("Attn")
-        if self.column_visibility.get("P", True):
-            frozen_headers.append("P")
-        if self.column_visibility.get("A", True):
-            frozen_headers.append("A")
-        if self.column_visibility.get("L", True):
-            frozen_headers.append("L")
-        self.frozen_headers = frozen_headers  # <-- Assign to self
-        # Build frozen_data rows to match self.frozen_headers
-        frozen_data = []
-        # Add "Running Total" row
-        running_total_row = []
-        for header in self.frozen_headers:
-            if header == "#":
-                running_total_row.append("")
-            elif header == "Name":
-                running_total_row.append("Running Total")
-            else:
-                running_total_row.append("-")
-        frozen_data.append(running_total_row)
-        # Add student rows
-        attendance_dates = self.get_attendance_dates()
-        for idx, student in enumerate(self.students.values()):
-            row = []
-            for header in self.frozen_headers:
-                if header == "#":
-                    row.append(idx + 1)
-                elif header == "Name":
-                    row.append(student.get("name", ""))
-                elif header == "Nickname":
-                    row.append(student.get("nickname", ""))
-                elif header == "Company No":
-                    row.append(student.get("company_no", ""))
-                elif header == "Score":
-                    row.append(student.get("score", ""))
-                elif header == "PreTest":
-                    row.append(student.get("pre_test", ""))
-                elif header == "PostTest":
-                    row.append(student.get("post_test", ""))
-                elif header == "Attn":
-                    row.append(len(student.get("attendance", {})))
-                elif header == "P":
-                    row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "P"))
-                elif header == "A":
-                    row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "A"))
-                elif header == "L":
-                    row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "L"))
-                else:
-                    row.append("")
-            frozen_data.append(row)
-        self.frozen_table = DebugTableView()
-        self.frozen_table.setObjectName("FROZEN")
-        self.frozen_table.setModel(FrozenTableModel(frozen_data, self.frozen_headers))
-        self.frozen_table.verticalHeader().hide()
-        self.frozen_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-        self.frozen_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.frozen_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.frozen_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.frozen_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.frozen_table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.frozen_table.horizontalHeader().setMinimumSectionSize(5)
-        # Set column widths using header names
-        total_width = 0
-        for i, header in enumerate(self.frozen_headers):
-            width = self.FROZEN_COLUMN_WIDTHS.get(header, 50)
-            self.frozen_table.setColumnWidth(i, width)
-            total_width += width
-        self.frozen_table.setFixedWidth(total_width)
-        print(f"[DEBUG] Set frozen_table fixed width to {total_width} (headers: {self.frozen_headers})")
-        print(f"[DEBUG] frozen_table visible: {self.frozen_table.isVisible()}, geometry: {self.frozen_table.geometry()}")
+        self.frozen_table.setParent(self.table_container)
+        self.scrollable_table.setParent(self.table_container)
 
-        # Set the FrozenTableDelegate for the frozen table
-        self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
+        def position_tables():
+            frozen_width = self.frozen_table.width()
+            height = self.table_container.height()
+            self.frozen_table.setGeometry(0, 0, frozen_width, height)
+            self.scrollable_table.setGeometry(frozen_width - 2, 0, self.table_container.width() - frozen_width + 2, height)
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(0, position_tables)
 
-        # Scrollable Table
-        attendance_dates = self.get_attendance_dates()
-        scrollable_headers = attendance_dates  # Only include date columns
-        scrollable_data = [
-            [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
-            for student in self.students.values()
-        ]
-
-        self.scrollable_table = DebugTableView()
-        self.scrollable_table.setObjectName("SCROLLABLE")
-        active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
-        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
-        self.scrollable_table.verticalHeader().hide()
-        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)  # Enable dynamic resizing
-        self.scrollable_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.scrollable_table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.scrollable_table.setSelectionMode(QAbstractItemView.SingleSelection)
-        print(f"[DEBUG] scrollable_table visible: {self.scrollable_table.isVisible()}, geometry: {self.scrollable_table.geometry()}")
-        # Connect the sectionClicked signal to highlight the column
-        self.scrollable_table.horizontalHeader().sectionClicked.connect(self.highlight_column)
-
-        # **Connect the sectionDoubleClicked signal to open_pal_cod_form**
-        self.scrollable_table.horizontalHeader().sectionDoubleClicked.connect(
-        lambda col: self.open_pal_cod_form(col)
-        )
+        self.layout.addWidget(self.table_container)
 
         # Remove frame and padding from both tables to eliminate gaps
         self.frozen_table.setFrameStyle(QFrame.NoFrame)
@@ -581,12 +482,12 @@ class Mainform(QMainWindow):
         self.frozen_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-left: none; margin: 0px; padding: 0px; }")
         self.scrollable_table.setStyleSheet("QTableView { border: none; border-top: none; border-bottom: none; border-right: none; margin: 0px; padding: 0px; }")
         # Ensure the table_layout has no spacing or margins
-        self.table_layout.setSpacing(0)
-        self.table_layout.setContentsMargins(0, 0, 0, 0)
+        # self.table_layout.setSpacing(0)
+        # self.table_layout.setContentsMargins(0, 0, 0, 0)
 
         # Add tables to the layout
-        self.table_layout.addWidget(self.frozen_table)
-        self.table_layout.addWidget(self.scrollable_table)
+        # self.table_layout.addWidget(self.frozen_table)
+        # self.table_layout.addWidget(self.scrollable_table)
         # Now set header and corner button styles (after both tables exist)
         self.frozen_table.horizontalHeader().setStyleSheet("font-weight: bold; border: none;")
         self.scrollable_table.horizontalHeader().setStyleSheet("border: none;")
@@ -602,8 +503,8 @@ class Mainform(QMainWindow):
         from PyQt5.QtWidgets import QSizePolicy
         self.frozen_table.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.scrollable_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table_layout.setStretch(0, 0)  # Frozen table: fixed
-        self.table_layout.setStretch(1, 1)  # Scrollable table: expands
+        # self.table_layout.setStretch(0, 0)  # Frozen table: fixed
+        # self.table_layout.setStretch(1, 1)  # Scrollable table: expands
 
         # Add the table_layout to the main layout
         self.layout.addLayout(self.table_layout)
