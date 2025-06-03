@@ -380,7 +380,7 @@ class Mainform(QMainWindow):
         container = QWidget()
         self.layout = QVBoxLayout(container)
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(5, 0, 0, 0)
+        self.layout.setContentsMargins(5, 5, 5, 0)
 
         # Metadata Section (updated)
         metadata_widget = QWidget()  # Create a widget to contain the metadata layout
@@ -411,8 +411,8 @@ class Mainform(QMainWindow):
         metrics = QFontMetrics(self.metadata_font)
         label1_min = max([metrics.width(text) for text in label1_list]) + 26  # +padding
         label2_min = max([metrics.width(text) for text in label2_list]) + 26 if label2_list else label1_min
-        value1_min = max([metrics.width(str(text)) for text in value1_list]) + 34  # +padding
-        value2_min = max([metrics.width(str(text)) for text in value2_list]) + 34 if value2_list else value1_min
+        value1_min = max(200, max([metrics.width(str(text)) for text in value1_list]) + 34)  # min 300px
+        value2_min = max(200, max([metrics.width(str(text)) for text in value2_list]) + 34) if value2_list else value1_min
 
         # Set fixed width for metadata widget based on calculated min widths
         metadata_widget.setFixedWidth(label1_min + value1_min + label2_min + value2_min + 24)
@@ -450,6 +450,10 @@ class Mainform(QMainWindow):
         # Add the metadata widget to the main layout
         self.layout.addWidget(metadata_widget)
 
+        # Add a 5px vertical spacer below metadata before buttons
+        from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
+        self.layout.addItem(QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed))
+
         # Buttons Section
         buttons_layout = QHBoxLayout()
         add_edit_student_btn = QPushButton("Add/Edit Student")
@@ -479,6 +483,11 @@ class Mainform(QMainWindow):
         for button in buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
+
+        # Add a 5px vertical spacer below buttons before table
+        # from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
+        self.layout.addItem(QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed))
+
 
         # Table Section (manual overlay for perfect join)
         # Create both tables before referencing them
@@ -1085,5 +1094,13 @@ QTableView::item:selected {
             " QTableView::item { border-left: 1px solid #000; }"
             " QHeaderView::section { border-left: none !important; }"
             + corner_style + highlight_style
+        )
+
+        # Add a left border to the frozen table header and table rows for visual symmetry
+        self.frozen_table.setStyleSheet(
+            self.frozen_table.styleSheet() +
+            "QTableView { border-left: 1px solid #000; } "
+            "QTableView::item { border-left: 1px solid #000; } "
+            "QHeaderView::section { border-left: 1px solid #000 !important; }"
         )
 
