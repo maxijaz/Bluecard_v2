@@ -386,10 +386,12 @@ class Mainform(QMainWindow):
         metadata_widget = QWidget()  # Create a widget to contain the metadata layout
         metadata_layout = QGridLayout(metadata_widget)
         metadata_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
-        metadata_layout.setHorizontalSpacing(5)  # Reduce horizontal spacing
-        metadata_layout.setVerticalSpacing(2)  # Reduce vertical spacing
-        metadata_widget.setFixedWidth(850)
+        # metadata_layout.setHorizontalSpacing(10)  # Reduce horizontal spacing
+        metadata_layout.setVerticalSpacing(0)  # Reduce vertical spacing
+        from PyQt5.QtWidgets import QSizePolicy
+        from PyQt5.QtGui import QFontMetrics
 
+        # Define metadata_fields before using it
         metadata_fields = [
             ("Company:", self.metadata.get("company", ""), "Course Hours:", f"{self.metadata.get('course_hours', '')} / {self.metadata.get('class_time', '')} / {self.metadata.get('max_classes', '')}"),
             ("Room:", self.metadata.get("room", ""), "Start Date:", self.metadata.get("start_date", "")),
@@ -399,33 +401,51 @@ class Mainform(QMainWindow):
             ("Notes:", self.metadata.get("notes", ""), "COD/CIA/HOL:", self.metadata.get("cod_cia", "")),
         ]
 
+        # --- Calculate dynamic min widths for metadata labels and values ---
+        # Collect all label1, label2, value1, value2
+        label1_list = [label1 for (label1, _, _, _) in metadata_fields]
+        label2_list = [label2 for (_, _, label2, _) in metadata_fields if label2]
+        value1_list = [value1 for (_, value1, _, _) in metadata_fields]
+        value2_list = [value2 for (_, _, _, value2) in metadata_fields if value2]
+
+        metrics = QFontMetrics(self.metadata_font)
+        label1_min = max([metrics.width(text) for text in label1_list]) + 26  # +padding
+        label2_min = max([metrics.width(text) for text in label2_list]) + 26 if label2_list else label1_min
+        value1_min = max([metrics.width(str(text)) for text in value1_list]) + 34  # +padding
+        value2_min = max([metrics.width(str(text)) for text in value2_list]) + 34 if value2_list else value1_min
+
+        # Set fixed width for metadata widget based on calculated min widths
+        metadata_widget.setFixedWidth(label1_min + value1_min + label2_min + value2_min + 24)
+        metadata_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # --- Metadata Section - Add metadata fields ---
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
-            # Label 1 or Column 1 Metadata
+            # Label 1
             label1_widget = QLabel(label1)
-            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;") # padding-left: 5px;
-            label1_widget.setFixedWidth(125)
+            label1_widget.setStyleSheet("font-weight: bold; text-align: left; border: none; padding-left: 5px; padding-right: 5px;")
+            label1_widget.setMinimumWidth(label1_min)
             label1_widget.setFont(self.metadata_font)
+            label1_widget.setFixedHeight(metrics.height() + 4)
             metadata_layout.addWidget(label1_widget, row, 0)
-            # Value 1 or Column 2 Metadata
+            # Value 1
             value1_widget = QLabel(value1)
-            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
-            value1_widget.setFixedWidth(300)
+            value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; padding-left: 5px; padding-right: 5px;")
+            value1_widget.setMinimumWidth(value1_min)
             value1_widget.setFont(self.metadata_font)
+            value1_widget.setFixedHeight(metrics.height() + 4)
             metadata_layout.addWidget(value1_widget, row, 1)
             if label2:
-                # Label 2 or Column 3 Metadata
                 label2_widget = QLabel(label2)
-                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none;")
-                label2_widget.setFixedWidth(125)
+                label2_widget.setStyleSheet("font-weight: bold; text-align: left; border: none; padding-left: 5px; padding-right: 5px;")
+                label2_widget.setMinimumWidth(label2_min)
                 label2_widget.setFont(self.metadata_font)
+                label2_widget.setFixedHeight(metrics.height() + 4)
                 metadata_layout.addWidget(label2_widget, row, 2)
             if value2:
-                # Value 2 or Column 4 Metadata
                 value2_widget = QLabel(value2)
-                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray;")
-                value2_widget.setFixedWidth(300)
+                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; padding-left: 5px; padding-right: 5px;")
+                value2_widget.setMinimumWidth(value2_min)
                 value2_widget.setFont(self.metadata_font)
+                value2_widget.setFixedHeight(metrics.height() + 4)
                 metadata_layout.addWidget(value2_widget, row, 3)
         # Add the metadata widget to the main layout
         self.layout.addWidget(metadata_widget)
