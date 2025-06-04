@@ -281,6 +281,10 @@ class Launcher(QMainWindow):
         self.refresh_data()  # Refresh the data and table
         self.show()
         self.center_window()
+        # --- PATCH: Ensure columns are stretched after show ---
+        header = self.table.horizontalHeader()
+        for col in range(self.table.columnCount()):
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
 
     def edit_class(self):
         """Edit the selected class."""
