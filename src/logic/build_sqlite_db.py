@@ -28,8 +28,73 @@ os.makedirs(DATA_DIR, exist_ok=True)
 DB_FILENAME = "001attendance.db"
 DB_PATH = os.path.join(DATA_DIR, DB_FILENAME)
 
-JSON_FILENAME = "001attendance_data.json"
-JSON_PATH = os.path.join(DATA_DIR, JSON_FILENAME)
+# JSON_FILENAME = "001attendance_data.json"
+# JSON_PATH = os.path.join(DATA_DIR, JSON_FILENAME)
+
+# --- BEGIN: Embedded attendance data (formerly from 001attendance_data.json) ---
+ATTENDANCE_DATA = {
+    "classes": {
+        "OLO123": {
+            "metadata": {
+                "class_no": "OLO123",
+                "company": "Acer",
+                "consultant": "James",
+                "teacher": "Paul R",
+                "teacher_no": "A20049",
+                "room": "Small building 2nd Floor",
+                "course_book": "IEX Pre Inter",
+                "start_date": "01/05/2025",
+                "finish_date": "01/05/2026",
+                "time": "17:00 - 19:00",
+                "notes": "Nice Group",
+                "rate": "520",
+                "ccp": "120",
+                "travel": "200",
+                "bonus": "1000",
+                "course_hours": "40",
+                "class_time": "2",
+                "max_classes": "20 x 2 = 40.0",
+                "days": "Monday, Tuesday",
+                "dates": [
+                    "01/05/2025", "05/05/2025", "06/05/2025", "12/05/2025", "13/05/2025", "14/05/2025", "15/05/2025", "16/05/2025", "17/05/2025", "18/05/2025", "19/05/2025", "20/05/2025", "21/05/2025", "22/05/2025", "23/05/2025", "26/05/2025", "27/05/2025", "02/06/2025", "03/06/2025", "09/06/2025", "10/06/2025", "16/06/2025", "17/06/2025"
+                ],
+                "cod_cia": "0 COD 0 CIA 0 HOL"
+            },
+            "students": {
+                "S001": {
+                    "name": "Paul",
+                    "nickname": "Monkey King",
+                    "company_no": "A123456",
+                    "gender": "Male",
+                    "score": "65% B",
+                    "pre_test": "58%",
+                    "post_test": "98%",
+                    "note": "Good Student",
+                    "active": "Yes",
+                    "attendance": {
+                        "14/05/2025": "P", "15/05/2025": "A", "16/05/2025": "P", "17/05/2025": "P", "18/05/2025": "P", "19/05/2025": "P", "20/05/2025": "P", "21/05/2025": "P", "22/05/2025": "P", "23/05/2025": "P", "10/06/2025": "-", "16/06/2025": "-", "27/05/2025": "P", "26/05/2025": "A", "17/06/2025": "-"
+                    }
+                },
+                "S002": {
+                    "name": "Jeerapha Suadee",
+                    "nickname": "Small Monkey",
+                    "company_no": "A321564s",
+                    "gender": "Female",
+                    "score": "55% D",
+                    "pre_test": "55%",
+                    "post_test": "85%",
+                    "note": "Pain in Butt",
+                    "active": "Yes",
+                    "attendance": {
+                        "01/05/2025": "-", "05/05/2025": "-", "06/05/2025": "-", "12/05/2025": "-", "13/05/2025": "-", "14/05/2025": "-", "15/05/2025": "-", "16/05/2025": "-", "17/05/2025": "-", "18/05/2025": "-", "19/05/2025": "A", "20/05/2025": "P", "21/05/2025": "-", "22/05/2025": "-", "23/05/2025": "P", "26/05/2025": "A", "27/05/2025": "-", "02/06/2025": "-", "03/06/2025": "-", "09/06/2025": "-", "10/06/2025": "-", "16/06/2025": "-", "17/06/2025": "-"
+                    }
+                }
+            },
+            "archive": "No"
+        }
+    }
+}
+# --- END: Embedded attendance data ---
 
 def recreate_db(db_path=DB_PATH):
     if os.path.exists(db_path):
@@ -72,6 +137,20 @@ def recreate_db(db_path=DB_PATH):
         show_p TEXT DEFAULT 'Yes',
         show_a TEXT DEFAULT 'Yes',
         show_l TEXT DEFAULT 'Yes',
+        show_note TEXT DEFAULT 'Yes',
+        width_row_number INTEGER DEFAULT 30,
+        width_name INTEGER DEFAULT 150,
+        width_nickname INTEGER DEFAULT 100,
+        width_company_no INTEGER DEFAULT 100,
+        width_score INTEGER DEFAULT 65,
+        width_prestest INTEGER DEFAULT 65,
+        width_posttest INTEGER DEFAULT 65,
+        width_attn INTEGER DEFAULT 50,
+        width_p INTEGER DEFAULT 30,
+        width_a INTEGER DEFAULT 30,
+        width_l INTEGER DEFAULT 30,
+        width_note INTEGER DEFAULT 150,
+        width_date INTEGER DEFAULT 50,
         -- PATCH: Add color columns for attendance types
         bgcolor_p TEXT DEFAULT '#c8e6c9',
         bgcolor_a TEXT DEFAULT '#ffcdd2',
@@ -168,32 +247,25 @@ def recreate_db(db_path=DB_PATH):
 def import_data(conn, data):
     cursor = conn.cursor()
     for class_no, class_data in data["classes"].items():
-        meta = class_data["metadata"]
-
+        meta = class_data["metadata"]        
         cursor.execute("""
-            INSERT OR REPLACE INTO classes VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR REPLACE INTO classes (
+                class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
+                show_nickname, show_company_no, show_score, show_prestest, show_posttest, show_attn, show_p, show_a, show_l, show_note,
+                width_row_number, width_name, width_nickname, width_company_no, width_score, width_prestest, width_posttest, width_attn, width_p, width_a, width_l, width_note, width_date,
+                bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             meta["class_no"], meta["company"], meta["consultant"], meta["teacher"], meta["teacher_no"],
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
             meta.get("max_classes", ""), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
-            meta.get("show_nickname", "Yes"),
-            meta.get("show_company_no", "Yes"),
-            meta.get("show_score", "Yes"),
-            meta.get("show_prestest", "Yes"),
-            meta.get("show_posttest", "Yes"),
-            meta.get("show_attn", "Yes"),
-            meta.get("show_p", "Yes"),
-            meta.get("show_a", "Yes"),
-            meta.get("show_l", "Yes"),
-            meta.get("bgcolor_p", "#c8e6c9"),
-            meta.get("bgcolor_a", "#ffcdd2"),
-            meta.get("bgcolor_l", "#fff9c4"),
-            meta.get("bgcolor_cod", "#c8e6c9"),
-            meta.get("bgcolor_cia", "#ffcdd2"),
-            meta.get("bgcolor_hol", "#ffcdd2"),
+            meta.get("show_nickname", "Yes"), meta.get("show_company_no", "Yes"), meta.get("show_score", "Yes"), meta.get("show_prestest", "Yes"), meta.get("show_posttest", "Yes"), meta.get("show_attn", "Yes"), meta.get("show_p", "Yes"), meta.get("show_a", "Yes"), meta.get("show_l", "Yes"), meta.get("show_note", "Yes"),
+            int(meta.get("width_row_number", 30)), int(meta.get("width_name", 150)), int(meta.get("width_nickname", 100)), int(meta.get("width_company_no", 100)), int(meta.get("width_score", 65)), int(meta.get("width_prestest", 65)), int(meta.get("width_posttest", 65)), int(meta.get("width_attn", 50)), int(meta.get("width_p", 30)), int(meta.get("width_a", 30)), int(meta.get("width_l", 30)), int(meta.get("width_note", 150)), int(meta.get("width_date", 50)),
+            meta.get("bgcolor_p", "#c8e6c9"), meta.get("bgcolor_a", "#ffcdd2"), meta.get("bgcolor_l", "#fff9c4"), meta.get("bgcolor_cod", "#c8e6c9"), meta.get("bgcolor_cia", "#ffcdd2"), meta.get("bgcolor_hol", "#ffcdd2")
         ))
+        # ...existing code...
 
         for date in meta.get("dates", []):
             cursor.execute("""
@@ -262,7 +334,7 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
         keys = list(defaults.keys())
         idx = keys.index("columns_before_today") + 1 if "columns_before_today" in keys else len(keys)
         items = list(defaults.items())
-        items.insert(idx, ("cod_cia_hol", "0 COD / 0 CIA / 0 HOL"))
+        items.insert(idx, ("cod_cia_hol", "0 COD 0 CIA 0 HOL"))
         defaults = dict(items)
     # PATCH: Add default colors if not present
     for color_key, color_val in [
@@ -372,25 +444,17 @@ def import_form_settings(conn, form_settings_path=os.path.join(DATA_DIR, "001for
     print(f"Imported per-form settings from {form_settings_path}")
 
 def main():
-    if not os.path.exists(JSON_PATH):
-        print(f"Error: Dataset file not found: {JSON_PATH}")
-        return
-
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
+    # No longer need to check for JSON_PATH or read JSON file
     conn = recreate_db()
-    import_data(conn, data)
+    import_data(conn, ATTENDANCE_DATA)
     import_defaults(conn)
     import_form_settings(conn)  # <-- NEW: Import per-form settings
-
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM holidays ORDER BY date")
     holidays = cursor.fetchall()
     print("Holidays in DB:")
     for h in holidays:
         print(h)
-
     conn.close()
 
 if __name__ == "__main__":
