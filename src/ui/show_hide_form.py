@@ -16,6 +16,7 @@ SHOW_HIDE_FIELDS = [
     ("show_p", "P"),
     ("show_a", "A"),
     ("show_l", "L"),
+    ("show_note", "Note"),
 ]
 
 COLOR_FIELDS = [

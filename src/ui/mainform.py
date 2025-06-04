@@ -313,7 +313,8 @@ class Mainform(QMainWindow):
             "Attn": (self.class_data.get("show_attn") or self.default_settings.get("show_attn", "Yes")) == "Yes",
             "P": (self.class_data.get("show_p") or self.default_settings.get("show_p", "Yes")) == "Yes",
             "A": (self.class_data.get("show_a") or self.default_settings.get("show_a", "Yes")) == "Yes",
-            "L": (self.class_data.get("show_l") or self.default_settings.get("show_l", "Yes")) == "Yes"
+            "L": (self.class_data.get("show_l") or self.default_settings.get("show_l", "Yes")) == "Yes",
+            "Note": (self.class_data.get("show_note") or self.default_settings.get("show_note", "Yes")) == "Yes",
         }
         self.scrollable_column_visibility = {
             "Dates": (self.class_data.get("show_dates") or self.default_settings.get("show_dates", "Yes")) == "Yes"
@@ -864,6 +865,8 @@ QTableView::item:selected {
             frozen_headers.append("A")
         if self.column_visibility.get("L", True):
             frozen_headers.append("L")
+        if self.column_visibility.get("Note", True):
+            frozen_headers.append("Note")
         self.frozen_headers = frozen_headers  # <-- Assign to self
         frozen_data = []
         # Add "Running Total" row
@@ -902,6 +905,8 @@ QTableView::item:selected {
                     row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "A"))
                 elif header == "L":
                     row.append(sum(1 for date in attendance_dates if student.get("attendance", {}).get(date) == "L"))
+                elif header == "Note":
+                    row.append(student.get("note", ""))  # Handle Note column
                 else:
                     row.append("")
             frozen_data.append(row)
@@ -1065,7 +1070,7 @@ QTableView::item:selected {
     def open_show_hide(self):
         """Open the Show/Hide columns dialog and update the frozen table accordingly."""
         try:
-            from .show_hide_form import ShowHideForm
+            from .show_hide_form import ShowHideForm, SHOW_HIDE_FIELDS
         except ImportError:
             QMessageBox.warning(self, "Error", "Show/Hide form not found.")
             return
@@ -1091,9 +1096,7 @@ QTableView::item:selected {
             self.reset_column_widths()
             self.reset_scrollable_column_widths()
             self.adjust_frozen_table_width()  # Ensure width is recalculated after show/hide
-
         # Overlap scrollable_table over frozen_table by setting a negative left margin
-        # self.table_layout.setContentsMargins(20, 0, 0, 0)
         self.scrollable_table.setStyleSheet(
             self.scrollable_table.styleSheet() +
             "QTableView { margin-left: 20px; }"
