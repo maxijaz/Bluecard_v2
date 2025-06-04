@@ -257,9 +257,29 @@ class Mainform(QMainWindow):
 
         # --- PATCH: Load from DB ---
         self.class_data = get_class_by_id(self.class_id)
-        # print(f"[DEBUG] Loaded class_data for {self.class_id}: " + ", ".join(f"{k}={self.class_data.get(k)}" for k in [
-        #    "show_nickname", "show_company_no", "show_score", "show_prestest", "show_posttest", "show_attn", "show_p", "show_a", "show_l"
-        # ]))
+        # --- PATCH: Update FROZEN_COLUMN_WIDTHS from DB if present ---
+        width_map = {
+            "#": "width_row_number",
+            "Name": "width_name",
+            "Note": "width_note",
+            "Nickname": "width_nickname",
+            "Company No": "width_company_no",
+            "Score": "width_score",
+            "PreTest": "width_pre_test",
+            "PostTest": "width_post_test",
+            "Attn": "width_attn",
+            "P": "width_p",
+            "A": "width_a",
+            "L": "width_l",
+        }
+        for col, db_key in width_map.items():
+            db_val = self.class_data.get(db_key)
+            if db_val is not None:
+                try:
+                    self.FROZEN_COLUMN_WIDTHS[col] = int(db_val)
+                except (ValueError, TypeError):
+                    pass
+
         self.students = {}
         for student_row in get_students_by_class(self.class_id):
             student_id = student_row["student_id"]
@@ -987,17 +1007,18 @@ QTableView::item:selected {
         return super().eventFilter(obj, event)
 
     FROZEN_COLUMN_WIDTHS = {
-        "#": 30,
-        "Name": 150,
-        "Nickname": 100,
-        "Company No": 100,
-        "Score": 65,
-        "PreTest": 65,
-        "PostTest": 65,
-        "Attn": 50,
-        "P": 30,
-        "A": 30,
-        "L": 30,
+        "#": 30, # mapped to db width_row_number = 30
+        "Name": 150, # mapped to db width_name = 150
+        "Note": 200,  # mapped to db width_note = 150
+        "Nickname": 100, # mapped to db width_nickname = 100
+        "Company No": 100, # mapped to db width_company_no = 100
+        "Score": 65, # mapped to db to width_score = 65
+        "PreTest": 65, # mapped to db to width_pre_test = 65
+        "PostTest": 65, # mapped to db to width_post_test = 65
+        "Attn": 50, # mapped to db to width_attn = 50
+        "P": 30, # mapped to db to width_p = 30
+        "A": 30, # mapped to db to width_a = 30
+        "L": 30, # mapped to db to width_l = 30
     }
 
     def reset_column_widths(self):
