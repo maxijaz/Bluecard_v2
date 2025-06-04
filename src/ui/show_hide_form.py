@@ -10,7 +10,7 @@ SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
     ("show_company_no", "Company No"),
     ("show_score", "Score"),
-    ("show_prestest", "PreTest"),
+    ("show_pretest", "PreTest"),
     ("show_posttest", "PostTest"),
     ("show_attn", "Attn"),
     ("show_p", "P"),
@@ -18,6 +18,20 @@ SHOW_HIDE_FIELDS = [
     ("show_l", "L"),
     ("show_note", "Note"),
 ]
+
+# Map from label to DB width key
+WIDTH_DB_KEYS = {
+    "Nickname": "width_nickname",
+    "Company No": "width_company_no",
+    "Score": "width_score",
+    "PreTest": "width_pretest",
+    "PostTest": "width_posttest",
+    "Attn": "width_attn",
+    "P": "width_p",
+    "A": "width_a",
+    "L": "width_l",
+    "Note": "width_note",
+}
 
 COLOR_FIELDS = [
     ("bgcolor_p", "P", "#c8e6c9"),
@@ -37,6 +51,7 @@ class ShowHideForm(QDialog):
         self.class_data = get_class_by_id(class_id)  # <-- Load from classes table
         self.checkboxes = {}
         self.color_edits = {}
+        self.width_edits = {}  # {db_key: QLineEdit}
 
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("ShowHideForm") or {}
@@ -78,6 +93,7 @@ class ShowHideForm(QDialog):
         header_layout = QHBoxLayout()
         header_layout.addWidget(QLabel("<b>Choose columns to show/hide</b>"))
         header_layout.addWidget(QLabel("<b>P/A/L colour scheme</b>"))
+        header_layout.addWidget(QLabel("<b>Column Width</b>"))
         layout.addLayout(header_layout)
 
         # Main grid
@@ -93,9 +109,20 @@ class ShowHideForm(QDialog):
                 self.checkboxes[key] = cb
                 grid.addWidget(lbl, row, 0)
                 grid.addWidget(cb, row, 1)
+                # Column 3: Width QLineEdit
+                width_db_key = WIDTH_DB_KEYS.get(label)
+                if width_db_key:
+                    width_val = self.class_data.get(width_db_key, "")
+                    width_edit = QLineEdit(str(width_val) if width_val else "")
+                    width_edit.setMaximumWidth(60)
+                    self.width_edits[width_db_key] = width_edit
+                    grid.addWidget(width_edit, row, 4)
+                else:
+                    grid.addWidget(QWidget(), row, 4)
             else:
                 grid.addWidget(QWidget(), row, 0)
                 grid.addWidget(QWidget(), row, 1)
+                grid.addWidget(QWidget(), row, 4)
             # Column 2: Colour scheme
             if row < len(COLOR_FIELDS):
                 color_key, color_label, default = COLOR_FIELDS[row]
@@ -115,8 +142,11 @@ class ShowHideForm(QDialog):
         self.toggle_columns_btn.clicked.connect(self.toggle_columns)
         self.toggle_colors_btn = QPushButton("Toggle bgcolor on/off")
         self.toggle_colors_btn.clicked.connect(self.toggle_colors)
+        self.reset_widths_btn = QPushButton("Reset Widths")
+        self.reset_widths_btn.clicked.connect(self.reset_widths)
         toggle_layout.addWidget(self.toggle_columns_btn)
         toggle_layout.addWidget(self.toggle_colors_btn)
+        toggle_layout.addWidget(self.reset_widths_btn)
         layout.addLayout(toggle_layout)
 
         # Save/Cancel
@@ -128,6 +158,14 @@ class ShowHideForm(QDialog):
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
+
+    def reset_widths(self):
+        # Reload widths from DB and update QLineEdits
+        db_row = get_class_by_id(self.class_id)
+        for label, db_key in WIDTH_DB_KEYS.items():
+            if db_key in self.width_edits:
+                val = db_row.get(db_key, "")
+                self.width_edits[db_key].setText(str(val) if val else "")
 
     def toggle_columns(self):
         # Toggle all checkboxes: if any unchecked, check all; else uncheck all
@@ -146,6 +184,13 @@ class ShowHideForm(QDialog):
         updates = {key: "Yes" if cb.isChecked() else "No" for key, cb in self.checkboxes.items()}
         for color_key, edit in self.color_edits.items():
             updates[color_key] = edit.text().strip()
+        # Save widths
+        for db_key, edit in self.width_edits.items():
+            val = edit.text().strip()
+            if val.isdigit():
+                updates[db_key] = int(val)
+            else:
+                updates[db_key] = None
         # print(f"[DEBUG] ShowHideForm.save: updates to save for class {self.class_id}: {updates}")
         try:
             update_class(self.class_id, updates)

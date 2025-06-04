@@ -17,7 +17,7 @@ def load_data() -> Dict[str, Any]:
     """Fetch all classes and their students from the database."""
     classes = {}
     show_hide_fields = [
-        "show_nickname", "show_company_no", "show_score", "show_prestest",
+        "show_nickname", "show_company_no", "show_score", "show_pretest",
         "show_posttest", "show_attn", "show_p", "show_a", "show_l"
     ]
     for class_row in get_all_classes():
@@ -58,7 +58,7 @@ def validate_class_format(data: dict) -> bool:
             "class_no", "company", "consultant", "teacher", "teacher_no", "room", "course_book",
             "start_date", "finish_date", "time", "notes", "rate", "ccp", "travel", "bonus",
             "course_hours", "class_time", "max_classes", "days", "dates", "cod_cia",
-            "show_nickname", "show_company_no", "show_score", "show_prestest",
+            "show_nickname", "show_company_no", "show_score", "show_pretest",
             "show_posttest", "show_attn", "show_p", "show_a", "show_l"
         ]
         if not all(field in class_data for field in required_metadata_fields):

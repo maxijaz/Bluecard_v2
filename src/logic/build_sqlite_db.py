@@ -131,7 +131,7 @@ def recreate_db(db_path=DB_PATH):
         show_nickname TEXT DEFAULT 'Yes',
         show_company_no TEXT DEFAULT 'Yes',
         show_score TEXT DEFAULT 'Yes',
-        show_prestest TEXT DEFAULT 'Yes',
+        show_pretest TEXT DEFAULT 'Yes',
         show_posttest TEXT DEFAULT 'Yes',
         show_attn TEXT DEFAULT 'Yes',
         show_p TEXT DEFAULT 'Yes',
@@ -143,7 +143,7 @@ def recreate_db(db_path=DB_PATH):
         width_nickname INTEGER DEFAULT 100,
         width_company_no INTEGER DEFAULT 100,
         width_score INTEGER DEFAULT 65,
-        width_prestest INTEGER DEFAULT 65,
+        width_pretest INTEGER DEFAULT 65,
         width_posttest INTEGER DEFAULT 65,
         width_attn INTEGER DEFAULT 50,
         width_p INTEGER DEFAULT 30,
@@ -251,8 +251,8 @@ def import_data(conn, data):
         cursor.execute("""
             INSERT OR REPLACE INTO classes (
                 class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
-                show_nickname, show_company_no, show_score, show_prestest, show_posttest, show_attn, show_p, show_a, show_l, show_note,
-                width_row_number, width_name, width_nickname, width_company_no, width_score, width_prestest, width_posttest, width_attn, width_p, width_a, width_l, width_note, width_date,
+                show_nickname, show_company_no, show_score, show_pretest, show_posttest, show_attn, show_p, show_a, show_l, show_note,
+                width_row_number, width_name, width_nickname, width_company_no, width_score, width_pretest, width_posttest, width_attn, width_p, width_a, width_l, width_note, width_date,
                 bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
@@ -261,8 +261,8 @@ def import_data(conn, data):
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
             meta.get("max_classes", ""), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
-            meta.get("show_nickname", "Yes"), meta.get("show_company_no", "Yes"), meta.get("show_score", "Yes"), meta.get("show_prestest", "Yes"), meta.get("show_posttest", "Yes"), meta.get("show_attn", "Yes"), meta.get("show_p", "Yes"), meta.get("show_a", "Yes"), meta.get("show_l", "Yes"), meta.get("show_note", "Yes"),
-            int(meta.get("width_row_number", 30)), int(meta.get("width_name", 150)), int(meta.get("width_nickname", 100)), int(meta.get("width_company_no", 100)), int(meta.get("width_score", 65)), int(meta.get("width_prestest", 65)), int(meta.get("width_posttest", 65)), int(meta.get("width_attn", 50)), int(meta.get("width_p", 30)), int(meta.get("width_a", 30)), int(meta.get("width_l", 30)), int(meta.get("width_note", 150)), int(meta.get("width_date", 50)),
+            meta.get("show_nickname", "Yes"), meta.get("show_company_no", "Yes"), meta.get("show_score", "Yes"), meta.get("show_pretest", "Yes"), meta.get("show_posttest", "Yes"), meta.get("show_attn", "Yes"), meta.get("show_p", "Yes"), meta.get("show_a", "Yes"), meta.get("show_l", "Yes"), meta.get("show_note", "Yes"),
+            int(meta.get("width_row_number", 30)), int(meta.get("width_name", 150)), int(meta.get("width_nickname", 100)), int(meta.get("width_company_no", 100)), int(meta.get("width_score", 65)), int(meta.get("width_pretest", 65)), int(meta.get("width_posttest", 65)), int(meta.get("width_attn", 50)), int(meta.get("width_p", 30)), int(meta.get("width_a", 30)), int(meta.get("width_l", 30)), int(meta.get("width_note", 150)), int(meta.get("width_date", 50)),
             meta.get("bgcolor_p", "#c8e6c9"), meta.get("bgcolor_a", "#ffcdd2"), meta.get("bgcolor_l", "#fff9c4"), meta.get("bgcolor_cod", "#c8e6c9"), meta.get("bgcolor_cia", "#ffcdd2"), meta.get("bgcolor_hol", "#ffcdd2")
         ))
         # ...existing code...

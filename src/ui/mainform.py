@@ -41,7 +41,7 @@ SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
     ("show_company_no", "Company No"),
     ("show_score", "Score"),
-    ("show_prestest", "PreTest"),
+    ("show_pretest", "PreTest"),
     ("show_posttest", "PostTest"),
     ("show_attn", "Attn"),
     ("show_p", "P"),
@@ -328,7 +328,7 @@ class Mainform(QMainWindow):
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
             "Company No": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
             "Score": (self.class_data.get("show_score") or self.default_settings.get("show_score", "Yes")) == "Yes",
-            "PreTest": (self.class_data.get("show_prestest") or self.default_settings.get("show_prestest", "Yes")) == "Yes",
+            "PreTest": (self.class_data.get("show_pretest") or self.default_settings.get("show_pretest", "Yes")) == "Yes",
             "PostTest": (self.class_data.get("show_posttest") or self.default_settings.get("show_posttest", "Yes")) == "Yes",
             "Attn": (self.class_data.get("show_attn") or self.default_settings.get("show_attn", "Yes")) == "Yes",
             "P": (self.class_data.get("show_p") or self.default_settings.get("show_p", "Yes")) == "Yes",
@@ -853,7 +853,7 @@ QTableView::item:selected {
             "class_no", "company", "room", "consultant", "teacher", "course_book",
             "course_hours", "class_time", "max_classes", "start_date", "finish_date",
             "days", "notes", "cod_cia", "archive", "show_nickname", "show_company_no",
-            "show_score", "show_prestest", "show_posttest", "show_attn", "show_p",
+            "show_score", "show_pretest", "show_posttest", "show_attn", "show_p",
             "show_l", "show_a"
         }
         db_metadata = {k: v for k, v in self.metadata.items() if k in db_columns}
