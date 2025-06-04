@@ -542,7 +542,7 @@ class Mainform(QMainWindow):
         # self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + "QTableView { border: 2px solid blue !important; }")
         
         from PyQt5.QtCore import QTimer
-        QTimer.singleShot(0, position_tables)
+        QTimer.singleShot(0, self.position_tables)
 
         self.layout.addWidget(self.table_container)
 
@@ -1033,6 +1033,14 @@ QTableView::item:selected {
         self.adjust_frozen_table_width()
         self.update_scrollable_table_position()
 
+    def position_tables(self):
+        """Position frozen and scrollable tables so scrollable always sticks to the right of frozen."""
+        frozen_width = self.frozen_table.width()
+        height = self.table_container.height()
+        self.frozen_table.setGeometry(0, 0, frozen_width, height)
+        # Move scrollable_table left by 1px for a perfect join
+        self.scrollable_table.setGeometry(frozen_width - 1, 0, self.table_container.width() - frozen_width + 1, height)
+
     def adjust_frozen_table_width(self):
         # Calculate the width of the frozen table as the sum of visible columns
         total_width = 0
@@ -1117,6 +1125,7 @@ QTableView::item:selected {
             self.reset_column_widths()
             self.reset_scrollable_column_widths()
             self.adjust_frozen_table_width()  # Ensure width is recalculated after show/hide
+            self.position_tables()
         # Overlap scrollable_table over frozen_table by setting a negative left margin
         self.scrollable_table.setStyleSheet(
             self.scrollable_table.styleSheet() +
