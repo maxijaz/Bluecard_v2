@@ -428,29 +428,84 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     conn.commit()
     print("Imported defaults from default.json")
 
-def import_form_settings(conn, form_settings_path=os.path.join(DATA_DIR, "001form_settings.json")):
-    """Import per-form settings from JSON and insert into form_settings table."""
-    if not os.path.exists(form_settings_path):
-        print(f"No 001form_settings.json found at {form_settings_path}")
-        return
-    with open(form_settings_path, "r", encoding="utf-8") as f:
-        form_settings_list = json.load(f)
+def import_defaults_from_factory(conn, factory_defaults):
+    """Import global defaults from factory_defaults.json into defaults table."""
+    global_defaults = factory_defaults.get("global", {})
     cursor = conn.cursor()
-    for entry in form_settings_list:
-        columns = list(entry.keys())
-        placeholders = ["?"] * len(columns)
-        values = [entry[k] for k in columns]
-        sql = f"INSERT OR REPLACE INTO form_settings ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
-        cursor.execute(sql, values)
+    for key, value in global_defaults.items():
+        cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
     conn.commit()
-    print(f"Imported per-form settings from {form_settings_path}")
+    print("Imported global defaults from factory_defaults.json")
+
+def import_form_settings_from_factory(conn, factory_defaults):
+    """Import per-form settings from factory_defaults.json into form_settings table."""
+    forms = factory_defaults.get("forms", {})
+    cursor = conn.cursor()
+    for form_name, settings in forms.items():
+        columns = list(settings.keys())
+        placeholders = ["?"] * len(columns)
+        values = [settings[k] for k in columns]
+        sql = f"INSERT OR REPLACE INTO form_settings (form_name, {', '.join(columns)}) VALUES (?, {', '.join(placeholders)})"
+        cursor.execute(sql, [form_name] + values)
+    conn.commit()
+    print("Imported per-form settings from factory_defaults.json")
+
+def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
+    """
+    Compare the DB's defaults and form_settings to those in factory_defaults.json.
+    Print warnings or raise error if mismatches are found.
+    If strict=True, raise an error on any mismatch.
+    """
+    cursor = conn.cursor()
+    # Check global defaults
+    db_defaults = dict(cursor.execute("SELECT key, value FROM defaults").fetchall())
+    factory_global = factory_defaults.get("global", {})
+    mismatches = []
+    for key, value in factory_global.items():
+        db_val = db_defaults.get(key)
+        if str(db_val) != str(value):
+            mismatches.append(f"Global default mismatch: {key}: DB='{db_val}' vs Factory='{value}'")
+    # Check per-form settings
+    db_forms = cursor.execute("SELECT form_name FROM form_settings").fetchall()
+    db_forms = [row[0] for row in db_forms]
+    factory_forms = factory_defaults.get("forms", {})
+    for form_name, settings in factory_forms.items():
+        if form_name not in db_forms:
+            mismatches.append(f"Form '{form_name}' missing in DB form_settings table.")
+            continue
+        db_row = cursor.execute(f"SELECT * FROM form_settings WHERE form_name=?", (form_name,)).fetchone()
+        db_columns = [desc[0] for desc in cursor.description]
+        db_dict = dict(zip(db_columns, db_row))
+        for k, v in settings.items():
+            db_val = db_dict.get(k)
+            if str(db_val) != str(v):
+                mismatches.append(f"Form '{form_name}' setting mismatch: {k}: DB='{db_val}' vs Factory='{v}'")
+    if mismatches:
+        print("\nFactory defaults mismatches found:")
+        for m in mismatches:
+            print(m)
+        if strict:
+            raise RuntimeError("Factory defaults do not match DB. See above.")
+    else:
+        print("Factory defaults match DB.")
 
 def main():
-    # No longer need to check for JSON_PATH or read JSON file
+    import argparse
+    parser = argparse.ArgumentParser(description="Build Bluecard DB and check against factory defaults.")
+    parser.add_argument('--strict-factory-check', action='store_true', help='Fail if DB and factory defaults mismatch')
+    args = parser.parse_args()
+    # ...existing code...
     conn = recreate_db()
     import_data(conn, ATTENDANCE_DATA)
-    import_defaults(conn)
-    import_form_settings(conn)  # <-- NEW: Import per-form settings
+    # Load factory_defaults.json
+    factory_defaults_path = os.path.join(DATA_DIR, "factory_defaults.json")
+    with open(factory_defaults_path, "r", encoding="utf-8") as f:
+        factory_defaults = json.load(f)
+    # Use factory_defaults for import_defaults and import_form_settings
+    import_defaults_from_factory(conn, factory_defaults)
+    import_form_settings_from_factory(conn, factory_defaults)
+    # Check for mismatches
+    check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM holidays ORDER BY date")
     holidays = cursor.fetchall()
