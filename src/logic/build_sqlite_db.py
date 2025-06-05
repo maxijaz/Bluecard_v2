@@ -236,6 +236,13 @@ def recreate_db(db_path=DB_PATH):
         extra_json TEXT, -- for future extensibility (JSON-encoded dict)
         last_modified TEXT -- ISO timestamp
     );
+    CREATE TABLE factory_defaults (
+        scope TEXT,           -- 'global' or 'form'
+        form_name TEXT,       -- NULL for global, form name for form
+        key TEXT,
+        value TEXT,
+        PRIMARY KEY (scope, form_name, key)
+    );
     """)
     print("Created tables")
 
@@ -428,6 +435,19 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     conn.commit()
     print("Imported defaults from default.json")
 
+def import_factory_defaults_table(conn, factory_defaults):
+    """Populate factory_defaults table with all global and per-form defaults from factory_defaults.json."""
+    cursor = conn.cursor()
+    # Global defaults
+    for key, value in factory_defaults.get("global", {}).items():
+        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(value)))
+    # Per-form defaults
+    for form_name, settings in factory_defaults.get("forms", {}).items():
+        for key, value in settings.items():
+            cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(value)))
+    conn.commit()
+    print("Populated factory_defaults table from factory_defaults.json")
+
 def import_defaults_from_factory(conn, factory_defaults):
     """Import global defaults from factory_defaults.json into defaults table."""
     global_defaults = factory_defaults.get("global", {})
@@ -517,8 +537,22 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Build Bluecard DB and check against factory defaults.")
     parser.add_argument('--strict-factory-check', action='store_true', help='Fail if DB and factory defaults mismatch')
+    parser.add_argument('--check-only', action='store_true', help='Only check for mismatches, do not rebuild DB')
     args = parser.parse_args()
     # ...existing code...
+    factory_defaults_path = os.path.join(DATA_DIR, "factory_defaults.json")
+    with open(factory_defaults_path, "r", encoding="utf-8") as f:
+        factory_defaults = json.load(f)
+    if args.check_only:
+        # Connect to existing DB and check
+        if not os.path.exists(DB_PATH):
+            print(f"No database found at {DB_PATH} to check.")
+            return
+        conn = sqlite3.connect(DB_PATH)
+        check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
+        conn.close()
+        return
+    # ...existing code for full rebuild...
     conn = recreate_db()
     import_data(conn, ATTENDANCE_DATA)
     # Load factory_defaults.json
@@ -528,6 +562,7 @@ def main():
     # Use factory_defaults for import_defaults and import_form_settings
     import_defaults_from_factory(conn, factory_defaults)
     import_form_settings_from_factory(conn, factory_defaults)
+    import_factory_defaults_table(conn, factory_defaults)
     # Check for mismatches
     check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
     cursor = conn.cursor()

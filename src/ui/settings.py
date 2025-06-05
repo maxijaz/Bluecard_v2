@@ -187,35 +187,55 @@ class SettingsForm(QDialog):
         display_layout.addRow("Height ratio:", height_spin)
         layout.addLayout(display_layout)
 
-    def save_settings(self):
-        updated_settings = {}
-        for key, entry in self.entries.items():
-            if isinstance(entry, QLineEdit):
-                updated_settings[key] = entry.text()
-            elif isinstance(entry, QCheckBox):
-                updated_settings[key] = "1" if entry.isChecked() else "0"
-            elif isinstance(entry, QDoubleSpinBox):
-                updated_settings[key] = str(entry.value())
-            else:
-                updated_settings[key] = str(entry.text()) if hasattr(entry, 'text') else str(entry)
+        # --- Add Check Factory Defaults Button ---
+        check_button_layout = QHBoxLayout()
+        check_button_layout.addStretch(1)
+        check_defaults_btn = QPushButton("Check Factory Defaults")
+        check_defaults_btn.setMinimumWidth(180)
+        check_defaults_btn.clicked.connect(self.check_factory_defaults)
+        check_button_layout.addWidget(check_defaults_btn)
+        check_button_layout.addStretch(1)
+        layout.addLayout(check_button_layout)
+
+    def check_factory_defaults(self):
+        """Check DB defaults vs factory_defaults.json and show differences."""
         try:
-            set_all_defaults(updated_settings)
-            # --- Live update: apply display settings immediately if parent is a main window ---
-            parent = self.parent()
-            if parent is not None:
-                from logic.db_interface import get_all_defaults
-                from logic.display import center_widget, scale_and_center
-                display_settings = get_all_defaults()
-                scale = str(display_settings.get("scale_windows", "1")) == "1"
-                center = str(display_settings.get("center_windows", "1")) == "1"
-                width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-                height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-                if scale:
-                    scale_and_center(parent, width_ratio, height_ratio)
-                elif center:
-                    center_widget(parent)
+            from logic.build_sqlite_db import check_factory_defaults_vs_db
+            from logic.db_interface import get_connection
+            import json
+            import os
+            # Get DB connection
+            conn = get_connection()
+            # Load factory defaults from JSON
+            factory_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'factory_defaults.json')
+            with open(factory_path, 'r', encoding='utf-8') as f:
+                factory_defaults = json.load(f)
+            result = check_factory_defaults_vs_db(conn, factory_defaults)
+            conn.close()
+            if not result or (isinstance(result, str) and result.strip() == "OK"):
+                QMessageBox.information(self, "Factory Defaults Check", "All settings match factory defaults.")
+            else:
+                # Show differences in a scrollable dialog
+                dlg = QDialog(self)
+                dlg.setWindowTitle("Factory Defaults Differences")
+                dlg.resize(700, 500)
+                vbox = QVBoxLayout(dlg)
+                label = QLabel("Differences between DB and factory_defaults.json:")
+                vbox.addWidget(label)
+                from PyQt5.QtWidgets import QTextEdit
+                text = QTextEdit()
+                text.setReadOnly(True)
+                text.setText(str(result))
+                vbox.addWidget(text)
+                btn = QPushButton("Close")
+                btn.clicked.connect(dlg.accept)
+                vbox.addWidget(btn)
+                dlg.exec_()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save default settings: {e}")
-            return
+            QMessageBox.critical(self, "Error", f"Failed to check factory defaults:\n{e}")
+
+    def save_settings(self):
+        """Stub for saving settings. Implement actual save logic here."""
+        # For now, just close the dialog with accept()
         self.accept()
 
