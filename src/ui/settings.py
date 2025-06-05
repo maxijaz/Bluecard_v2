@@ -32,9 +32,7 @@ class SettingsForm(QDialog):
             self.setMinimumSize(300, 200)
         max_w = form_settings.get("max_width")
         max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
-        # Add minimize, maximize, and close buttons
+        # Always allow maximize
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
@@ -121,18 +119,22 @@ class SettingsForm(QDialog):
         above_btn_sep.setFixedHeight(4)
         above_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
         layout.addWidget(above_btn_sep)
-        # Buttons
+        # Buttons (Save, Cancel, Check Factory Defaults) in one row
         button_layout = QHBoxLayout()
-        button_layout.addStretch(1)  # Add stretch before buttons for spacing
+        button_layout.addStretch(1)
         save_button = QPushButton("Save")
         save_button.setMinimumWidth(90)
         save_button.clicked.connect(self.save_settings)
         cancel_button = QPushButton("Cancel")
         cancel_button.setMinimumWidth(90)
         cancel_button.clicked.connect(self.reject)
+        check_defaults_btn = QPushButton("Check Factory Defaults")
+        check_defaults_btn.setMinimumWidth(180)
+        check_defaults_btn.clicked.connect(self.check_factory_defaults)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
-        button_layout.addStretch(1)  # Add stretch after buttons for spacing
+        button_layout.addWidget(check_defaults_btn)
+        button_layout.addStretch(1)
         layout.addLayout(button_layout)
         # Separator 4: below buttons
         below_btn_sep = QWidget()
@@ -148,54 +150,6 @@ class SettingsForm(QDialog):
                 widget = field_widget.widget()
                 if isinstance(widget, QLineEdit):
                     widget.setStyleSheet("padding-right: 16px;")
-
-        # --- Display Management Controls ---
-        display_heading = QLabel("Window Display Management")
-        display_heading.setStyleSheet("font-weight: bold; font-size: 13pt; margin-top: 12px;")
-        layout.addWidget(display_heading)
-        display_layout = QFormLayout()
-        display_layout.setLabelAlignment(Qt.AlignRight)
-        display_layout.setFormAlignment(Qt.AlignLeft)
-        display_layout.setHorizontalSpacing(16)
-        # Center windows checkbox
-        center_cb = QCheckBox("Center windows on open")
-        center_cb.setChecked(str(self.default_settings.get("center_windows", "1")) == "1")
-        self.entries["center_windows"] = center_cb
-        display_layout.addRow(center_cb)
-        # Scale windows checkbox
-        scale_cb = QCheckBox("Scale windows to screen size")
-        scale_cb.setChecked(str(self.default_settings.get("scale_windows", "1")) == "1")
-        self.entries["scale_windows"] = scale_cb
-        display_layout.addRow(scale_cb)
-        # Width ratio spinbox
-        width_spin = QDoubleSpinBox()
-        width_spin.setRange(0.1, 1.0)
-        width_spin.setSingleStep(0.05)
-        width_spin.setDecimals(2)
-        width_spin.setValue(float(self.default_settings.get("window_width_ratio", 0.6)))
-        width_spin.setSuffix(" (width ratio)")
-        self.entries["window_width_ratio"] = width_spin
-        display_layout.addRow("Width ratio:", width_spin)
-        # Height ratio spinbox
-        height_spin = QDoubleSpinBox()
-        height_spin.setRange(0.1, 1.0)
-        height_spin.setSingleStep(0.05)
-        height_spin.setDecimals(2)
-        height_spin.setValue(float(self.default_settings.get("window_height_ratio", 0.6)))
-        height_spin.setSuffix(" (height ratio)")
-        self.entries["window_height_ratio"] = height_spin
-        display_layout.addRow("Height ratio:", height_spin)
-        layout.addLayout(display_layout)
-
-        # --- Add Check Factory Defaults Button ---
-        check_button_layout = QHBoxLayout()
-        check_button_layout.addStretch(1)
-        check_defaults_btn = QPushButton("Check Factory Defaults")
-        check_defaults_btn.setMinimumWidth(180)
-        check_defaults_btn.clicked.connect(self.check_factory_defaults)
-        check_button_layout.addWidget(check_defaults_btn)
-        check_button_layout.addStretch(1)
-        layout.addLayout(check_button_layout)
 
     def check_factory_defaults(self):
         """Check DB defaults vs factory_defaults.json and show differences."""
