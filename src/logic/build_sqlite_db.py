@@ -438,23 +438,29 @@ def import_defaults_from_factory(conn, factory_defaults):
     print("Imported global defaults from factory_defaults.json")
 
 def import_form_settings_from_factory(conn, factory_defaults):
-    """Import per-form settings from factory_defaults.json into form_settings table."""
+    """Import per-form settings from factory_defaults.json into form_settings table, ensuring all fields are present for all forms."""
     forms = factory_defaults.get("forms", {})
+    # Get the union of all keys used in any form
+    all_fields = set()
+    for settings in forms.values():
+        all_fields.update(settings.keys())
+    all_fields = sorted(all_fields)
     cursor = conn.cursor()
     for form_name, settings in forms.items():
-        columns = list(settings.keys())
-        placeholders = ["?"] * len(columns)
-        values = [settings[k] for k in columns]
-        sql = f"INSERT OR REPLACE INTO form_settings (form_name, {', '.join(columns)}) VALUES (?, {', '.join(placeholders)})"
+        # For each form, ensure all fields are present (fill missing with None or "")
+        values = [settings.get(field, None) for field in all_fields]
+        placeholders = ["?"] * len(all_fields)
+        sql = f"INSERT OR REPLACE INTO form_settings (form_name, {', '.join(all_fields)}) VALUES (?, {', '.join(placeholders)})"
         cursor.execute(sql, [form_name] + values)
     conn.commit()
-    print("Imported per-form settings from factory_defaults.json")
+    print("Imported per-form settings from factory_defaults.json (all fields ensured)")
 
 def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
     """
     Compare the DB's defaults and form_settings to those in factory_defaults.json.
     Print warnings or raise error if mismatches are found.
     If strict=True, raise an error on any mismatch.
+    Also warn if any field is missing in either direction.
     """
     cursor = conn.cursor()
     # Check global defaults
@@ -465,10 +471,18 @@ def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
         db_val = db_defaults.get(key)
         if str(db_val) != str(value):
             mismatches.append(f"Global default mismatch: {key}: DB='{db_val}' vs Factory='{value}'")
+    for key in db_defaults:
+        if key not in factory_global:
+            mismatches.append(f"Global default in DB but missing in factory_defaults.json: {key}")
     # Check per-form settings
     db_forms = cursor.execute("SELECT form_name FROM form_settings").fetchall()
     db_forms = [row[0] for row in db_forms]
     factory_forms = factory_defaults.get("forms", {})
+    # Get the union of all fields in factory
+    all_fields = set()
+    for settings in factory_forms.values():
+        all_fields.update(settings.keys())
+    all_fields = sorted(all_fields)
     for form_name, settings in factory_forms.items():
         if form_name not in db_forms:
             mismatches.append(f"Form '{form_name}' missing in DB form_settings table.")
@@ -476,10 +490,20 @@ def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
         db_row = cursor.execute(f"SELECT * FROM form_settings WHERE form_name=?", (form_name,)).fetchone()
         db_columns = [desc[0] for desc in cursor.description]
         db_dict = dict(zip(db_columns, db_row))
-        for k, v in settings.items():
+        # Check all fields in factory
+        for k in all_fields:
+            v = settings.get(k, None)
             db_val = db_dict.get(k)
             if str(db_val) != str(v):
                 mismatches.append(f"Form '{form_name}' setting mismatch: {k}: DB='{db_val}' vs Factory='{v}'")
+        # Check for extra fields in DB not in factory
+        for k in db_dict:
+            if k not in all_fields and k != "form_name":
+                mismatches.append(f"Form '{form_name}' has extra field in DB not in factory_defaults.json: {k}")
+    # Warn for forms in DB but not in factory
+    for db_form in db_forms:
+        if db_form not in factory_forms:
+            mismatches.append(f"Form '{db_form}' in DB but missing in factory_defaults.json")
     if mismatches:
         print("\nFactory defaults mismatches found:")
         for m in mismatches:
