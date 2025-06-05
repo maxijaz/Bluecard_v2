@@ -387,13 +387,18 @@ class Mainform(QMainWindow):
         QApplication.instance().setFont(QFont("Segoe UI", self.font_size))
 
     def reset_scrollable_column_widths(self):
-        """Reset the column widths of the scrollable table to their default values."""
-        # Fixed widths for the date columns
-        for col in range(self.scrollable_table.model().columnCount()):  # All columns are now date columns
-            self.scrollable_table.setColumnWidth(col, 50)  # Default width for date columns
-
-        # Ensure all columns are resizable
-        self.scrollable_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        """Reset the column widths of the scrollable table to their default or DB values, and prevent stretching."""
+        # Use width_date from DB if present, else fallback to 50
+        width = 50
+        if self.class_data.get("width_date"):
+            try:
+                width = int(self.class_data["width_date"])
+            except Exception:
+                width = 50
+        for col in range(self.scrollable_table.model().columnCount()):
+            self.scrollable_table.setColumnWidth(col, width)
+            # Prevent stretching: always set to Interactive
+            self.scrollable_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.Interactive)
 
     def init_ui(self):
         """Initialize the UI components."""
@@ -1097,21 +1102,24 @@ QTableView::item:selected {
         pass
 
     def open_show_hide(self):
-        """Open the Show/Hide columns dialog and update the frozen table accordingly."""
+        """Open the Show/Hide columns dialog and update the frozen and scrollable tables accordingly."""
         try:
             from .show_hide_form import ShowHideForm, SHOW_HIDE_FIELDS
         except ImportError:
             QMessageBox.warning(self, "Error", "Show/Hide form not found.")
             return
-        # Only allow toggling columns except # and Name
         columns = [col for col in self.FROZEN_COLUMN_WIDTHS.keys() if col not in ("#", "Name")]
         current = {col: self.column_visibility.get(col, True) for col in columns}
         dlg = ShowHideForm(self, self.class_id)
         if dlg.exec_():
             updated = dlg.get_selected_columns()  # Now returns DB keys
             for key in updated:
-                label = dict(SHOW_HIDE_FIELDS)[key]
-                self.column_visibility[label] = updated[key]
+                # Map DB keys to column_visibility and scrollable_column_visibility
+                if key == "show_dates":
+                    self.scrollable_column_visibility["Dates"] = updated[key]
+                else:
+                    label = dict(SHOW_HIDE_FIELDS)[key]
+                    self.column_visibility[label] = updated[key]
             # Save show/hide state to DB for this class
             db_updates = {key: "Yes" if updated[key] else "No" for key in updated}
             from logic.db_interface import update_class
@@ -1162,4 +1170,8 @@ QTableView::item:selected {
         QTimer.singleShot(0, lambda: self.frozen_table.updateGeometry())
         QTimer.singleShot(0, lambda: self.frozen_table.viewport().update())
         QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
+
+        # Show or hide the scrollable table based on show_dates value
+        show_dates = self.class_data.get("show_dates", "Yes")
+        self.scrollable_table.setVisible(show_dates == "Yes")
 

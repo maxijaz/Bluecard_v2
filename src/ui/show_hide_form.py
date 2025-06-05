@@ -17,6 +17,7 @@ SHOW_HIDE_FIELDS = [
     ("show_a", "A"),
     ("show_l", "L"),
     ("show_note", "Note"),
+    ("show_dates", "Dates"),  # <-- Add Dates (scrollable table)
 ]
 
 # Map from label to DB width key
@@ -31,6 +32,7 @@ WIDTH_DB_KEYS = {
     "A": "width_a",
     "L": "width_l",
     "Note": "width_note",
+    "Dates": "width_date",  # <-- Add width_date for Dates
 }
 
 COLOR_FIELDS = [
@@ -64,7 +66,7 @@ class ShowHideForm(QDialog):
         if win_w and win_h:
             self.resize(int(win_w), int(win_h))
         else:
-            self.setFixedSize(650, 500)
+            self.setFixedSize(850, 500)
         min_w = form_settings.get("min_width")
         min_h = form_settings.get("min_height")
         if min_w and min_h:
@@ -109,31 +111,31 @@ class ShowHideForm(QDialog):
                 self.checkboxes[key] = cb
                 grid.addWidget(lbl, row, 0)
                 grid.addWidget(cb, row, 1)
-                # Column 3: Width QLineEdit
+                # Column 2: Width QLineEdit (aligned with label/tickbox)
                 width_db_key = WIDTH_DB_KEYS.get(label)
                 if width_db_key:
                     width_val = self.class_data.get(width_db_key, "")
                     width_edit = QLineEdit(str(width_val) if width_val else "")
                     width_edit.setMaximumWidth(60)
                     self.width_edits[width_db_key] = width_edit
-                    grid.addWidget(width_edit, row, 4)
+                    grid.addWidget(width_edit, row, 2)
                 else:
-                    grid.addWidget(QWidget(), row, 4)
+                    grid.addWidget(QWidget(), row, 2)
             else:
                 grid.addWidget(QWidget(), row, 0)
                 grid.addWidget(QWidget(), row, 1)
-                grid.addWidget(QWidget(), row, 4)
-            # Column 2: Colour scheme
+                grid.addWidget(QWidget(), row, 2)
+            # Column 3: Color label + QLineEdit
             if row < len(COLOR_FIELDS):
                 color_key, color_label, default = COLOR_FIELDS[row]
                 lbl = QLabel(color_label)
                 edit = QLineEdit(self.class_data.get(color_key, default))
                 self.color_edits[color_key] = edit
-                grid.addWidget(lbl, row, 2)
-                grid.addWidget(edit, row, 3)
+                grid.addWidget(lbl, row, 3)
+                grid.addWidget(edit, row, 4)
             else:
-                grid.addWidget(QWidget(), row, 2)
                 grid.addWidget(QWidget(), row, 3)
+                grid.addWidget(QWidget(), row, 4)
         layout.addLayout(grid)
 
         # Toggle buttons
