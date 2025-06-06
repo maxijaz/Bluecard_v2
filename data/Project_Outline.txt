@@ -99,17 +99,7 @@ Action Steps
 7. Add/Update Settings UI to allow check/reset to factory defaults.
 8. Document the new structure for future development.
 
-
-
-
-
-
-
-
-
-
-
-
+-----------------------------------------------------------------------
 
 # 1. Dataset_1 - data/001attendance_data.JSON 
 
