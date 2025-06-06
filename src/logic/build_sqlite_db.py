@@ -435,19 +435,6 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     conn.commit()
     print("Imported defaults from default.json")
 
-def import_factory_defaults_table(conn, factory_defaults):
-    """Populate factory_defaults table with all global and per-form defaults from factory_defaults.json."""
-    cursor = conn.cursor()
-    # Global defaults
-    for key, value in factory_defaults.get("global", {}).items():
-        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(value)))
-    # Per-form defaults
-    for form_name, settings in factory_defaults.get("forms", {}).items():
-        for key, value in settings.items():
-            cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(value)))
-    conn.commit()
-    print("Populated factory_defaults table from factory_defaults.json")
-
 def import_defaults_from_factory(conn, factory_defaults):
     """Import global defaults from factory_defaults.json into defaults table."""
     global_defaults = factory_defaults.get("global", {})
@@ -456,6 +443,46 @@ def import_defaults_from_factory(conn, factory_defaults):
         cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
     conn.commit()
     print("Imported global defaults from factory_defaults.json")
+
+def import_class_defaults_from_factory(conn, factory_defaults):
+    """Import per-class defaults from factory_defaults.json into class_defaults table (or as template for new classes)."""
+    class_defaults = factory_defaults.get("classes", {}).get("default", {})
+    if not class_defaults:
+        print("No class defaults found in factory_defaults.json")
+        return
+    cursor = conn.cursor()
+    # Create class_defaults table if not exists (template for new classes)
+    columns = ', '.join([f'{k} TEXT' for k in class_defaults.keys()])
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS class_defaults (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            {columns}
+        )
+    """)
+    # Remove all previous rows (keep only one template row)
+    cursor.execute("DELETE FROM class_defaults")
+    # Insert the default row
+    fields = ', '.join(class_defaults.keys())
+    placeholders = ', '.join(['?'] * len(class_defaults))
+    cursor.execute(f"INSERT INTO class_defaults ({fields}) VALUES ({placeholders})", tuple(class_defaults.values()))
+    conn.commit()
+    print("Imported per-class defaults from factory_defaults.json into class_defaults table")
+
+def import_factory_defaults_table(conn, factory_defaults):
+    """Populate factory_defaults table with all global, per-form, and per-class defaults from factory_defaults.json."""
+    cursor = conn.cursor()
+    # Global defaults
+    for key, value in factory_defaults.get("global", {}).items():
+        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(value)))
+    # Per-form defaults
+    for form_name, settings in factory_defaults.get("forms", {}).items():
+        for key, value in settings.items():
+            cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(value)))
+    # Per-class defaults
+    for key, value in factory_defaults.get("classes", {}).get("default", {}).items():
+        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, str(value)))
+    conn.commit()
+    print("Populated factory_defaults table from factory_defaults.json (now includes class defaults)")
 
 def import_form_settings_from_factory(conn, factory_defaults):
     """Import per-form settings from factory_defaults.json into form_settings table, ensuring all fields are present for all forms."""
@@ -539,10 +566,11 @@ def main():
     parser.add_argument('--strict-factory-check', action='store_true', help='Fail if DB and factory defaults mismatch')
     parser.add_argument('--check-only', action='store_true', help='Only check for mismatches, do not rebuild DB')
     args = parser.parse_args()
-    # ...existing code...
+
     factory_defaults_path = os.path.join(DATA_DIR, "factory_defaults.json")
     with open(factory_defaults_path, "r", encoding="utf-8") as f:
         factory_defaults = json.load(f)
+
     if args.check_only:
         # Connect to existing DB and check
         if not os.path.exists(DB_PATH):
@@ -552,17 +580,15 @@ def main():
         check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
         conn.close()
         return
-    # ...existing code for full rebuild...
+
+    # --- FULL REBUILD ---
     conn = recreate_db()
-    import_data(conn, ATTENDANCE_DATA)
-    # Load factory_defaults.json
-    factory_defaults_path = os.path.join(DATA_DIR, "factory_defaults.json")
-    with open(factory_defaults_path, "r", encoding="utf-8") as f:
-        factory_defaults = json.load(f)
-    # Use factory_defaults for import_defaults and import_form_settings
+    # Import all settings from factory_defaults.json
     import_defaults_from_factory(conn, factory_defaults)
     import_form_settings_from_factory(conn, factory_defaults)
+    import_class_defaults_from_factory(conn, factory_defaults)
     import_factory_defaults_table(conn, factory_defaults)
+    import_data(conn, ATTENDANCE_DATA)
     # Check for mismatches
     check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
     cursor = conn.cursor()
