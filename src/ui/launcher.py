@@ -417,7 +417,7 @@ class Launcher(QMainWindow):
     def center_window(self):
         """Center the Launcher window on the screen using the display utility."""
         center_widget(self)
-        print(f"[DEBUG] Window location on open: x={self.x()}, y={self.y()}, width={self.width()}, height={self.height()}")
+        # print(f"[DEBUG] Window location on open: x={self.x()}, y={self.y()}, width={self.width()}, height={self.height()}")
 
     def open_mainform_after_save(self, class_id):
         """Open the Mainform after saving a new class."""
@@ -458,11 +458,11 @@ class Launcher(QMainWindow):
             for col in range(self.table.columnCount()):
                 header.setSectionResizeMode(col, QHeaderView.Stretch)
         # Print window size on every resize
-        print(f"[DEBUG] Window resized: width={self.width()}, height={self.height()}")
+        # print(f"[DEBUG] Window resized: width={self.width()}, height={self.height()}")
 
     def showEvent(self, event):
         super().showEvent(event)
-        print(f"[DEBUG] Window size after show: width={self.width()}, height={self.height()}")
+        # print(f"[DEBUG] Window size after show: width={self.width()}, height={self.height()}")
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""

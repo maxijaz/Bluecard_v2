@@ -485,10 +485,13 @@ def import_form_settings_from_factory(conn, factory_defaults):
     """
     cursor = conn.cursor()
     forms = factory_defaults.get("forms", {})
+    # Remove max_width and max_height from all forms before inserting into DB
     for form_name, form_settings in forms.items():
+        form_settings.pop("max_width", None)
+        form_settings.pop("max_height", None)
         # Flatten settings for SQL insert
         columns = [
-            "form_name", "window_width", "window_height", "min_width", "min_height", "max_width", "max_height",
+            "form_name", "window_width", "window_height", "min_width", "min_height",
             "resizable", "window_controls", "form_font_family", "title_color", "title_font_size", "title_font_bold", "title_alignment",
             "subtitle_color", "subtitle_font_size", "subtitle_font_bold", "subtitle_alignment", "form_bg_color", "form_fg_color", "form_border_color",
             "form_font_size", "form_label_bold", "form_label_alignment", "form_input_bg_color", "form_input_alignment", "form_input_field_bold",
