@@ -216,10 +216,10 @@
       "button_error_border_color": "#e53935"
     },
     "Launcher": {
-      "window_width": 650,
-      "window_height": 500,
-      "min_width": 400,
-      "min_height": 300,
+      "window_width": 550,
+      "window_height": 300,
+      "min_width": 300,
+      "min_height": 200,
       "max_width": 1200,
       "max_height": 1000,
       "resizable": "yes",

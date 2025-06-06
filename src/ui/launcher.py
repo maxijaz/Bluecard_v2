@@ -38,7 +38,9 @@ class Launcher(QMainWindow):
         super().__init__()
         self.theme = theme
         self.font_prompt_shown = False
-        # --- PATCH: Load per-form settings from DB ---
+        # --- FIX: Initialize self.classes before any method that uses it ---
+        self.classes = {row["class_no"]: row for row in get_all_classes()}
+        # Load per table form_settings from DB 
         form_settings = get_form_settings("Launcher") or {}
         self.setWindowTitle("Bluecard Launcher")
         win_w = form_settings.get("window_width")
@@ -51,12 +53,10 @@ class Launcher(QMainWindow):
         min_h = form_settings.get("min_height")
         if min_w and min_h:
             self.setMinimumSize(int(min_w), int(min_h))
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # Do NOT set max_width or max_height, so maximize is always available
+
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        # --- FONT SIZE PATCH: Set global font size from per-form or global settings ---
+        # Set global font size from per-form or global settings ---
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
         def get_setting(key, fallback):
@@ -83,45 +83,15 @@ class Launcher(QMainWindow):
             QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
         """
         QApplication.instance().setStyleSheet(style)
-        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
-        if not win_w or not win_h:
-            display_settings = default_settings
-            scale = str(display_settings.get("scale_windows", "1")) == "1"
-            center = str(display_settings.get("center_windows", "1")) == "1"
-            width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-            height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-            if scale:
-                scale_and_center(self, width_ratio, height_ratio)
-            elif center:
-                center_widget(self)
-        # --- PATCH END ---
-
-        # Load class data from DB
-        self.classes = {row["class_no"]: row for row in get_all_classes()}
-
-        # Main container widget
-        container = QWidget()
-        self.setCentralWidget(container)
-        self.layout = QVBoxLayout(container)
-
-        # Create UI components
-        self.create_widgets()
-
-        # Center the window on startup
+        # Center the window on open
         self.center_window()
-        # --- Apply display preferences ---
-        display_settings = get_all_defaults()
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
-        # Optionally, apply window flags if you want to control minimize/maximize
-        # apply_window_flags(self, show_minimize=True, show_maximize=True)
-        # print("[DEBUG] Launcher __init__ end")
+
+        # --- FIX: Set up layout and widgets ---
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
+        self.create_widgets()
+        # --- END FIX ---
 
     def create_widgets(self):
         """Create the table and buttons."""
@@ -483,13 +453,16 @@ class Launcher(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        table_width = self.table.viewport().width()
-        header = self.table.horizontalHeader()
-        # Always stretch columns to fill available width when window is maximized or wide
-        for col in range(self.table.columnCount()):
-            header.setSectionResizeMode(col, QHeaderView.Stretch)
-        # print(f"[DEBUG] resizeEvent: window size={self.size()}, table size={self.table.size()}, col_widths={[self.table.columnWidth(0), self.table.columnWidth(1)]}")
-        # print(f"[DEBUG] After resizeEvent: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
+        if hasattr(self, "table"):
+            header = self.table.horizontalHeader()
+            for col in range(self.table.columnCount()):
+                header.setSectionResizeMode(col, QHeaderView.Stretch)
+        # Print window size on every resize
+        print(f"[DEBUG] Window resized: width={self.width()}, height={self.height()}")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        print(f"[DEBUG] Window size after show: width={self.width()}, height={self.height()}")
 
 def generate_dates(start_date_str, days_str, max_classes):
     """Generate a list of dates based on StartDate, Days, and MaxClasses."""
