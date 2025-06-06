@@ -99,6 +99,76 @@ Action Steps
 7. Add/Update Settings UI to allow check/reset to factory defaults.
 8. Document the new structure for future development.
 
+----------------------------------------------------------------------------------
+
+"factory_defaults" description for factory_defaults.json
+
+"global": {
+  "use_colors": true,                      // Master toggle to enable or disable colors on all forms
+  "resizable": "yes",                      // Allow windows to be resized
+  "window_controls": "standard",           // Use standard window controls (minimize, maximize, close)
+  "form_font_family": "Segoe UI",          // Default font family for all form text
+
+  "title_color": "#1976d2",                // Title text color
+  "title_font_size": 14,                   // Title font size in points
+  "title_font_bold": true,                 // Title text is bold
+  "title_alignment": "left",               // Title is left-aligned
+
+  "subtitle_color": "#1976d2",             // Subtitle text color
+  "subtitle_font_size": 12,                // Subtitle font size
+  "subtitle_font_bold": false,             // Subtitle is not bold
+  "subtitle_alignment": "left",            // Subtitle is left-aligned
+
+  "form_bg_color": "#e3f2fd",                  // Background color of form
+  "form_fg_color": "#222222",                  // Text color for form content
+  "form_border_color": "#1976d2",              // Border color of the form
+  "form_font_size": 12,                        // Font size inside forms
+  "form_label_bold": true,                     // Form labels are bold
+  "form_label_alignment": "left",              // Form labels are left-aligned
+  "form_input_bg_color": "#ffffff",            // Background color of input fields
+  "form_input_alignment": "left",              // Input text is left-aligned
+  "form_input_field_bold": false,              // Input text is not bold
+  "form_input_placeholder_color": "#999999",   // Placeholder text color in inputs (Enter full name here..)
+  "form_input_focus_border_color": "#42a5f5",  // Border color when input is focused
+  "form_input_disabled_bg_color": "#f0f0f0",   // Input background when disabled
+  "form_error_border_color": "#e53935",        // Input border color on error
+
+  "metadata_bg_color": "#e3f2fd",                  // Background color for metadata section
+  "metadata_fg_color": "#222222",                  // Text color for metadata
+  "metadata_border_color": "#1976d2",              // Border color for metadata section
+  "metadata_font_size": 12,                        // Font size in metadata section
+  "metadata_label_bold": true,                     // Metadata labels are bold
+  "metadata_input_field_bold": false,              // Metadata input text is not bold
+  "metadata_input_bg_color": "#ffffff",            // Metadata input field background
+  "metadata_input_placeholder_color": "#999999",   // Placeholder color in metadata input (Enter full name here..)
+  "metadata_input_focus_border_color": "#42a5f5",  // Border color on metadata input focus
+  "metadata_input_disabled_bg_color": "#f0f0f0",   // Metadata input background when disabled
+  "metadata_error_border_color": "#e53935",        // Metadata input border color on error
+
+  "table_header_bg_color": "#1976d2",      // Background color for table headers
+  "table_header_fg_color": "#ffffff",      // Text color for table headers
+  "table_header_border_color": "#1976d2",  // Border color for table headers
+  "table_header_font_size": 14,            // Font size for table header text
+  "table_header_bold": true,               // Table headers are bold
+
+  "table_bg_color": "#ffffff",             // Background color for table cells
+  "table_fg_color": "#222222",             // Text color in table cells
+  "table_border_color": "#1976d2",         // Border color for table cells
+  "table_font_size": 12,                   // Font size in table cells
+  "table_input_field_bold": true,          // Table cell input text is bold
+  "table_error_border_color": "#e53935",   // Border color for table cells with error
+
+  "button_bg_color": "#1976d2",            // Button background color
+  "button_fg_color": "#ffffff",            // Button text color
+  "button_border_color": "#1976d2",        // Button border color
+  "button_font_size": 12,                  // Button text font size
+  "button_font_bold": false,               // Button text is not bold
+  "button_hover_bg_color": "#1565c0",      // Button background on hover
+  "button_active_bg_color": "#0d47a1",     // Button background when active/clicked
+  "button_error_border_color": "#e53935"   // Button border color on error
+},
+
+
 -----------------------------------------------------------------------
 
 # 1. Dataset_1 - data/001attendance_data.JSON 
