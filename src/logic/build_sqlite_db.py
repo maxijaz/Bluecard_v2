@@ -211,8 +211,6 @@ def recreate_db(db_path=DB_PATH):
         window_height INTEGER,
         min_width INTEGER,
         min_height INTEGER,
-        max_width INTEGER,
-        max_height INTEGER,
         resizable TEXT DEFAULT 'yes', -- 'yes' or 'no'
         window_controls TEXT,
         form_font_family TEXT,
@@ -266,9 +264,7 @@ def recreate_db(db_path=DB_PATH):
         button_font_bold TEXT, -- 'yes' or 'no'
         button_hover_bg_color TEXT,
         button_active_bg_color TEXT,
-        button_error_border_color TEXT,
-        extra_json TEXT, -- for future extensibility (JSON-encoded dict)
-        last_modified TEXT -- ISO timestamp
+        button_error_border_color TEXT
     );
     CREATE TABLE factory_defaults (
         scope TEXT,           -- 'global' or 'form'
@@ -475,8 +471,12 @@ def import_defaults_from_factory(conn, factory_defaults):
     """
     cursor = conn.cursor()
     global_defaults = factory_defaults.get("global", {})
+    def normalize_value(val):
+        if isinstance(val, bool):
+            return "True" if val else "False"
+        return str(val)
     for key, value in global_defaults.items():
-        cursor.execute("REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, json.dumps(value)))
+        cursor.execute("REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, normalize_value(value)))
     conn.commit()
 
 def import_form_settings_from_factory(conn, factory_defaults):
@@ -485,11 +485,7 @@ def import_form_settings_from_factory(conn, factory_defaults):
     """
     cursor = conn.cursor()
     forms = factory_defaults.get("forms", {})
-    # Remove max_width and max_height from all forms before inserting into DB
     for form_name, form_settings in forms.items():
-        form_settings.pop("max_width", None)
-        form_settings.pop("max_height", None)
-        # Flatten settings for SQL insert
         columns = [
             "form_name", "window_width", "window_height", "min_width", "min_height",
             "resizable", "window_controls", "form_font_family", "title_color", "title_font_size", "title_font_bold", "title_alignment",
@@ -503,7 +499,11 @@ def import_form_settings_from_factory(conn, factory_defaults):
             "table_error_border_color", "button_bg_color", "button_fg_color", "button_border_color", "button_font_size", "button_font_bold",
             "button_hover_bg_color", "button_active_bg_color", "button_error_border_color"
         ]
-        values = [form_name] + [form_settings.get(col, None) for col in columns[1:]]
+        def normalize_value(val):
+            if isinstance(val, bool):
+                return "True" if val else "False"
+            return str(val)
+        values = [form_name] + [normalize_value(form_settings.get(col, None)) for col in columns[1:]]
         placeholders = ','.join(['?'] * len(columns))
         cursor.execute(f"REPLACE INTO form_settings ({','.join(columns)}) VALUES ({placeholders})", values)
     conn.commit()
@@ -525,16 +525,24 @@ def import_factory_defaults_table(conn, factory_defaults):
     Import all factory defaults into the factory_defaults table for reference and reset.
     """
     cursor = conn.cursor()
+    def normalize_bool(val):
+        if isinstance(val, bool):
+            return "True" if val else "False"
+        if isinstance(val, int):
+            return str(val)
+        if str(val).lower() in ("true", "yes"): return "True"
+        if str(val).lower() in ("false", "no"): return "False"
+        return val
     # Global
     for key, value in factory_defaults.get("global", {}).items():
-        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, json.dumps(value)))
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(normalize_bool(value))))
     # Forms
     for form_name, form_settings in factory_defaults.get("forms", {}).items():
         for key, value in form_settings.items():
-            cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, json.dumps(value)))
+            cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(normalize_bool(value))))
     # Classes
     for key, value in factory_defaults.get("classes", {}).get("default", {}).items():
-        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, json.dumps(value)))
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, str(normalize_bool(value))))
     conn.commit()
 
 def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
