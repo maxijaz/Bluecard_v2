@@ -18,6 +18,99 @@ List of sections / forms:
 
 ----------------------------------------------------------------
 
+TASK: DB Table "Factory_Defaults" and App db table "defaults" with "factory_defaults.json" & "build_sqlite_db"
+
+we are building the backend of my project, "factory_defaults" = json holds raw data to build a db [001attendance.db] via [build_sqlite_db]. [Settings] -> [check factory settings] = checks the data matches between db table "factory_defaults" and "defaults" (this needs updating). I want the project to use "defaults" to control the UI settings, which can be modified and checked and reset to "factory settings". The files added to this chat box, I think are all the previous attempts to centralise this. Basically:
+
+"factory_defaults" = build from json (raw data)
+"defaults" = place app looks to check default values, which can be modified and saved here.
+"classes" = holds show/hide columns, column_widths, P/A/L/cod/cia/hol colors for individual classes (factory defaults need to be added to "factory defaults" .json )
+
+Task: make a plan to centralise the json, db #, defaults and factory_defaults. Use the defaults to have 1 place for "global" settings. Clean all the other files currently holding defaults, then switch all UI etc to use defaults for GUI fonts, bg fg colors etc.
+
+
+Centralization Plan: Factory Defaults, Defaults, and App Settings
+
+1. Define the Roles:
+
+factory_defaults.json
+The single source of truth for all "factory" (raw/original) settings.
+Used only for building the DB and for "reset to factory" operations.
+Should include:
+All global UI settings (fonts, colors, etc.)
+All per-form settings (window sizes, etc.)
+All per-class defaults (show/hide columns, column widths, P/A/L/cod/cia/hol colors, etc.)
+
+defaults (DB table)
+The only place the app reads for current global settings.
+Can be modified by the user (via UI).
+Used by all UI for fonts, colors, etc.
+form_settings (DB table)
+Per-form settings (window size, etc.), loaded from factory_defaults.json at build, but can be changed by the user.
+
+classes (DB table)
+Per-class settings (show/hide columns, column widths, colors), with factory defaults loaded at build time.
+
+
+2. Clean Up and Centralize
+Remove all other JSONs and hardcoded defaults from the codebase.
+Ensure factory_defaults.json contains everything needed for:
+Global settings
+Per-form settings
+Per-class defaults
+
+3. Update the Build Process
+On DB build:
+Import all global settings from factory_defaults.json into the defaults table.
+Import all per-form settings into the form_settings table.
+Import all per-class defaults into the classes table for new classes (or as templates for new classes).
+Populate the factory_defaults table in the DB for reference and for "reset to factory" operations.
+
+4. Update the App Logic
+All UI and logic should read from the defaults table for global settings (fonts, colors, etc.).
+All per-form settings should be read from form_settings.
+All per-class settings (show/hide columns, widths, colors) should be read from classes.
+When the user resets to factory defaults, copy values from the DB's factory_defaults table back into defaults, form_settings, and (optionally) classes.
+
+5. Provide a Single "Check/Reset" UI
+In Settings, provide:
+A "Check Factory Defaults" button (compares defaults and form_settings to factory_defaults).
+A "Reset to Factory Defaults" button (restores all settings from factory_defaults).
+
+6. Remove Redundancy
+Delete all old JSONs and hardcoded defaults after migration.
+Document that all new settings must be added to factory_defaults.json.
+
+Summary Table
+Source	                Purpose	                    Editable by user?	Used by UI?	   Used for reset?
+factory_defaults.json	Raw factory settings	    No	                No	           Yes
+factory_defaults (DB)	Reference for reset/check	No	                No	           Yes
+defaults (DB)	        Current global settings	    Yes	                Yes   	       Yes
+form_settings (DB)	    Current per-form settings	Yes	                Yes	           Yes
+classes (DB)	        Per-class settings	        Yes	                Yes	           Yes
+
+Action Steps
+1. Expand factory_defaults.json to include all global, per-form, and per-class defaults.
+2. Update build_sqlite_db.py to:
+3. Populate all relevant DB tables from factory_defaults.json.
+4. Ensure factory_defaults table is always up-to-date.
+5. Update all UI and logic to use only the defaults table for global settings.
+6. Remove all other sources of defaults (old JSONs, hardcoded values).
+7. Add/Update Settings UI to allow check/reset to factory defaults.
+8. Document the new structure for future development.
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 1. Dataset_1 - data/001attendance_data.JSON 
 
 {
