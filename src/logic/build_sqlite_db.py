@@ -204,6 +204,10 @@ def recreate_db(db_path=DB_PATH):
         key TEXT PRIMARY KEY,
         value TEXT
     );
+    CREATE TABLE teacher_defaults (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    );
     -- --- NEW: Per-form settings table for full customization ---
     CREATE TABLE form_settings (
         form_name TEXT PRIMARY KEY, -- e.g. 'MetadataForm', 'StudentForm', etc.
@@ -275,6 +279,20 @@ def recreate_db(db_path=DB_PATH):
     );
     """)
     print("Created tables")
+
+    # --- PATCH: Insert teacher_defaults into teacher_defaults table ---
+    teacher_defaults = {
+        "def_teacher": "Paul R",
+        "def_teacher_no": "A20049",
+        "def_coursehours": "40",
+        "def_classtime": "2",
+        "def_rate": "520",
+        "def_ccp": "120",
+        "def_travel": "200",
+        "def_bonus": "1000"
+    }
+    cursor.executemany("INSERT OR REPLACE INTO teacher_defaults (key, value) VALUES (?, ?)", teacher_defaults.items())
+    print("Inserted teacher defaults")
 
     cursor.executemany("INSERT INTO holidays VALUES (?, ?)", thai_holidays)
     print("Inserted Thai holidays")

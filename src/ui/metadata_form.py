@@ -11,7 +11,7 @@ from logic.update_dates import update_dates, add_date, remove_date, modify_date 
 from datetime import datetime, timedelta
 from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
-from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id, get_form_settings
+from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id, get_form_settings, get_teacher_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 class MetadataForm(QDialog):
@@ -28,6 +28,7 @@ class MetadataForm(QDialog):
         self.single_date_mode = single_date_mode
 
         self.defaults = defaults or {}
+        self.cod_cia_hol_default = self.defaults.get("def_cod_cia_hol", "0 COD 0 CIA 0 HOL")
 
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("MetadataForm") or {}
@@ -43,10 +44,8 @@ class MetadataForm(QDialog):
             self.setMinimumSize(int(min_w), int(min_h))
         else:
             self.setMinimumSize(300, 200)
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # REMOVED: max_width and max_height logic
+
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
@@ -67,6 +66,13 @@ class MetadataForm(QDialog):
             elif center:
                 center_widget(self)
         # --- PATCH END ---
+
+        # --- PATCH: Load teacher defaults for new class creation ---
+        self.teacher_defaults = get_teacher_defaults() if not self.is_edit else {}
+        # Fallbacks for course_hours, class_time, max_classes
+        self.fallback_course_hours = 40
+        self.fallback_class_time = 2
+        self.fallback_max_classes = 20
 
         # Main layout
         layout = QVBoxLayout(self)
@@ -125,57 +131,33 @@ class MetadataForm(QDialog):
         num_fields = len(field_defs)
         num_rows = (num_fields + 1) // 2
         for idx, (label, key) in enumerate(field_defs):
-            field_label = QLabel(label)
-            field_label.setFont(self.form_font)
-            field_input = QLineEdit()
-            field_input.setFont(self.form_font)
-            # Set defaults and fallbacks for important fields
+            # --- PATCH: Use teacher_defaults for new class, fallback for course_hours/class_time/max_classes ---
+            if self.is_edit:
+                value = metadata.get(key, "")
+            else:
+                if key == "course_hours":
+                    value = self.teacher_defaults.get("def_coursehours", str(self.fallback_course_hours))
+                elif key == "class_time":
+                    value = self.teacher_defaults.get("def_classtime", str(self.fallback_class_time))
+                elif key == "max_classes":
+                    value = str(self.fallback_max_classes)
+                else:
+                    # For other fields, use teacher_defaults if present, else blank
+                    value = self.teacher_defaults.get(f"def_{key}", "")
+            field = QLineEdit(value)
+            field.setFont(self.form_font)
+            self.fields[key] = field
+            # --- PATCH: Assign special fields to instance variables ---
             if key == "course_hours":
-                val = str(metadata.get(key, self.defaults.get("def_coursehours", "40")))
-                if not val or not val.replace('.', '', 1).isdigit():
-                    val = "40"
-                field_input.setText(val)
+                self.class_hours_input = field
             elif key == "class_time":
-                val = str(metadata.get(key, self.defaults.get("def_classtime", "2")))
-                if not val or not val.replace('.', '', 1).isdigit():
-                    val = "2"
-                field_input.setText(val)
+                self.class_time_input = field
             elif key == "max_classes":
-                val = str(metadata.get(key, self.defaults.get("def_maxclasses", "20")))
-                if not val or not val.isdigit():
-                    val = "20"
-                field_input.setText(val)
-                field_input.setReadOnly(True)
-            else:
-                if not self.is_edit:
-                    default_key = f"def_{key}"
-                    field_input.setText(self.defaults.get(default_key, ""))
-                else:
-                    field_input.setText(str(metadata.get(key, "")))
-            if key == "start_date":
-                pick_button = QPushButton("Pick")
-                pick_button.setFont(self.form_font)
-                pick_button.clicked.connect(self.pick_start_date)
-                row_layout = QHBoxLayout()
-                row_layout.addWidget(field_input)
-                row_layout.addWidget(pick_button)
-                row_widget = QWidget()
-                row_widget.setLayout(row_layout)
-                self.fields[key] = field_input
-                if idx < num_rows:
-                    grid_layout.addWidget(field_label, idx, 0)
-                    grid_layout.addWidget(row_widget, idx, 1)
-                else:
-                    grid_layout.addWidget(field_label, idx - num_rows, 2)
-                    grid_layout.addWidget(row_widget, idx - num_rows, 3)
-            else:
-                self.fields[key] = field_input
-                if idx < num_rows:
-                    grid_layout.addWidget(field_label, idx, 0)
-                    grid_layout.addWidget(field_input, idx, 1)
-                else:
-                    grid_layout.addWidget(field_label, idx - num_rows, 2)
-                    grid_layout.addWidget(field_input, idx - num_rows, 3)
+                self.max_classes_input = field
+            row = idx % num_rows
+            col = idx // num_rows
+            grid_layout.addWidget(QLabel(label), row, col * 2)
+            grid_layout.addWidget(field, row, col * 2 + 1)
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
         # --- Tickboxes (Days) at bottom ---
@@ -441,9 +423,13 @@ class MetadataForm(QDialog):
         self.resize(500, 600)
         super().closeEvent(event)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        print(f"[DEBUG] MetadataForm shown: width={self.width()}, height={self.height()}")
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        print(f"[DEBUG] Window size: width={self.width()}, height={self.height()}")
+        print(f"[DEBUG] MetadataForm resized: width={self.width()}, height={self.height()}")
 
     def validate_start_date(self):
         start_date = self.fields["start_date"].text().strip()

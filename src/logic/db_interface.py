@@ -248,3 +248,38 @@ def set_form_settings(form_name, settings_dict):
         cursor.execute(f"INSERT INTO form_settings ({', '.join(columns)}) VALUES ({', '.join(placeholders)})", values)
     conn.commit()
     conn.close()
+
+def get_teacher_defaults():
+    """Fetch all teacher defaults as a dict."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM teacher_defaults")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["key"]: row["value"] for row in rows}
+
+def set_teacher_defaults(new_defaults):
+    """Set or update multiple teacher defaults in the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    for key, value in new_defaults.items():
+        cursor.execute("INSERT OR REPLACE INTO teacher_defaults (key, value) VALUES (?, ?)", (key, value))
+    conn.commit()
+    conn.close()
+
+def get_message_defaults():
+    """Fetch message style defaults as a dict from the defaults table."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    keys = [
+        "message_bg_color", "message_fg_color", "message_border_color", "message_border_width",
+        "message_border_radius", "message_padding", "message_font_size", "message_font_bold"
+    ]
+    d = {}
+    for key in keys:
+        cursor.execute("SELECT value FROM defaults WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        if row:
+            d[key] = row["value"]
+    conn.close()
+    return d

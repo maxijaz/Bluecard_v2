@@ -26,6 +26,7 @@ from logic.db_interface import (
     set_class_archived,
     get_all_defaults,
     get_form_settings,
+    get_message_defaults,
 )
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
@@ -183,16 +184,8 @@ class Launcher(QMainWindow):
         self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
 
     def set_table_column_widths(self):
-        """Set both columns to fixed width 180 and update resize mode (accounts for vertical scrollbar)."""
-        self.table.setColumnWidth(0, 180)
-        self.table.setColumnWidth(1, 180)
-        # print(f"[DEBUG] Actual column widths after set: {[self.table.columnWidth(0), self.table.columnWidth(1)]}")
-        # print(f"[DEBUG] Table widget size: {self.table.size()}, minimumSize: {self.table.minimumSize()}, sizePolicy: {self.table.sizePolicy()}")
-        # print(f"[DEBUG] Main window size: {self.size()}, minimumSize: {self.minimumSize()}")
-        self.col_widths = [180, 180]
-        header = self.table.horizontalHeader()
-        for col in range(self.table.columnCount()):
-            header.setSectionResizeMode(col, QHeaderView.Fixed)
+        # This method is no longer used for stretching columns. Remove or leave empty.
+        pass
 
     def populate_table(self):
         # print("[DEBUG] populate_table start")
@@ -220,16 +213,17 @@ class Launcher(QMainWindow):
         row_height = int(table_font_size * 2.4)
         for row in range(self.table.rowCount()):
             self.table.setRowHeight(row, row_height)
-        # --- Set column widths and resize mode using dedicated method ---
-        self.set_table_column_widths()
-        # print(f"[DEBUG] Columns set to fixed width {self.col_widths}")
-        # print("[DEBUG] populate_table end")
+        # --- Set columns to stretch after populating ---
+        header = self.table.horizontalHeader()
+        for col in range(self.table.columnCount()):
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
+        # print(f"[DEBUG] Columns set to stretch after populate_table")
 
     def refresh_data(self):
         """Refresh the data and table in the Launcher."""
         self.classes = {row["class_no"]: row for row in get_all_classes()}
         self.populate_table()  # Refresh the table with the updated data
-        self.set_table_column_widths()  # Ensure columns are always reset after repopulating
+        # Do NOT call set_table_column_widths() here
 
     def open_class(self):
         """Open the selected class in the Mainform."""
@@ -255,6 +249,11 @@ class Launcher(QMainWindow):
         header = self.table.horizontalHeader()
         for col in range(self.table.columnCount()):
             header.setSectionResizeMode(col, QHeaderView.Stretch)
+        # --- PATCH: Force a resize event to trigger column stretching ---
+        self.resize(self.width() + 1, self.height())  # Nudge width by 1px
+        self.resize(self.width() - 1, self.height())  # Restore width
+        # --- DEBUG: Print column widths after show ---
+        print(f"[DEBUG] After show_launcher: col0={self.table.columnWidth(0)}, col1={self.table.columnWidth(1)}, win_width={self.width()}")
 
     def edit_class(self):
         """Edit the selected class."""
@@ -310,26 +309,8 @@ class Launcher(QMainWindow):
         header = self.table.horizontalHeader()
         for col in range(self.table.columnCount()):
             header.setSectionResizeMode(col, QHeaderView.Stretch)
-        # Show a non-blocking confirmation dialog for 2 seconds
-        from PyQt5.QtCore import QTimer
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel
-        from PyQt5.QtGui import QFontMetrics, QFont
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Archived")
-        dlg.setWindowFlags(dlg.windowFlags() | Qt.FramelessWindowHint | Qt.Tool)
-        layout = QVBoxLayout(dlg)
-        label_text = f"Class {class_id} ({company}) has been archived."
-        label = QLabel(label_text)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        dlg.setLayout(layout)
-        font = label.font() if hasattr(label, 'font') else QFont()
-        metrics = QFontMetrics(font)
-        text_width = metrics.width(label_text)
-        dlg_width = max(text_width + 60, 400)
-        dlg.setFixedSize(dlg_width, 80)
-        dlg.show()
-        QTimer.singleShot(2000, dlg.accept)
+        # Show a non-blocking confirmation dialog for 2 seconds using message defaults
+        show_message_dialog(self, f"Class {class_id} ({company}) has been archived.")
 
     def open_archive_manager(self):
         """Open the Archive Manager for all archived classes."""
@@ -432,7 +413,7 @@ class Launcher(QMainWindow):
         """Refresh the data and table in the Launcher."""
         self.classes = {row["class_no"]: row for row in get_all_classes()}
         self.populate_table()  # Refresh the table with the updated data
-        self.set_table_column_widths()  # Ensure columns are always reset after repopulating
+        # Do NOT call set_table_column_widths() here
 
     def closeEvent(self, event):
         """Prompt for DB backup when closing the launcher."""
@@ -523,6 +504,42 @@ def backup_sqlite_db():
     backup_path = os.path.join(BACKUP_DIR, f"001attendance_{timestamp}.db")
     shutil.copy2(DB_PATH, backup_path)
     print(f"✅ Database backed up to {backup_path}")
+
+def show_message_dialog(parent, text, duration=2000):
+    from PyQt5.QtCore import QTimer, Qt
+    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(text)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    msg_dialog.adjustSize()
+    screen = parent.window().screen() if hasattr(parent.window(), 'screen') else None
+    if screen:
+        scr_geo = screen.geometry()
+        x = scr_geo.x() + (scr_geo.width() - msg_dialog.width()) // 2
+        y = scr_geo.y() + (scr_geo.height() - msg_dialog.height()) // 2
+    else:
+        x = 400
+        y = 300
+    msg_dialog.move(x, y)
+    msg_dialog.show()
+    parent._msg_dialog = msg_dialog  # Keep reference to prevent GC
+    QTimer.singleShot(duration, msg_dialog.close)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 import json
 import os
 
-from logic.db_interface import get_form_settings, get_all_defaults, set_all_defaults
+from logic.db_interface import get_form_settings, get_all_defaults, set_all_defaults, get_teacher_defaults, set_teacher_defaults, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 SETTINGS_PATH = "data/settings.json"
@@ -30,17 +30,12 @@ class SettingsForm(QDialog):
             self.setMinimumSize(int(min_w), int(min_h))
         else:
             self.setMinimumSize(300, 200)
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        # Always allow maximize
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
         font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
         QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
-        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
             display_settings = get_all_defaults()
             scale = str(display_settings.get("scale_windows", "1")) == "1"
@@ -51,18 +46,14 @@ class SettingsForm(QDialog):
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
                 center_widget(self)
-
-        self.default_settings = self.load_default_settings()
+        # --- PATCH: Load teacher defaults from DB ---
+        self.teacher_defaults = get_teacher_defaults()
         self.init_ui()
-
-    def load_default_settings(self):
-        """Load default settings from the database."""
-        return get_all_defaults()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         metadata_col = QVBoxLayout()
-        metadata_heading = QLabel("Default Metadata")
+        metadata_heading = QLabel("Default Metadata (Teacher Defaults)")
         metadata_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
         metadata_col.addWidget(metadata_heading)
         # Separator 1: under heading
@@ -71,7 +62,7 @@ class SettingsForm(QDialog):
         heading_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
         metadata_col.addWidget(heading_sep)
         # Info text
-        info_label = QLabel("Set default values here for all new classes.\nAll values can be changed by editing metadata.")
+        info_label = QLabel("Set default values here for all new classes. All values can be changed by editing metadata.")
         info_label.setStyleSheet("font-size: 9.5pt; color: #444444;")
         info_label.setWordWrap(True)
         metadata_col.addWidget(info_label)
@@ -96,7 +87,7 @@ class SettingsForm(QDialog):
             return lbl
         min_entry_width = 150
         for idx, key in enumerate(fields_to_include):
-            value = self.default_settings.get(key, "")
+            value = self.teacher_defaults.get(key, "")
             entry = QLineEdit(value)
             entry.setMinimumWidth(min_entry_width)
             entry.setStyleSheet("padding-left: 8px; padding-right: 16px;")  # Add left padding for symmetry
@@ -122,7 +113,7 @@ class SettingsForm(QDialog):
         # Buttons (Save, Cancel, Check Factory Defaults) in one row
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
-        save_button = QPushButton("Save")
+        save_button = QPushButton("Save and Close")
         save_button.setMinimumWidth(90)
         save_button.clicked.connect(self.save_settings)
         cancel_button = QPushButton("Cancel")
@@ -156,8 +147,6 @@ class SettingsForm(QDialog):
         try:
             from logic.build_sqlite_db import check_factory_defaults_vs_db
             from logic.db_interface import get_connection
-            import json
-            import os
             # Get DB connection
             conn = get_connection()
             # Load factory defaults from JSON
@@ -189,7 +178,52 @@ class SettingsForm(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to check factory defaults:\n{e}")
 
     def save_settings(self):
-        """Stub for saving settings. Implement actual save logic here."""
-        # For now, just close the dialog with accept()
-        self.accept()
+        """Save teacher defaults to the DB."""
+        new_defaults = {key: entry.text().strip() for key, entry in self.entries.items()}
+        set_teacher_defaults(new_defaults)
+        # Use message style defaults from DB
+        msg_defaults = get_message_defaults()
+        bg = msg_defaults.get("message_bg_color", "#2980f0")
+        fg = msg_defaults.get("message_fg_color", "#fff")
+        border = msg_defaults.get("message_border_color", "#1565c0")
+        border_width = msg_defaults.get("message_border_width", "3")
+        border_radius = msg_defaults.get("message_border_radius", "12")
+        padding = msg_defaults.get("message_padding", "18px 32px")
+        font_size = msg_defaults.get("message_font_size", "13")
+        font_bold = msg_defaults.get("message_font_bold", "true")
+        font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+        style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+        from PyQt5.QtCore import QTimer, Qt
+        from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+        msg_dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+        msg_dialog.setModal(False)
+        layout = QVBoxLayout(msg_dialog)
+        label = QLabel("Teacher defaults have been updated.")
+        label.setStyleSheet(style)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        msg_dialog.adjustSize()
+        # Center the dialog on the screen
+        screen = self.window().screen() if hasattr(self.window(), 'screen') else None
+        if screen:
+            scr_geo = screen.geometry()
+            x = scr_geo.x() + (scr_geo.width() - msg_dialog.width()) // 2
+            y = scr_geo.y() + (scr_geo.height() - msg_dialog.height()) // 2
+        else:
+            x = 400
+            y = 300
+        msg_dialog.move(x, y)
+        msg_dialog.show()
+        self._msg_dialog = msg_dialog  # Keep reference to prevent GC
+        QTimer.singleShot(2000, msg_dialog.close)
+        QTimer.singleShot(2050, self.accept)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        print(f"[DEBUG] SettingsForm shown: width={self.width()}, height={self.height()}")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        print(f"[DEBUG] SettingsForm resized: width={self.width()}, height={self.height()}")
 

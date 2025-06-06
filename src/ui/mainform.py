@@ -30,6 +30,7 @@ from logic.db_interface import (
     get_all_defaults,
     set_attendance,
     get_form_settings,
+    get_message_defaults,
 )
 
 from logic.display import center_widget, scale_and_center, apply_window_flags
@@ -227,10 +228,8 @@ class Mainform(QMainWindow):
             self.setMinimumSize(int(min_w), int(min_h))
         else:
             self.setMinimumSize(300, 200)
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # REMOVED: max_width and max_height logic
+
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         from logic.db_interface import get_all_defaults
@@ -741,6 +740,14 @@ QTableView::item:selected {
         metadata_form.class_saved.connect(deferred_refresh)
         metadata_form.exec_()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        print(f"[DEBUG] Mainform shown: width={self.width()}, height={self.height()}")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        print(f"[DEBUG] Mainform resized: width={self.width()}, height={self.height()}")
+
     def resizeEvent(self, event):
         """Adjust the width and position of the scrollable table dynamically."""
         if hasattr(self, "frozen_table") and self.frozen_table.width() > 0:
@@ -1174,4 +1181,41 @@ QTableView::item:selected {
         # Show or hide the scrollable table based on show_dates value
         show_dates = self.class_data.get("show_dates", "Yes")
         self.scrollable_table.setVisible(show_dates == "Yes")
+
+    def show_message_dialog(parent, text, duration=2000):
+        from PyQt5.QtCore import QTimer, Qt
+        from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+        msg_defaults = get_message_defaults()
+        bg = msg_defaults.get("message_bg_color", "#2980f0")
+        fg = msg_defaults.get("message_fg_color", "#fff")
+        border = msg_defaults.get("message_border_color", "#1565c0")
+        border_width = msg_defaults.get("message_border_width", "3")
+        border_radius = msg_defaults.get("message_border_radius", "12")
+        padding = msg_defaults.get("message_padding", "18px 32px")
+        font_size = msg_defaults.get("message_font_size", "13")
+        font_bold = msg_defaults.get("message_font_bold", "true")
+        font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+        style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+        msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+        msg_dialog.setModal(False)
+        layout = QVBoxLayout(msg_dialog)
+        label = QLabel(text)
+        label.setStyleSheet(style)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        msg_dialog.adjustSize()
+        screen = parent.window().screen() if hasattr(parent.window(), 'screen') else None
+        if screen:
+            scr_geo = screen.geometry()
+            x = scr_geo.x() + (scr_geo.width() - msg_dialog.width()) // 2
+            y = scr_geo.y() + (scr_geo.height() - msg_dialog.height()) // 2
+        else:
+            x = 400
+            y = 300
+        msg_dialog.move(x, y)
+        msg_dialog.show()
+        parent._msg_dialog = msg_dialog  # Keep reference to prevent GC
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(duration, msg_dialog.close)
 

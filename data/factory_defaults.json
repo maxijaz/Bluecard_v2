@@ -54,7 +54,15 @@
     "button_font_bold": false,
     "button_hover_bg_color": "#1565c0",
     "button_active_bg_color": "#0d47a1",
-    "button_error_border_color": "#e53935"
+    "button_error_border_color": "#e53935",
+    "message_bg_color": "#2980f0",
+    "message_fg_color": "#ffffff",
+    "message_border_color": "#1565c0",
+    "message_border_width": 3,
+    "message_border_radius": 12,
+    "message_padding": "18px 32px",
+    "message_font_size": 13,
+    "message_font_bold": true
   },
   "classes": {
     "default": {

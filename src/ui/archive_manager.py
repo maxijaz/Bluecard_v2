@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from logic.db_interface import (
     set_class_archived, get_all_classes, get_class_by_id, update_class, delete_class,
-    get_form_settings, get_all_defaults
+    get_form_settings, get_all_defaults, get_message_defaults
 )
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
@@ -31,10 +31,8 @@ class ArchiveManager(QDialog):
             self.setMinimumSize(int(min_w), int(min_h))
         else:
             self.setMinimumSize(300, 200)
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # REMOVED: max_width and max_height logic
+
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
 
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
@@ -55,7 +53,6 @@ class ArchiveManager(QDialog):
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
                 center_widget(self)
-        # Optionally, apply_window_flags(self, show_minimize=True, show_maximize=True)
 
         # Main layout
         layout = QVBoxLayout(self)
@@ -89,6 +86,14 @@ class ArchiveManager(QDialog):
 
         layout.addLayout(button_layout)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        print(f"[DEBUG] ArchiveManager shown: width={self.width()}, height={self.height()}")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        print(f"[DEBUG] ArchiveManager resized: width={self.width()}, height={self.height()}")
+
     def populate_table(self):
         """Populate the table with archived class data."""
         self.table.setRowCount(0)  # Clear existing rows
@@ -113,27 +118,8 @@ class ArchiveManager(QDialog):
         company = self.table.item(selected_row, 1).text()
         set_class_archived(class_id, archived=False)
         self.refresh_data()
-        # Show a non-blocking confirmation dialog for 2 seconds
-        from PyQt5.QtCore import QTimer
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel
-        from PyQt5.QtGui import QFontMetrics, QFont
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Restored")
-        dlg.setWindowFlags(dlg.windowFlags() | Qt.FramelessWindowHint | Qt.Tool)
-        layout = QVBoxLayout(dlg)
-        label_text = f"Class {class_id} ({company}) has been restored."
-        label = QLabel(label_text)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        dlg.setLayout(layout)
-        # Dynamically set dialog width based on label text
-        font = label.font() if hasattr(label, 'font') else QFont()
-        metrics = QFontMetrics(font)
-        text_width = metrics.width(label_text)
-        dlg_width = max(text_width + 60, 400)  # 60px padding, min 400px
-        dlg.setFixedSize(dlg_width, 80)
-        dlg.show()
-        QTimer.singleShot(2000, dlg.accept)
+        # Show a non-blocking confirmation dialog for 2 seconds using message defaults
+        self.show_message_dialog(f"Class {class_id} ({company}) has been restored.")
 
     def delete_class(self):
         """Delete the selected archived class."""
@@ -143,6 +129,7 @@ class ArchiveManager(QDialog):
             return
 
         class_id = self.table.item(selected_row, 0).text()
+        company = self.table.item(selected_row, 1).text()
         confirm = QMessageBox.warning(
             self, "Delete Class",
             f"Are you sure you want to delete class {class_id}? \nThis action will delete all associated data and cannot be undone.",
@@ -153,6 +140,7 @@ class ArchiveManager(QDialog):
             from logic.db_interface import delete_class
             delete_class(class_id)
             self.refresh_data()
+            self.show_message_dialog(f"{class_id} - {company} and all its data has been deleted")
 
     def refresh_data(self):
         """Refresh the table and trigger the refresh callback."""
@@ -179,3 +167,39 @@ class ArchiveManager(QDialog):
         """Restore the initial size when the archive manager is reopened."""
         self.resize(395, 300)
         super().closeEvent(event)
+
+    def show_message_dialog(self, text, duration=2000):
+        from PyQt5.QtCore import QTimer, Qt
+        from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+        msg_defaults = get_message_defaults()
+        bg = msg_defaults.get("message_bg_color", "#2980f0")
+        fg = msg_defaults.get("message_fg_color", "#fff")
+        border = msg_defaults.get("message_border_color", "#1565c0")
+        border_width = msg_defaults.get("message_border_width", "3")
+        border_radius = msg_defaults.get("message_border_radius", "12")
+        padding = msg_defaults.get("message_padding", "18px 32px")
+        font_size = msg_defaults.get("message_font_size", "13")
+        font_bold = msg_defaults.get("message_font_bold", "true")
+        font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+        style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+        msg_dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+        msg_dialog.setModal(False)
+        layout = QVBoxLayout(msg_dialog)
+        label = QLabel(text)
+        label.setStyleSheet(style)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        msg_dialog.adjustSize()
+        screen = self.window().screen() if hasattr(self.window(), 'screen') else None
+        if screen:
+            scr_geo = screen.geometry()
+            x = scr_geo.x() + (scr_geo.width() - msg_dialog.width()) // 2
+            y = scr_geo.y() + (scr_geo.height() - msg_dialog.height()) // 2
+        else:
+            x = 400
+            y = 300
+        msg_dialog.move(x, y)
+        msg_dialog.show()
+        self._msg_dialog = msg_dialog  # Keep reference to prevent GC
+        QTimer.singleShot(duration, msg_dialog.close)
