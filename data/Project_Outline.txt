@@ -90,9 +90,9 @@ form_settings (DB)	    Current per-form settings	Yes	                Yes	       
 classes (DB)	        Per-class settings	        Yes	                Yes	           Yes
 
 Action Steps
-1. Expand factory_defaults.json to include all global, per-form, and per-class defaults.
-2. Update build_sqlite_db.py to:
-3. Populate all relevant DB tables from factory_defaults.json.
+1. Expand factory_defaults.json to include all global, per-form, and per-class defaults. ✔
+2. Update build_sqlite_db.py to: ✔
+3. Populate all relevant DB tables from factory_defaults.json. ✔
 4. Ensure factory_defaults table is always up-to-date.
 5. Update all UI and logic to use only the defaults table for global settings.
 6. Remove all other sources of defaults (old JSONs, hardcoded values).

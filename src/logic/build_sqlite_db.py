@@ -436,71 +436,69 @@ def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
     print("Imported defaults from default.json")
 
 def import_defaults_from_factory(conn, factory_defaults):
-    """Import global defaults from factory_defaults.json into defaults table."""
+    """
+    Import global defaults from factory_defaults.json into the defaults table.
+    """
+    cursor = conn.cursor()
     global_defaults = factory_defaults.get("global", {})
-    cursor = conn.cursor()
     for key, value in global_defaults.items():
-        cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
+        cursor.execute("REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, json.dumps(value)))
     conn.commit()
-    print("Imported global defaults from factory_defaults.json")
-
-def import_class_defaults_from_factory(conn, factory_defaults):
-    """Import per-class defaults from factory_defaults.json into class_defaults table (or as template for new classes)."""
-    class_defaults = factory_defaults.get("classes", {}).get("default", {})
-    if not class_defaults:
-        print("No class defaults found in factory_defaults.json")
-        return
-    cursor = conn.cursor()
-    # Create class_defaults table if not exists (template for new classes)
-    columns = ', '.join([f'{k} TEXT' for k in class_defaults.keys()])
-    cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS class_defaults (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            {columns}
-        )
-    """)
-    # Remove all previous rows (keep only one template row)
-    cursor.execute("DELETE FROM class_defaults")
-    # Insert the default row
-    fields = ', '.join(class_defaults.keys())
-    placeholders = ', '.join(['?'] * len(class_defaults))
-    cursor.execute(f"INSERT INTO class_defaults ({fields}) VALUES ({placeholders})", tuple(class_defaults.values()))
-    conn.commit()
-    print("Imported per-class defaults from factory_defaults.json into class_defaults table")
-
-def import_factory_defaults_table(conn, factory_defaults):
-    """Populate factory_defaults table with all global, per-form, and per-class defaults from factory_defaults.json."""
-    cursor = conn.cursor()
-    # Global defaults
-    for key, value in factory_defaults.get("global", {}).items():
-        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(value)))
-    # Per-form defaults
-    for form_name, settings in factory_defaults.get("forms", {}).items():
-        for key, value in settings.items():
-            cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(value)))
-    # Per-class defaults
-    for key, value in factory_defaults.get("classes", {}).get("default", {}).items():
-        cursor.execute("INSERT OR REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, str(value)))
-    conn.commit()
-    print("Populated factory_defaults table from factory_defaults.json (now includes class defaults)")
 
 def import_form_settings_from_factory(conn, factory_defaults):
-    """Import per-form settings from factory_defaults.json into form_settings table, ensuring all fields are present for all forms."""
-    forms = factory_defaults.get("forms", {})
-    # Get the union of all keys used in any form
-    all_fields = set()
-    for settings in forms.values():
-        all_fields.update(settings.keys())
-    all_fields = sorted(all_fields)
+    """
+    Import per-form settings from factory_defaults.json into the form_settings table.
+    """
     cursor = conn.cursor()
-    for form_name, settings in forms.items():
-        # For each form, ensure all fields are present (fill missing with None or "")
-        values = [settings.get(field, None) for field in all_fields]
-        placeholders = ["?"] * len(all_fields)
-        sql = f"INSERT OR REPLACE INTO form_settings (form_name, {', '.join(all_fields)}) VALUES (?, {', '.join(placeholders)})"
-        cursor.execute(sql, [form_name] + values)
+    forms = factory_defaults.get("forms", {})
+    for form_name, form_settings in forms.items():
+        # Flatten settings for SQL insert
+        columns = [
+            "form_name", "window_width", "window_height", "min_width", "min_height", "max_width", "max_height",
+            "resizable", "window_controls", "form_font_family", "title_color", "title_font_size", "title_font_bold", "title_alignment",
+            "subtitle_color", "subtitle_font_size", "subtitle_font_bold", "subtitle_alignment", "form_bg_color", "form_fg_color", "form_border_color",
+            "form_font_size", "form_label_bold", "form_label_alignment", "form_input_bg_color", "form_input_alignment", "form_input_field_bold",
+            "form_input_placeholder_color", "form_input_focus_border_color", "form_input_disabled_bg_color", "form_error_border_color",
+            "metadata_bg_color", "metadata_fg_color", "metadata_border_color", "metadata_font_size", "metadata_label_bold", "metadata_input_field_bold",
+            "metadata_input_bg_color", "metadata_input_placeholder_color", "metadata_input_focus_border_color", "metadata_input_disabled_bg_color",
+            "metadata_error_border_color", "table_header_bg_color", "table_header_fg_color", "table_header_border_color", "table_header_font_size",
+            "table_header_bold", "table_bg_color", "table_fg_color", "table_border_color", "table_font_size", "table_input_field_bold",
+            "table_error_border_color", "button_bg_color", "button_fg_color", "button_border_color", "button_font_size", "button_font_bold",
+            "button_hover_bg_color", "button_active_bg_color", "button_error_border_color"
+        ]
+        values = [form_name] + [form_settings.get(col, None) for col in columns[1:]]
+        placeholders = ','.join(['?'] * len(columns))
+        cursor.execute(f"REPLACE INTO form_settings ({','.join(columns)}) VALUES ({placeholders})", values)
     conn.commit()
-    print("Imported per-form settings from factory_defaults.json (all fields ensured)")
+
+def import_class_defaults_from_factory(conn, factory_defaults):
+    """
+    Import per-class defaults from factory_defaults.json into the classes table as templates (for new classes).
+    """
+    cursor = conn.cursor()
+    class_defaults = factory_defaults.get("classes", {}).get("default", {})
+    # This function can be expanded to insert into a class_templates table if needed
+    # For now, just store in factory_defaults table for reference
+    for key, value in class_defaults.items():
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, json.dumps(value)))
+    conn.commit()
+
+def import_factory_defaults_table(conn, factory_defaults):
+    """
+    Import all factory defaults into the factory_defaults table for reference and reset.
+    """
+    cursor = conn.cursor()
+    # Global
+    for key, value in factory_defaults.get("global", {}).items():
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, json.dumps(value)))
+    # Forms
+    for form_name, form_settings in factory_defaults.get("forms", {}).items():
+        for key, value in form_settings.items():
+            cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, json.dumps(value)))
+    # Classes
+    for key, value in factory_defaults.get("classes", {}).get("default", {}).items():
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, json.dumps(value)))
+    conn.commit()
 
 def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
     """
