@@ -214,25 +214,59 @@ def recreate_db(db_path=DB_PATH):
         max_width INTEGER,
         max_height INTEGER,
         resizable TEXT DEFAULT 'yes', -- 'yes' or 'no'
-        font_family TEXT,
-        font_size INTEGER,
-        font_bold TEXT, -- 'yes' or 'no'
-        font_italic TEXT, -- 'yes' or 'no'
-        fg_color TEXT, -- main text color
-        bg_color TEXT, -- main background color
-        border_color TEXT,
+        window_controls TEXT,
+        form_font_family TEXT,
         title_color TEXT,
-        button_bg_color TEXT,
-        button_fg_color TEXT,
-        button_font_size INTEGER,
-        button_border_color TEXT,
-        table_bg_color TEXT,
-        table_fg_color TEXT,
-        table_font_size INTEGER,
+        title_font_size INTEGER,
+        title_font_bold TEXT, -- 'yes' or 'no'
+        title_alignment TEXT,
+        subtitle_color TEXT,
+        subtitle_font_size INTEGER,
+        subtitle_font_bold TEXT, -- 'yes' or 'no'
+        subtitle_alignment TEXT,
+        form_bg_color TEXT,
+        form_fg_color TEXT,
+        form_border_color TEXT,
+        form_font_size INTEGER,
+        form_label_bold TEXT, -- 'yes' or 'no'
+        form_label_alignment TEXT,
+        form_input_bg_color TEXT,
+        form_input_alignment TEXT,
+        form_input_field_bold TEXT, -- 'yes' or 'no'
+        form_input_placeholder_color TEXT,
+        form_input_focus_border_color TEXT,
+        form_input_disabled_bg_color TEXT,
+        form_error_border_color TEXT,
+        metadata_bg_color TEXT,
+        metadata_fg_color TEXT,
+        metadata_border_color TEXT,
+        metadata_font_size INTEGER,
+        metadata_label_bold TEXT, -- 'yes' or 'no'
+        metadata_input_field_bold TEXT, -- 'yes' or 'no'
+        metadata_input_bg_color TEXT,
+        metadata_input_placeholder_color TEXT,
+        metadata_input_focus_border_color TEXT,
+        metadata_input_disabled_bg_color TEXT,
+        metadata_error_border_color TEXT,
         table_header_bg_color TEXT,
         table_header_fg_color TEXT,
+        table_header_border_color TEXT,
         table_header_font_size INTEGER,
-        icon_path TEXT,
+        table_header_bold TEXT, -- 'yes' or 'no'
+        table_bg_color TEXT,
+        table_fg_color TEXT,
+        table_border_color TEXT,
+        table_font_size INTEGER,
+        table_input_field_bold TEXT, -- 'yes' or 'no'
+        table_error_border_color TEXT,
+        button_bg_color TEXT,
+        button_fg_color TEXT,
+        button_border_color TEXT,
+        button_font_size INTEGER,
+        button_font_bold TEXT, -- 'yes' or 'no'
+        button_hover_bg_color TEXT,
+        button_active_bg_color TEXT,
+        button_error_border_color TEXT,
         extra_json TEXT, -- for future extensibility (JSON-encoded dict)
         last_modified TEXT -- ISO timestamp
     );

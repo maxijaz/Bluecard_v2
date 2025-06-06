@@ -26,19 +26,15 @@ from ui.launcher import Launcher
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-SETTINGS_PATH = "data/settings.json"
 DEFAULT_THEME = "normal"
 TEST_MODE = os.getenv("BLUECARD_TEST_MODE") == "1"  # optional environment toggle
 
-def load_theme():
-    """Loads UI theme from settings.json, fallback to default."""
-    if not os.path.exists(SETTINGS_PATH):
-        return DEFAULT_THEME
+def get_theme():
+    """Get UI theme from DB defaults, fallback to DEFAULT_THEME."""
     try:
-        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
-            settings = json.load(f)
-            return settings.get("theme", DEFAULT_THEME)
-    except json.JSONDecodeError:
+        defaults = get_all_defaults()
+        return defaults.get("theme", DEFAULT_THEME)
+    except Exception:
         return DEFAULT_THEME
 
 def clean_environment():
@@ -57,7 +53,7 @@ def clean_environment():
 
 def start_launcher():
     """Start the Launcher form."""
-    theme = load_theme()
+    theme = get_theme()
     app = QApplication(sys.argv)
     # --- PATCH: Load per-form settings for Launcher ---
     try:
