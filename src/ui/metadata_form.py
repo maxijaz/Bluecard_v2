@@ -171,17 +171,51 @@ class MetadataForm(QDialog):
             ("Mon", "Monday"), ("Tue", "Tuesday"), ("Wed", "Wednesday"),
             ("Thu", "Thursday"), ("Fri", "Friday"), ("Sat", "Saturday"), ("Sun", "Sunday")
         ]
+        # --- PATCH: Load toggle button style defaults from DB ---
+        toggle_defaults = get_all_defaults()
+        toggle_bg = toggle_defaults.get("toggle_bg_color", "#ffffff")
+        toggle_fg = toggle_defaults.get("toggle_fg_color", "#1565c0")
+        toggle_border = toggle_defaults.get("toggle_border_color", "#1565c0")
+        toggle_border_width = int(toggle_defaults.get("toggle_border_width", 3))
+        toggle_border_radius = int(toggle_defaults.get("toggle_border_radius", 12))
+        toggle_padding = toggle_defaults.get("toggle_padding", "5px 10px")
+        toggle_font_size = int(toggle_defaults.get("toggle_font_size", 12))
+        toggle_font_bold = str(toggle_defaults.get("toggle_font_bold", "true")).lower() == "true"
+        toggle_hover_bg = toggle_defaults.get("toggle_hover_bg_color", "#e0f0ff")
+        toggle_pressed_bg = toggle_defaults.get("toggle_pressed_bg_color", "#c0e0ff")
+        toggle_checked_bg = toggle_defaults.get("toggle_checked_bg_color", "#2980f0")
+        toggle_checked_fg = toggle_defaults.get("toggle_checked_fg_color", "#ffffff")
+        font_weight = "bold" if toggle_font_bold else "normal"
+        toggle_stylesheet = f"""
+            QPushButton {{
+                border-radius: {toggle_border_radius}px;
+                padding: {toggle_padding};
+                background: {toggle_bg};
+                color: {toggle_fg};
+                border: {toggle_border_width}px solid {toggle_border};
+                font-size: {toggle_font_size}pt;
+                font-weight: {font_weight};
+            }}
+            QPushButton:checked {{
+                background: {toggle_checked_bg};
+                color: {toggle_checked_fg};
+                border: {toggle_border_width + 1}px solid {toggle_border};
+            }}
+            QPushButton:hover {{
+                background: {toggle_hover_bg};
+            }}
+            QPushButton:pressed {{
+                background: {toggle_pressed_bg};
+            }}
+        """
         for short, full in day_map:
             btn = QPushButton(short)
             btn.setCheckable(True)
             btn.setFont(self.form_font)
             btn.setMinimumWidth(44)
             btn.setMaximumWidth(60)
-            btn.setStyleSheet(
-                "QPushButton { border-radius: 12px; padding: 4px 12px; background: #e3f2fd; color: #222; border: 1.5px solid #1976d2; } "
-                "QPushButton:checked { background: #1976d2; color: white; border: 2px solid #1976d2; } "
-                "QPushButton:hover { background: #bbdefb; }"
-            )
+            btn.setFixedWidth(64)  # Fixed width of Mon, Tue, Wed etc. for consistency
+            btn.setStyleSheet(toggle_stylesheet)
             self.days_buttons[full] = btn
             days_layout.addWidget(btn)
         # Prepopulate toggles if editing

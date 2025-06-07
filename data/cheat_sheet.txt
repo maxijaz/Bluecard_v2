@@ -10,6 +10,9 @@ My list:
 windows min/max
 Add minimize, maximize, and close buttons to this window using setWindowFlags.
 
+# add title window title bar
+# Set window title to "My Form Name"
+# root.title("My Form Name")
 
 💬 Common questions:
 - How can I improve this function?

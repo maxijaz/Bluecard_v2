@@ -62,7 +62,19 @@
     "message_border_radius": 12,
     "message_padding": "18px 32px",
     "message_font_size": 13,
-    "message_font_bold": true
+    "message_font_bold": true,
+    "toggle_bg_color": "#ffffff",
+    "toggle_fg_color": "#1565c0",
+    "toggle_border_color": "#1565c0",
+    "toggle_border_width": 3,
+    "toggle_border_radius": 12,
+    "toggle_padding": "5px 10px",
+    "toggle_font_size": 12,
+    "toggle_font_bold": true,
+    "toggle_hover_bg_color": "#e0f0ff",
+    "toggle_pressed_bg_color": "#c0e0ff",
+    "toggle_checked_bg_color": "#2980f0",
+    "toggle_checked_fg_color": "#ffffff"
   },
   "classes": {
     "default": {
@@ -700,7 +712,7 @@
       "button_error_border_color": "#e53935"
     },
     "StudentForm": {
-      "window_width": 350,
+      "window_width": 400,
       "window_height": 400,
       "min_width": 350,
       "min_height": 400,

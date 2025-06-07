@@ -87,24 +87,49 @@ class StudentForm(QDialog):
 
         # Row 3
         grid.addWidget(self.bold_label("Gender:"), 3, 0, alignment=Qt.AlignVCenter)
-        gender_layout = QHBoxLayout()
-        self.male_radio = QRadioButton("Male")
-        self.male_radio.setFont(self.form_font)
-        self.female_radio = QRadioButton("Female")
-        self.female_radio.setFont(self.form_font)
-        if student_data:
-            if student_data.get("gender", "Female") == "Male":
-                self.male_radio.setChecked(True)
-            else:
-                self.female_radio.setChecked(True)
+        # --- Gender Toggle Buttons ---
+        from PyQt5.QtWidgets import QButtonGroup
+        toggle_defaults = get_all_defaults()
+        toggle_style = (
+            f"QPushButton {{"
+            f"border: {toggle_defaults.get('toggle_border_width', 3)}px solid {toggle_defaults.get('toggle_border_color', '#1565c0')};"
+            f"border-radius: {toggle_defaults.get('toggle_border_radius', 12)}px;"
+            f"padding: {toggle_defaults.get('toggle_padding', '5px 10px')};"
+            f"background-color: {toggle_defaults.get('toggle_bg_color', '#ffffff')};"
+            f"color: {toggle_defaults.get('toggle_fg_color', '#1565c0')};"
+            f"font-size: {toggle_defaults.get('toggle_font_size', 12)}px;"
+            f"font-weight: {'bold' if str(toggle_defaults.get('toggle_font_bold', True)).lower() in ('1','true','yes') else 'normal'};"
+            f"}}"
+            f"QPushButton:hover {{background-color: {toggle_defaults.get('toggle_hover_bg_color', '#e0f0ff')};}}"
+            f"QPushButton:pressed {{background-color: {toggle_defaults.get('toggle_pressed_bg_color', '#c0e0ff')};}}"
+            f"QPushButton:checked {{background-color: {toggle_defaults.get('toggle_checked_bg_color', '#2980f0')};"
+            f"color: {toggle_defaults.get('toggle_checked_fg_color', '#ffffff')};}}"
+        )
+        # Gender buttons
+        self.gender_female_btn = QPushButton("Female")
+        self.gender_male_btn = QPushButton("Male")
+        self.gender_clear_btn = QPushButton("Not Set")
+        for btn in (self.gender_female_btn, self.gender_male_btn, self.gender_clear_btn):
+            btn.setCheckable(True)
+            btn.setFixedWidth(80)
+            btn.setStyleSheet(toggle_style)
+        self.gender_group = QButtonGroup(self)
+        self.gender_group.setExclusive(True)
+        self.gender_group.addButton(self.gender_female_btn)
+        self.gender_group.addButton(self.gender_male_btn)
+        self.gender_group.addButton(self.gender_clear_btn)
+        gender_val = self.student_data.get("gender", "female").lower()
+        if gender_val == "male":
+            self.gender_male_btn.setChecked(True)
+        elif gender_val == "":
+            self.gender_clear_btn.setChecked(True)
         else:
-            self.female_radio.setChecked(True)
-        gender_layout.addWidget(self.male_radio)
-        gender_layout.addWidget(self.female_radio)
-        gender_widget = QWidget()
-        gender_widget.setLayout(gender_layout)
-        gender_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        grid.addWidget(gender_widget, 3, 1, alignment=Qt.AlignVCenter)
+            self.gender_female_btn.setChecked(True)
+        gender_layout = QHBoxLayout()
+        gender_layout.addWidget(self.gender_female_btn)
+        gender_layout.addWidget(self.gender_male_btn)
+        gender_layout.addWidget(self.gender_clear_btn)
+        grid.addLayout(gender_layout, 3, 1, alignment=Qt.AlignVCenter)
 
         # Row 4
         grid.addWidget(self.bold_label("Score:"), 4, 0, alignment=Qt.AlignTop)
@@ -132,24 +157,26 @@ class StudentForm(QDialog):
 
         # Row 8
         grid.addWidget(self.bold_label("Active:"), 8, 0, alignment=Qt.AlignVCenter)
-        active_layout = QHBoxLayout()
-        self.active_yes = QRadioButton("Yes")
-        self.active_yes.setFont(self.form_font)
-        self.active_no = QRadioButton("No")
-        self.active_no.setFont(self.form_font)
-        if student_data:
-            if student_data.get("active", "Yes") == "Yes":
-                self.active_yes.setChecked(True)
-            else:
-                self.active_no.setChecked(True)
+        # --- Active Toggle Buttons ---
+        self.active_yes_btn = QPushButton("Yes")
+        self.active_no_btn = QPushButton("No")
+        for btn in (self.active_yes_btn, self.active_no_btn):
+            btn.setCheckable(True)
+            btn.setFixedWidth(80)
+            btn.setStyleSheet(toggle_style)
+        self.active_group = QButtonGroup(self)
+        self.active_group.setExclusive(True)
+        self.active_group.addButton(self.active_yes_btn)
+        self.active_group.addButton(self.active_no_btn)
+        active_val = self.student_data.get("active", "yes").lower()
+        if active_val == "no":
+            self.active_no_btn.setChecked(True)
         else:
-            self.active_yes.setChecked(True)
-        active_layout.addWidget(self.active_yes)
-        active_layout.addWidget(self.active_no)
-        active_widget = QWidget()
-        active_widget.setLayout(active_layout)
-        active_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        grid.addWidget(active_widget, 8, 1, alignment=Qt.AlignVCenter)
+            self.active_yes_btn.setChecked(True)
+        active_layout = QHBoxLayout()
+        active_layout.addWidget(self.active_yes_btn)
+        active_layout.addWidget(self.active_no_btn)
+        grid.addLayout(active_layout, 8, 1, alignment=Qt.AlignVCenter)
 
         main_layout.addLayout(grid)
 
@@ -227,12 +254,19 @@ class StudentForm(QDialog):
         name = self.capitalize_words(self.name_entry.text().strip())
         nickname = self.capitalize_words(self.nickname_entry.text().strip())
         company_no = self.company_no_entry.text().strip()
-        gender = "Male" if self.male_radio.isChecked() else "Female"
+        # Gender
+        if self.gender_female_btn.isChecked():
+            gender = "female"
+        elif self.gender_male_btn.isChecked():
+            gender = "male"
+        else:
+            gender = ""
+        # Active
+        active = "yes" if self.active_yes_btn.isChecked() else "no"
         score = self.score_entry.text().strip()
         pre_test = self.pre_test_entry.text().strip()
         post_test = self.post_test_entry.text().strip()
         note = self.note_entry.text().strip()
-        active = "Yes" if self.active_yes.isChecked() else "No"
 
         if not name:
             self.show_message_dialog("Name is required.")
