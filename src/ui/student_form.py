@@ -328,8 +328,11 @@ class StudentForm(QDialog):
                 # Table style
                 self.setStyleSheet(f"background: {table_bg}; color: {table_fg}; font-family: {font_family}; font-size: {font_size}pt;")
                 self.horizontalHeader().setStyleSheet(f"background: {table_header_bg}; color: {table_header_fg}; font-family: {font_family}; font-size: {font_size+2}pt; font-weight: bold;")
-                self.setSelectionBehavior(QTableWidget.SelectRows)
-                self.setSelectionMode(QTableWidget.SingleSelection)
+                # Don't delete this comment or next 4 lines, they are important
+                # click cell highlight row automatically - next 3 lines changes behaviour
+                # self.setSelectionBehavior(QTableWidget.SelectRows) # 1. Select entire rows
+                self.setSelectionBehavior(QTableWidget.SelectItems) # 2. Select individual items
+                self.setSelectionMode(QTableWidget.SingleSelection)  # choose 1 or 2 inlcude: ExtendedSelection for multi-select
                 self.setAlternatingRowColors(True)
                 self.setEditTriggers(QTableWidget.NoEditTriggers)
                 self.setShowGrid(True)
@@ -422,13 +425,12 @@ class StudentForm(QDialog):
                         self.setItem(row, col, new_item)
 
             def highlight_row(self, row):
-                # Always act as a state setter: highlight if not highlighted, deselect if highlighted
+                # If already highlighted, remove highlight and return
                 is_highlighted = all(
                     self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
                     for col in range(self.columnCount())
                 )
                 if is_highlighted:
-                    # Deselect row highlight and row header
                     for col in range(self.columnCount()):
                         item = self.item(row, col)
                         if item:
@@ -438,59 +440,62 @@ class StudentForm(QDialog):
                             new_item.setBackground(Qt.white)
                             self.setItem(row, col, new_item)
                     self.selectionModel().select(self.model().index(row, 0), QItemSelectionModel.Deselect | QItemSelectionModel.Rows)
-                else:
-                    # Remove all previous highlights (row or column)
-                    self.clear_row_highlights()
-                    self.clear_column_highlights()
-                    # Highlight selected row (blue) and select row header
-                    for col in range(self.columnCount()):
-                        item = self.item(row, col)
-                        if item:
-                            item.setBackground(QColor('#2196f3'))
-                        else:
-                            new_item = QTableWidgetItem("")
-                            new_item.setBackground(QColor('#2196f3'))
-                            self.setItem(row, col, new_item)
-                    self.selectRow(row)
+                    return
+                # Remove previous highlights
+                self.clear_row_highlights()
+                self.clear_column_highlights()
+                # Highlight selected row (blue)
+                for col in range(self.columnCount()):
+                    item = self.item(row, col)
+                    if item:
+                        item.setBackground(QColor('#2196f3'))
+                    else:
+                        new_item = QTableWidgetItem("")
+                        new_item.setBackground(QColor('#2196f3'))
+                        self.setItem(row, col, new_item)
+                self.selectRow(row)
 
             def mousePressEvent(self, event):
-                # Row header click: set row highlight state (not toggle), clear column highlight
-                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).column() == -1:
-                    row = self.indexAt(event.pos()).row()
-                    if row >= 0:
-                        is_row_highlighted = all(
-                            self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
-                            for col in range(self.columnCount())
-                        )
-                        if is_row_highlighted:
-                            self.clear_row_highlights()
-                            self.selectionModel().clearSelection()
-                        else:
-                            self.clear_column_highlights()
-                            self.highlight_row(row)
-                    return
-                # Column header click: clear row highlight, then highlight column
-                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).row() == -1 and self.indexAt(event.pos()).column() != -1:
-                    self.clear_row_highlights()  # Always clear row highlight on column header click
-                    col = self.indexAt(event.pos()).column()
-                    if col >= 0:
-                        self.highlight_column(col)
-                        return
-                # Table cell click: deselect row if highlighted, otherwise just select cell
-                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).isValid():
-                    row = self.indexAt(event.pos()).row()
-                    is_row_highlighted = all(
-                        self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
-                        for col in range(self.columnCount())
-                    )
-                    if is_row_highlighted:
-                        self.clear_row_highlights()
-                        self.selectionModel().clearSelection()
-                        return
-                    self.clear_row_highlights()
+                index = self.indexAt(event.pos())
+                row = index.row()
+                col = index.column()
+
+                # Row header click
+                if event.button() == Qt.LeftButton and col == -1 and row >= 0:
                     self.clear_column_highlights()
-                    self.setCurrentIndex(self.indexAt(event.pos()))
+                    # Toggle row highlight: if already highlighted, clear; else, highlight
+                    is_highlighted = all(
+                        self.item(row, c) and self.item(row, c).background().color().name() == '#2196f3'
+                        for c in range(self.columnCount())
+                    )
+                    if is_highlighted:
+                        self.clear_row_highlights()
+                    else:
+                        self.clear_row_highlights()
+                        self.highlight_row(row)
                     return
+
+                # Column header click
+                if event.button() == Qt.LeftButton and row == -1 and col >= 0:
+                    self.clear_row_highlights()
+                    # Toggle column highlight: if already highlighted, clear; else, highlight
+                    is_highlighted = all(
+                        self.item(r, col) and self.item(r, col).background().color().name() == '#2196f3'
+                        for r in range(self.rowCount())
+                    )
+                    if is_highlighted:
+                        self.clear_column_highlights()
+                    else:
+                        self.clear_column_highlights()
+                        self.highlight_column(col)
+                    return
+
+                # Table cell click: just move the focus (dotted box), do not clear or set any highlight
+                if event.button() == Qt.LeftButton and index.isValid():
+                    self.setCurrentIndex(index)
+                    # Do NOT clear or set any row/column highlight here!
+                    return
+
                 super().mousePressEvent(event)
 
             def clear_row_highlights(self):
