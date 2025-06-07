@@ -671,10 +671,12 @@ QTableView::item:selected {
                 print("Refreshing student table after adding a student...")
                 self.refresh_student_table()
                 self.frozen_table.selectionModel().clearSelection()  # Clear selection after adding
-
             default_attendance = self.get_default_attendance_for_new_student()
             student_form = StudentForm(self, self.class_id, {}, refresh_callback, default_attendance=default_attendance)
             student_form.exec_()
+            # --- PATCH: Open Bulk Import if requested ---
+            if getattr(student_form, "bulk_import_requested", False):
+                student_form.open_bulk_import_dialog()
         else:
             print("Edit Student button clicked")
             try:
@@ -685,9 +687,11 @@ QTableView::item:selected {
                     print("Refreshing student table after editing a student...")
                     self.refresh_student_table()
                     self.frozen_table.selectionModel().clearSelection()  # Clear selection after editing
-
                 student_form = StudentForm(self, self.class_id, {}, refresh_callback, student_id, student_data)
                 student_form.exec_()
+                # --- PATCH: Open Bulk Import if requested ---
+                if getattr(student_form, "bulk_import_requested", False):
+                    student_form.open_bulk_import_dialog()
             except IndexError:
                 QMessageBox.warning(self, "Error", "Invalid row selected. Please try again.")
 

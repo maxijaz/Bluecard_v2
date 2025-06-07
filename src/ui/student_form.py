@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy, QHeaderView
 )
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QTimer, QItemSelectionModel
+from PyQt5.QtGui import QFont, QColor
 from logic.parser import save_data
 from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults, get_form_settings, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
@@ -38,7 +38,7 @@ class StudentForm(QDialog):
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
-        font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
+        font_size = int(form_settings.get("window_width") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
         font_family = form_settings.get("font_family", "Segoe UI")
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
@@ -164,10 +164,13 @@ class StudentForm(QDialog):
         cancel_button.setFont(self.form_font)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
+        cancel_button.setDefault(True)  # Set Cancel as the default button
+        save_button.setAutoDefault(False)
+        save_button.setDefault(False)
 
         bulk_import_button = QPushButton("Bulk Import")
         bulk_import_button.setFont(self.form_font)
-        bulk_import_button.clicked.connect(self.open_bulk_import_dialog)
+        bulk_import_button.clicked.connect(self.open_bulk_import_and_close)
         button_layout.addWidget(bulk_import_button)
 
         main_layout.addLayout(button_layout)
@@ -178,6 +181,9 @@ class StudentForm(QDialog):
         # If adding a new student and default_attendance is provided, set it
         if self.student_id is None and self.default_attendance is not None:
             self.student_data["attendance"] = dict(self.default_attendance)
+
+        # Flag to track if bulk import was requested
+        self.bulk_import_requested = False
 
     def bold_label(self, text):
         label = QLabel(text)
@@ -325,11 +331,27 @@ class StudentForm(QDialog):
                 self.setSelectionBehavior(QTableWidget.SelectRows)
                 self.setSelectionMode(QTableWidget.SingleSelection)
                 self.setAlternatingRowColors(True)
-                self.setEditTriggers(QTableWidget.AllEditTriggers)
+                self.setEditTriggers(QTableWidget.NoEditTriggers)
                 self.setShowGrid(True)
                 self.setWordWrap(False)
                 self.horizontalHeader().setStretchLastSection(True)
                 self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+                # Pre-populate all cells with empty QTableWidgetItems (no highlight)
+                for r in range(self.rowCount()):
+                    for c in range(self.columnCount()):
+                        if not self.item(r, c):
+                            item = QTableWidgetItem("")
+                            item.setBackground(Qt.white)
+                            self.setItem(r, c, item)
+                # --- Add double-click delete row/column logic ---
+                self.verticalHeader().sectionDoubleClicked.connect(self.confirm_delete_row)
+                self.horizontalHeader().sectionDoubleClicked.connect(self.confirm_delete_column)
+                self.horizontalHeader().sectionClicked.connect(self.highlight_column)
+                self.verticalHeader().sectionClicked.connect(self.highlight_row)
+                # Set a fixed minimum row height for all rows
+                min_row_height = 28  # or fetch from settings if desired
+                for r in range(self.rowCount()):
+                    self.setRowHeight(r, min_row_height)
 
             def keyPressEvent(self, event):
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_V:
@@ -342,6 +364,178 @@ class StudentForm(QDialog):
                 paste_action = menu.addAction("Paste")
                 paste_action.triggered.connect(lambda: self.paste_callback(self))
                 menu.exec_(self.viewport().mapToGlobal(position))
+
+            def confirm_delete_row(self, row):
+                from PyQt5.QtWidgets import QMessageBox
+                # Set default button to No for safety
+                reply = QMessageBox.question(
+                    self, "Delete Row", f"Delete row {row+1}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self.removeRow(row)
+
+            def confirm_delete_column(self, col):
+                from PyQt5.QtWidgets import QMessageBox
+                header = self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f"Column {col+1}"
+                # Set default button to No for safety
+                reply = QMessageBox.question(
+                    self, "Clear Column", f"Clear all data in column '{header}'?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    for row in range(self.rowCount()):
+                        self.setItem(row, col, QTableWidgetItem(""))
+
+            def highlight_column(self, col):
+                # If already highlighted, remove highlight and return
+                already_highlighted = all(
+                    self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
+                    for row in range(self.rowCount())
+                )
+                if already_highlighted:
+                    for row in range(self.rowCount()):
+                        item = self.item(row, col)
+                        if item:
+                            item.setBackground(Qt.white)
+                        else:
+                            new_item = QTableWidgetItem("")
+                            new_item.setBackground(Qt.white)
+                            self.setItem(row, col, new_item)
+                    return
+                # Remove previous highlights
+                for c in range(self.columnCount()):
+                    for r in range(self.rowCount()):
+                        item = self.item(r, c)
+                        if item:
+                            item.setBackground(Qt.white)
+                        else:
+                            new_item = QTableWidgetItem("")
+                            new_item.setBackground(Qt.white)
+                            self.setItem(r, c, new_item)
+                # Highlight selected column (blue)
+                for row in range(self.rowCount()):
+                    item = self.item(row, col)
+                    if item:
+                        item.setBackground(QColor('#2196f3'))
+                    else:
+                        new_item = QTableWidgetItem("")
+                        new_item.setBackground(QColor('#2196f3'))
+                        self.setItem(row, col, new_item)
+
+            def highlight_row(self, row):
+                # Always act as a state setter: highlight if not highlighted, deselect if highlighted
+                is_highlighted = all(
+                    self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
+                    for col in range(self.columnCount())
+                )
+                if is_highlighted:
+                    # Deselect row highlight and row header
+                    for col in range(self.columnCount()):
+                        item = self.item(row, col)
+                        if item:
+                            item.setBackground(Qt.white)
+                        else:
+                            new_item = QTableWidgetItem("")
+                            new_item.setBackground(Qt.white)
+                            self.setItem(row, col, new_item)
+                    self.selectionModel().select(self.model().index(row, 0), QItemSelectionModel.Deselect | QItemSelectionModel.Rows)
+                else:
+                    # Remove all previous highlights (row or column)
+                    self.clear_row_highlights()
+                    self.clear_column_highlights()
+                    # Highlight selected row (blue) and select row header
+                    for col in range(self.columnCount()):
+                        item = self.item(row, col)
+                        if item:
+                            item.setBackground(QColor('#2196f3'))
+                        else:
+                            new_item = QTableWidgetItem("")
+                            new_item.setBackground(QColor('#2196f3'))
+                            self.setItem(row, col, new_item)
+                    self.selectRow(row)
+
+            def mousePressEvent(self, event):
+                # Row header click: set row highlight state (not toggle), clear column highlight
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).column() == -1:
+                    row = self.indexAt(event.pos()).row()
+                    if row >= 0:
+                        is_row_highlighted = all(
+                            self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
+                            for col in range(self.columnCount())
+                        )
+                        if is_row_highlighted:
+                            self.clear_row_highlights()
+                            self.selectionModel().clearSelection()
+                        else:
+                            self.clear_column_highlights()
+                            self.highlight_row(row)
+                    return
+                # Column header click: clear row highlight, then highlight column
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).row() == -1 and self.indexAt(event.pos()).column() != -1:
+                    self.clear_row_highlights()  # Always clear row highlight on column header click
+                    col = self.indexAt(event.pos()).column()
+                    if col >= 0:
+                        self.highlight_column(col)
+                        return
+                # Table cell click: deselect row if highlighted, otherwise just select cell
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).isValid():
+                    row = self.indexAt(event.pos()).row()
+                    is_row_highlighted = all(
+                        self.item(row, col) and self.item(row, col).background().color().name() == '#2196f3'
+                        for col in range(self.columnCount())
+                    )
+                    if is_row_highlighted:
+                        self.clear_row_highlights()
+                        self.selectionModel().clearSelection()
+                        return
+                    self.clear_row_highlights()
+                    self.clear_column_highlights()
+                    self.setCurrentIndex(self.indexAt(event.pos()))
+                    return
+                super().mousePressEvent(event)
+
+            def clear_row_highlights(self):
+                for row in range(self.rowCount()):
+                    for col in range(self.columnCount()):
+                        item = self.item(row, col)
+                        if item and item.background().color().name() == '#2196f3':
+                            item.setBackground(Qt.white)
+
+            def clear_column_highlights(self):
+                for col in range(self.columnCount()):
+                    for row in range(self.rowCount()):
+                        item = self.item(row, col)
+                        if item and item.background().color().name() == '#2196f3':
+                            item.setBackground(Qt.white)
+
+            def mouseDoubleClickEvent(self, event):
+                # Double click row header: offer to clear row
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).column() == -1:
+                    row = self.indexAt(event.pos()).row()
+                    if row >= 0:
+                        from PyQt5.QtWidgets import QMessageBox
+                        reply = QMessageBox.question(
+                            self, "Clear Row", f"Clear all data in row {row+1}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                        )
+                        if reply == QMessageBox.Yes:
+                            for col in range(self.columnCount()):
+                                self.setItem(row, col, QTableWidgetItem(""))
+                            # Keep row highlighted after clear
+                            for col in range(self.columnCount()):
+                                item = self.item(row, col)
+                                if item:
+                                    item.setBackground(QColor('#2196f3'))
+                                else:
+                                    new_item = QTableWidgetItem("")
+                                    new_item.setBackground(QColor('#2196f3'))
+                                    self.setItem(row, col, new_item)
+                    return
+                # Only allow edit on double click in table cells
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).isValid() and self.indexAt(event.pos()).column() != -1:
+                    self.setEditTriggers(QTableWidget.AllEditTriggers)
+                    self.edit(self.indexAt(event.pos()))
+                    self.setEditTriggers(QTableWidget.NoEditTriggers)
+                    return
+                super().mouseDoubleClickEvent(event)
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Bulk Import Students")
@@ -492,3 +686,8 @@ class StudentForm(QDialog):
 
     def capitalize_words(self, s):
         return " ".join(w[:1].upper() + w[1:] if w else "" for w in s.split())
+
+    def open_bulk_import_and_close(self):
+        self.bulk_import_requested = True
+        self.reject()
+        # Do NOT call QTimer or open_bulk_import_dialog here
