@@ -166,8 +166,16 @@ Action Steps
   "button_hover_bg_color": "#1565c0",      // Button background on hover
   "button_active_bg_color": "#0d47a1",     // Button background when active/clicked
   "button_error_border_color": "#e53935"   // Button border color on error
+  
+  "message_bg_color": "#2980f0",        // Message QLabel/QDialog
+  "message_fg_color": "#ffffff",
+  "message_border_color": "#1565c0",
+  "message_border_width": 3,
+  "message_border_radius": 12,
+  "message_padding": "18px 32px",
+  "message_font_size": 13,
+  "message_font_bold": true
 },
-
 
 -----------------------------------------------------------------------
 
