@@ -451,8 +451,9 @@ class Mainform(QMainWindow):
             label1_widget.setFont(self.metadata_font)
             label1_widget.setFixedHeight(metrics.height() + 4)
             metadata_layout.addWidget(label1_widget, row, 0)
-            # Value 1
-            value1_widget = QLabel(value1)
+            # Value 1 (always show border, even if blank)
+            v1 = value1 if value1.strip() else " "
+            value1_widget = QLabel(v1)
             value1_widget.setStyleSheet("text-align: left; border: 1px solid gray; padding-left: 5px; padding-right: 5px;")
             value1_widget.setMinimumWidth(value1_min)
             value1_widget.setFont(self.metadata_font)
@@ -465,13 +466,14 @@ class Mainform(QMainWindow):
                 label2_widget.setFont(self.metadata_font)
                 label2_widget.setFixedHeight(metrics.height() + 4)
                 metadata_layout.addWidget(label2_widget, row, 2)
-            if value2:
-                value2_widget = QLabel(value2)
-                value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; padding-left: 5px; padding-right: 5px;")
-                value2_widget.setMinimumWidth(value2_min)
-                value2_widget.setFont(self.metadata_font)
-                value2_widget.setFixedHeight(metrics.height() + 4)
-                metadata_layout.addWidget(value2_widget, row, 3)
+            # Value 2 (always show border, even if blank)
+            v2 = value2 if value2.strip() else " "
+            value2_widget = QLabel(v2)
+            value2_widget.setStyleSheet("text-align: left; border: 1px solid gray; padding-left: 5px; padding-right: 5px;")
+            value2_widget.setMinimumWidth(value2_min)
+            value2_widget.setFont(self.metadata_font)
+            value2_widget.setFixedHeight(metrics.height() + 4)
+            metadata_layout.addWidget(value2_widget, row, 3)
         # Add the metadata widget to the main layout
         self.layout.addWidget(metadata_widget)
 
