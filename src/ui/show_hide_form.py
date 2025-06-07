@@ -2,8 +2,8 @@ from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton,
     QGridLayout, QMessageBox, QLineEdit, QWidget
 )
-from PyQt5.QtCore import Qt
-from logic.db_interface import update_class, get_class_by_id, get_form_settings, get_all_defaults
+from PyQt5.QtCore import Qt, QTimer
+from logic.db_interface import update_class, get_class_by_id, get_form_settings, get_all_defaults, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 SHOW_HIDE_FIELDS = [
@@ -43,6 +43,35 @@ COLOR_FIELDS = [
     ("bgcolor_cia", "CIA", "#ffcdd2"),
     ("bgcolor_hol", "HOL", "#ffcdd2"),
 ]
+
+def show_message_dialog(parent, message, timeout=2000):
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+    from PyQt5.QtCore import Qt
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(message)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    msg_dialog.adjustSize()
+    # Center the dialog on the parent
+    parent_geo = parent.geometry()
+    msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    msg_dialog.show()
+    QTimer.singleShot(timeout, msg_dialog.accept)
 
 class ShowHideForm(QDialog):
     def __init__(self, parent, class_id, on_save_callback=None):
@@ -193,16 +222,13 @@ class ShowHideForm(QDialog):
                 updates[db_key] = int(val)
             else:
                 updates[db_key] = None
-        # print(f"[DEBUG] ShowHideForm.save: updates to save for class {self.class_id}: {updates}")
         try:
             update_class(self.class_id, updates)
-            # print(f"[DEBUG] update_class called for {self.class_id} with: {updates}")
             if self.on_save_callback:
                 self.on_save_callback()
             self.accept()
         except Exception as e:
-            # print(f"[DEBUG] ShowHideForm.save: Exception: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to save: {e}")
+            show_message_dialog(self, f"Failed to save: {e}")
 
     def get_selected_columns(self):
         # Returns a dict mapping DB key (e.g. 'show_nickname') to True/False for checked/unchecked

@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QHBoxLayout
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from src.logic.db_interface import update_student, insert_student, get_students_by_class, delete_student
 from src.ui.student_form import StudentForm
-from logic.db_interface import get_form_settings, get_all_defaults
+from logic.db_interface import get_form_settings, get_all_defaults, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 def validate_student_data(student_data: dict) -> bool:
@@ -20,6 +20,35 @@ def validate_student_data(student_data: dict) -> bool:
         student_data["attendance"] = {}
 
     return True
+
+def show_message_dialog(parent, message, timeout=2000):
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+    from PyQt5.QtCore import Qt
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(message)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    msg_dialog.adjustSize()
+    # Center the dialog on the parent
+    parent_geo = parent.geometry()
+    msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    msg_dialog.show()
+    QTimer.singleShot(timeout, msg_dialog.accept)
 
 class StudentManager(QDialog):
     def __init__(self, parent, data, class_id, refresh_callback):
@@ -135,7 +164,7 @@ class StudentManager(QDialog):
     def toggle_active_status(self):
         selected_rows = self.table.selectionModel().selectedRows()
         if not selected_rows:
-            QMessageBox.warning(self, "No Selection", "Please select a student to toggle status.")
+            show_message_dialog(self, "Please select a student to toggle status.")
             return
         for idx in selected_rows:
             row = idx.row()
@@ -152,7 +181,7 @@ class StudentManager(QDialog):
         """Delete the selected student(s) if they are inactive."""
         selected_rows = set(idx.row() for idx in self.table.selectionModel().selectedRows())
         if not selected_rows:
-            QMessageBox.warning(self, "No Selection", "Please select one or more students to delete.")
+            show_message_dialog(self, "Please select one or more students to delete.")
             return
 
         # Gather student IDs to delete, but only if Active == "No"
@@ -167,7 +196,7 @@ class StudentManager(QDialog):
                 undeletable_names.append(student.get("name", student_id))
 
         if not deletable_ids:
-            QMessageBox.warning(self, "Cannot Delete", "Only students with Active = No can be deleted.\nToggle Student Active Status = No then delete.")
+            show_message_dialog(self, "Only students with Active = No can be deleted.\nToggle Student Active Status = No then delete.")
             return
 
         # Confirm deletion
@@ -185,18 +214,13 @@ class StudentManager(QDialog):
             self.refresh_callback()
 
             if undeletable_names:
-                QMessageBox.information(
-                    self,
-                    "Some Students Not Deleted",
-                    "The following students were not deleted because they are still active:\n" +
-                    "\n".join(undeletable_names)
-                )
+                show_message_dialog(self, "The following students were not deleted because they are still active:\n" + "\n".join(undeletable_names))
 
     def edit_student(self):
         """Edit the selected student using StudentForm."""
         selected_rows = self.table.selectionModel().selectedRows()
         if not selected_rows or len(selected_rows) != 1:
-            QMessageBox.warning(self, "Select Student", "Please select a single student to edit.")
+            show_message_dialog(self, "Please select a single student to edit.")
             return
         row = selected_rows[0].row()
         student_id = self.row_to_student_id[row]

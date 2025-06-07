@@ -1221,3 +1221,10 @@ QTableView::item:selected {
         from PyQt5.QtCore import QTimer
         QTimer.singleShot(duration, msg_dialog.close)
 
+    def get_default_attendance_for_new_student(self):
+        """Return a dict of {date: '-'} for all attendance dates in this class."""
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+        return {date: "-" for date in attendance_dates}
+

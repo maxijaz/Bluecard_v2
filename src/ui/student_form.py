@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from logic.parser import save_data
-from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults, get_form_settings
+from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults, get_form_settings, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 
 class StudentForm(QDialog):
@@ -186,6 +186,35 @@ class StudentForm(QDialog):
         label.setFont(font)
         return label
 
+    def show_message_dialog(self, message, timeout=2000):
+        msg_defaults = get_message_defaults()
+        bg = msg_defaults.get("message_bg_color", "#2980f0")
+        fg = msg_defaults.get("message_fg_color", "#fff")
+        border = msg_defaults.get("message_border_color", "#1565c0")
+        border_width = msg_defaults.get("message_border_width", "3")
+        border_radius = msg_defaults.get("message_border_radius", "12")
+        padding = msg_defaults.get("message_padding", "18px 32px")
+        font_size = msg_defaults.get("message_font_size", "13")
+        font_bold = msg_defaults.get("message_font_bold", "true")
+        font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+        style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+        from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+        from PyQt5.QtCore import Qt
+        msg_dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+        msg_dialog.setModal(False)
+        layout = QVBoxLayout(msg_dialog)
+        label = QLabel(message)
+        label.setStyleSheet(style)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        msg_dialog.adjustSize()
+        # Center the dialog on the parent
+        parent_geo = self.geometry()
+        msg_dialog.move(self.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+        msg_dialog.show()
+        QTimer.singleShot(timeout, msg_dialog.accept)
+
     def save_student(self):
         """Save the student data."""
         name = self.capitalize_words(self.name_entry.text().strip())
@@ -199,7 +228,7 @@ class StudentForm(QDialog):
         active = "Yes" if self.active_yes.isChecked() else "No"
 
         if not name:
-            QMessageBox.warning(self, "Validation Error", "Name is required.")
+            self.show_message_dialog("Name is required.")
             return
 
         if self.student_id:
@@ -389,7 +418,7 @@ class StudentForm(QDialog):
             insert_student(student_record)
 
         self.refresh_callback()
-        QMessageBox.information(self, "Bulk Import", "Students imported successfully!")
+        self.show_message_dialog("Students imported successfully!")
         dialog.accept()
 
     def capitalize_words(self, s):
