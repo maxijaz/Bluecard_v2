@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy
+    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy, QHeaderView
 )
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont
 from logic.parser import save_data
 from logic.db_interface import insert_student, update_student, get_students_by_class, get_all_defaults, get_form_settings, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
@@ -281,6 +282,36 @@ class StudentForm(QDialog):
             idx += 1
 
     def open_bulk_import_dialog(self):
+        # --- Load per-form settings for BulkImportStudents ---
+        form_settings = get_form_settings("BulkImportStudents") or {}
+        win_w = form_settings.get("window_width")
+        win_h = form_settings.get("window_height")
+        min_w = form_settings.get("min_width")
+        min_h = form_settings.get("min_height")
+        resizable = str(form_settings.get("resizable", "yes")).lower() in ("yes", "true", "1")
+        window_controls = form_settings.get("window_controls", "standard")
+        font_family = form_settings.get("form_font_family", "Segoe UI")
+        font_size = int(form_settings.get("form_font_size", 12))
+        bg_color = form_settings.get("form_bg_color", "#e3f2fd")
+        fg_color = form_settings.get("form_fg_color", "#222222")
+        border_color = form_settings.get("form_border_color", "#1976d2")
+        table_header_bg = form_settings.get("table_header_bg_color", "#1976d2")
+        table_header_fg = form_settings.get("table_header_fg_color", "#ffffff")
+        table_bg = form_settings.get("table_bg_color", "#ffffff")
+        table_fg = form_settings.get("table_fg_color", "#222222")
+        button_bg = form_settings.get("button_bg_color", "#1976d2")
+        button_fg = form_settings.get("button_fg_color", "#ffffff")
+        button_font_size = int(form_settings.get("button_font_size", 12))
+        button_font_bold = str(form_settings.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
+        button_hover_bg = form_settings.get("button_hover_bg_color", "#1565c0")
+        button_active_bg = form_settings.get("button_active_bg_color", "#0d47a1")
+        button_border = form_settings.get("button_border_color", "#1976d2")
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
+
         class BulkImportTable(QTableWidget):
             def __init__(self, parent, paste_callback, *args, **kwargs):
                 super().__init__(*args, **kwargs)
@@ -288,6 +319,17 @@ class StudentForm(QDialog):
                 self.paste_callback = paste_callback
                 self.setContextMenuPolicy(Qt.CustomContextMenu)
                 self.customContextMenuRequested.connect(self.open_context_menu)
+                # Table style
+                self.setStyleSheet(f"background: {table_bg}; color: {table_fg}; font-family: {font_family}; font-size: {font_size}pt;")
+                self.horizontalHeader().setStyleSheet(f"background: {table_header_bg}; color: {table_header_fg}; font-family: {font_family}; font-size: {font_size+2}pt; font-weight: bold;")
+                self.setSelectionBehavior(QTableWidget.SelectRows)
+                self.setSelectionMode(QTableWidget.SingleSelection)
+                self.setAlternatingRowColors(True)
+                self.setEditTriggers(QTableWidget.AllEditTriggers)
+                self.setShowGrid(True)
+                self.setWordWrap(False)
+                self.horizontalHeader().setStretchLastSection(True)
+                self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
             def keyPressEvent(self, event):
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_V:
@@ -303,10 +345,24 @@ class StudentForm(QDialog):
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Bulk Import Students")
-        dialog.resize(1000, 600)
+        if win_w and win_h:
+            dialog.resize(int(win_w), int(win_h))
+        if min_w and min_h:
+            dialog.setMinimumSize(int(min_w), int(min_h))
+        dialog.setStyleSheet(f"background: {bg_color}; color: {fg_color}; border: 2px solid {border_color}; font-family: {font_family}; font-size: {font_size}pt;")
+        if resizable:
+            dialog.setSizeGripEnabled(True)
+        else:
+            dialog.setSizeGripEnabled(False)
+        if window_controls == "standard":
+            dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        else:
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+
         layout = QVBoxLayout(dialog)
 
         info_label = QLabel("Paste up to 150 students data from Excel below (columns: Name, Nickname, Company No, Gender, Score, Pre-Test, Post-Test, Note).")
+        info_label.setFont(QFont(font_family, font_size))
         layout.addWidget(info_label)
 
         table = BulkImportTable(self, self.paste_from_clipboard, 25, 8)
@@ -315,9 +371,33 @@ class StudentForm(QDialog):
         ])
         layout.addWidget(table)
 
-        add_rows_button = QPushButton("Add Rows")
-        layout.addWidget(add_rows_button)
+        # --- Buttons in a row, consistent order ---
+        button_row = QHBoxLayout()
+        save_button = QPushButton("Save Imported Students")
+        save_button.setFont(QFont(font_family, button_font_size, QFont.Bold if button_font_bold else QFont.Normal))
+        save_button.setStyleSheet(button_style)
+        save_button.clicked.connect(lambda: self.save_bulk_import(table, dialog))
+        button_row.addWidget(save_button)
 
+        paste_button = QPushButton("Paste from Clipboard (Ctrl+V)")
+        paste_button.setFont(QFont(font_family, button_font_size, QFont.Bold if button_font_bold else QFont.Normal))
+        paste_button.setStyleSheet(button_style)
+        paste_button.clicked.connect(lambda: self.paste_from_clipboard(table))
+        button_row.addWidget(paste_button)
+
+        clear_button = QPushButton("Clear All")
+        clear_button.setFont(QFont(font_family, button_font_size, QFont.Bold if button_font_bold else QFont.Normal))
+        clear_button.setStyleSheet(button_style)
+        def clear_all():
+            for row in range(table.rowCount()):
+                for col in range(table.columnCount()):
+                    table.setItem(row, col, QTableWidgetItem(""))
+        clear_button.clicked.connect(clear_all)
+        button_row.addWidget(clear_button)
+
+        add_rows_button = QPushButton("Add Rows")
+        add_rows_button.setFont(QFont(font_family, button_font_size, QFont.Bold if button_font_bold else QFont.Normal))
+        add_rows_button.setStyleSheet(button_style)
         def add_more_rows():
             current_rows = table.rowCount()
             if current_rows >= 150:
@@ -326,27 +406,16 @@ class StudentForm(QDialog):
             rows_to_add, ok = QInputDialog.getInt(dialog, "Add Rows", "How many rows to add?", 10, 1, 150 - current_rows)
             if ok:
                 table.setRowCount(min(150, current_rows + rows_to_add))
-
         add_rows_button.clicked.connect(add_more_rows)
+        button_row.addWidget(add_rows_button)
 
-        paste_button = QPushButton("Paste from Clipboard (Ctrl+V)")
-        paste_button.clicked.connect(lambda: self.paste_from_clipboard(table))
-        layout.addWidget(paste_button)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setFont(QFont(font_family, button_font_size, QFont.Bold if button_font_bold else QFont.Normal))
+        cancel_button.setStyleSheet(button_style)
+        cancel_button.clicked.connect(dialog.reject)
+        button_row.addWidget(cancel_button)
 
-        clear_button = QPushButton("Clear All")
-        layout.addWidget(clear_button)
-
-        def clear_all():
-            for row in range(table.rowCount()):
-                for col in range(table.columnCount()):
-                    table.setItem(row, col, QTableWidgetItem(""))
-
-        clear_button.clicked.connect(clear_all)
-
-        save_button = QPushButton("Save Imported Students")
-        save_button.clicked.connect(lambda: self.save_bulk_import(table, dialog))
-        layout.addWidget(save_button)
-
+        layout.addLayout(button_row)
         dialog.setLayout(layout)
         dialog.exec_()
 
