@@ -7,7 +7,8 @@ from flask import Flask, render_template_string, send_file
 import pdfkit
 from threading import Timer
 from datetime import datetime, timedelta
-from logic.db_interface import get_all_classes, get_class_by_id, get_students_by_class, get_attendance_by_student
+from logic.db_interface import get_all_classes, get_class_by_id, get_students_by_class, get_attendance_by_student, get_all_defaults
+from PyQt5.QtGui import QFont
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -23,6 +24,15 @@ logging.debug(f"Added src directory to Python path: {src_path}")
 
 # Create Flask app
 app = Flask(__name__)
+
+def get_html_style():
+    defaults = get_all_defaults()
+    font_family = defaults.get("form_font_family", "Segoe UI")
+    font_size = int(defaults.get("form_font_size", 12))
+    fg_color = defaults.get("form_fg_color", "#222222")
+    bg_color = defaults.get("form_bg_color", "#e3f2fd")
+    border_color = defaults.get("form_border_color", "#1976d2")
+    return f"body {{ font-family: '{font_family}'; font-size: {font_size}pt; color: {fg_color}; background: {bg_color}; }} table, th, td {{ border: 1px solid {border_color}; }}"
 
 @app.route("/")
 def home():
@@ -115,10 +125,7 @@ def home():
         <head>
             <title>Class Attendance - {class_id} - {company_name}</title>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #f2f2f2; }}
+                {get_html_style()}
                 h1, h2 {{ color: #333; }}
                 .bottom-space {{ margin-bottom: 1in; }}
             </style>
@@ -253,10 +260,7 @@ def download_pdf():
         <head>
             <title>Class Attendance - {class_id} - {company_name}</title>
             <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #f2f2f2; }}
+                {get_html_style()}
                 h1, h2 {{ color: #333; }}
                 .bottom-space {{ margin-bottom: 1in; }}
             </style>

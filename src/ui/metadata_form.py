@@ -213,7 +213,7 @@ class MetadataForm(QDialog):
             btn.setCheckable(True)
             btn.setFont(self.form_font)
             btn.setMinimumWidth(44)
-            btn.setMaximumWidth(60)
+            btn.setMaximumWidth(80)
             btn.setFixedWidth(64)  # Fixed width of Mon, Tue, Wed etc. for consistency
             btn.setStyleSheet(toggle_stylesheet)
             self.days_buttons[full] = btn

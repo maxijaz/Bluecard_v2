@@ -39,7 +39,7 @@ COLOR_FIELDS = [
     ("bgcolor_p", "P", "#c8e6c9"),
     ("bgcolor_a", "A", "#ffcdd2"),
     ("bgcolor_l", "L", "#fff9c4"),
-    ("bgcolor_cod", "COD", "#c8e6c9"),
+    ("bgcolor_cod", "CIA", "#c8e6c9"),
     ("bgcolor_cia", "CIA", "#ffcdd2"),
     ("bgcolor_hol", "HOL", "#ffcdd2"),
 ]
@@ -87,9 +87,12 @@ class ShowHideForm(QDialog):
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("ShowHideForm") or {}
         defaults = get_all_defaults()
+        # Font
+        font_family = form_settings.get("font_family", defaults.get("form_font_family", "Segoe UI"))
+        font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
         from PyQt5.QtGui import QFont
-        self.form_font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
-        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
+        self.form_font = QFont(font_family, font_size)
+        # Window sizing
         win_w = form_settings.get("window_width")
         win_h = form_settings.get("window_height")
         if win_w and win_h:
@@ -100,14 +103,10 @@ class ShowHideForm(QDialog):
         min_h = form_settings.get("min_height")
         if min_w and min_h:
             self.setMinimumSize(int(min_w), int(min_h))
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # Remove max_width/max_height logic
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
+        # Display preferences
         if not win_w or not win_h:
-            from logic.display import center_widget, scale_and_center, apply_window_flags
             scale = str(defaults.get("scale_windows", "1")) == "1"
             center = str(defaults.get("center_windows", "1")) == "1"
             width_ratio = float(defaults.get("window_width_ratio", 0.6))
@@ -122,21 +121,26 @@ class ShowHideForm(QDialog):
 
         # Header row
         header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel("<b>Choose columns to show/hide</b>"))
-        header_layout.addWidget(QLabel("<b>P/A/L colour scheme</b>"))
-        header_layout.addWidget(QLabel("<b>Column Width</b>"))
+        header_label_style = f"color: {defaults.get('title_color', '#1976d2')}; font-size: {defaults.get('title_font_size', 14)}pt; font-weight: {'bold' if str(defaults.get('title_font_bold', True)).lower() in ('1','true','yes') else 'normal'};"
+        for text in ("<b>Choose columns to show/hide</b>", "<b>P/A/L colour scheme</b>", "<b>Column Width</b>"):
+            lbl = QLabel(text)
+            lbl.setStyleSheet(header_label_style)
+            header_layout.addWidget(lbl)
         layout.addLayout(header_layout)
 
         # Main grid
         grid = QGridLayout()
         max_rows = max(len(SHOW_HIDE_FIELDS), len(COLOR_FIELDS))
+        label_style = f"color: {defaults.get('form_fg_color', '#222222')}; font-size: {font_size}pt; font-weight: {'bold' if str(defaults.get('form_label_bold', True)).lower() in ('1','true','yes') else 'normal'};"
         for row in range(max_rows):
             # Column 1: Show/Hide tickboxes
             if row < len(SHOW_HIDE_FIELDS):
                 key, label = SHOW_HIDE_FIELDS[row]
                 lbl = QLabel(label)
+                lbl.setStyleSheet(label_style)
                 cb = QCheckBox()
                 cb.setChecked(self.class_data.get(key, "Yes") == "Yes")
+                cb.setFont(self.form_font)
                 self.checkboxes[key] = cb
                 grid.addWidget(lbl, row, 0)
                 grid.addWidget(cb, row, 1)
@@ -146,6 +150,7 @@ class ShowHideForm(QDialog):
                     width_val = self.class_data.get(width_db_key, "")
                     width_edit = QLineEdit(str(width_val) if width_val else "")
                     width_edit.setMaximumWidth(60)
+                    width_edit.setFont(self.form_font)
                     self.width_edits[width_db_key] = width_edit
                     grid.addWidget(width_edit, row, 2)
                 else:
@@ -158,7 +163,9 @@ class ShowHideForm(QDialog):
             if row < len(COLOR_FIELDS):
                 color_key, color_label, default = COLOR_FIELDS[row]
                 lbl = QLabel(color_label)
+                lbl.setStyleSheet(label_style)
                 edit = QLineEdit(self.class_data.get(color_key, default))
+                edit.setFont(self.form_font)
                 self.color_edits[color_key] = edit
                 grid.addWidget(lbl, row, 3)
                 grid.addWidget(edit, row, 4)
@@ -168,12 +175,30 @@ class ShowHideForm(QDialog):
         layout.addLayout(grid)
 
         # Toggle buttons
+        button_bg = form_settings.get("button_bg_color", defaults.get("button_bg_color", "#1976d2"))
+        button_fg = form_settings.get("button_fg_color", defaults.get("button_fg_color", "#ffffff"))
+        button_font_size = int(form_settings.get("button_font_size", defaults.get("button_font_size", 12)))
+        button_font_bold = str(form_settings.get("button_font_bold", defaults.get("button_font_bold", "no"))).lower() in ("yes", "true", "1")
+        button_hover_bg = form_settings.get("button_hover_bg_color", defaults.get("button_hover_bg_color", "#1565c0"))
+        button_active_bg = form_settings.get("button_active_bg_color", defaults.get("button_active_bg_color", "#0d47a1"))
+        button_border = form_settings.get("button_border_color", defaults.get("button_border_color", "#1976d2"))
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
         toggle_layout = QHBoxLayout()
         self.toggle_columns_btn = QPushButton("Toggle show/hide columns")
+        self.toggle_columns_btn.setFont(self.form_font)
+        self.toggle_columns_btn.setStyleSheet(button_style)
         self.toggle_columns_btn.clicked.connect(self.toggle_columns)
         self.toggle_colors_btn = QPushButton("Toggle bgcolor on/off")
+        self.toggle_colors_btn.setFont(self.form_font)
+        self.toggle_colors_btn.setStyleSheet(button_style)
         self.toggle_colors_btn.clicked.connect(self.toggle_colors)
         self.reset_widths_btn = QPushButton("Reset Widths")
+        self.reset_widths_btn.setFont(self.form_font)
+        self.reset_widths_btn.setStyleSheet(button_style)
         self.reset_widths_btn.clicked.connect(self.reset_widths)
         toggle_layout.addWidget(self.toggle_columns_btn)
         toggle_layout.addWidget(self.toggle_colors_btn)
@@ -183,8 +208,12 @@ class ShowHideForm(QDialog):
         # Save/Cancel
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Save")
+        save_btn.setFont(self.form_font)
+        save_btn.setStyleSheet(button_style)
         save_btn.clicked.connect(self.save)
         cancel_btn = QPushButton("Cancel")
+        cancel_btn.setFont(self.form_font)
+        cancel_btn.setStyleSheet(button_style)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)

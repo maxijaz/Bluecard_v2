@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from logic.db_interface import get_all_defaults, set_all_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
+from PyQt5.QtGui import QFont
 
 class StylesheetForm(QDialog):
     def __init__(self, parent=None):
@@ -186,6 +187,32 @@ class StylesheetForm(QDialog):
         # --- PATCH: Apply color mode at form open ---
         if not self.color_toggle:
             self.toggle_color_on_off(init=True)
+        # --- PATCH: Use DB-driven font, color, and button styles for all UI elements ---
+        defaults = self.default_settings
+        font_family = defaults.get("form_font_family", "Segoe UI")
+        font_size = int(defaults.get("form_font_size", 12))
+        self.form_font = QFont(font_family, font_size)
+        self.setFont(self.form_font)
+        win_w = int(defaults.get("window_width", 700))
+        win_h = int(defaults.get("window_height", 500))
+        self.resize(win_w, win_h)
+        self.setStyleSheet(f"background: {defaults.get('form_bg_color', '#e3f2fd')}; color: {defaults.get('form_fg_color', '#222222')};")
+        # --- PATCH: Button style from DB ---
+        button_bg = defaults.get("button_bg_color", "#1976d2")
+        button_fg = defaults.get("button_fg_color", "#ffffff")
+        button_font_size = int(defaults.get("button_font_size", 12))
+        button_font_bold = str(defaults.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
+        button_hover_bg = defaults.get("button_hover_bg_color", "#1565c0")
+        button_active_bg = defaults.get("button_active_bg_color", "#0d47a1")
+        button_border = defaults.get("button_border_color", "#1976d2")
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
+        for btn in [save_button, restore_defaults_button, close_button, toggle_color_button]:
+            btn.setFont(self.form_font)
+            btn.setStyleSheet(button_style)
 
     def _get_current_values(self):
         """Return a dict of all current field values, including toggle."""

@@ -186,8 +186,6 @@ launcher.py
 archive_manager.py
 metadata_form.py
 settings.py
-NOT updated (likely still using legacy or hardcoded settings):
-
 student_form.py
 student_manager.py
 show_hide_form.py
@@ -196,8 +194,12 @@ monthly_summary.py
 htmlbluecard.py
 calendar.py
 stylesheet.py
+
+NOT updated (likely still using legacy or hardcoded settings):
+
 import sip.py
 update_dates.py
+
 2. /ui files NOT updated to use the new message (QLabel/QDialog) style settings from factory defaults:
 Already updated (per your summary and code):
 

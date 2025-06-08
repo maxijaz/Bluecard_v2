@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCalendarWidget, QPushButton, QMessageBox, QHBoxLayout
 from PyQt5.QtCore import QDate
-from PyQt5.QtGui import QTextCharFormat, QColor
+from PyQt5.QtGui import QTextCharFormat, QColor, QFont
 from logic.display import center_widget, scale_and_center, apply_window_flags
 from logic.db_interface import get_all_defaults
 
@@ -9,7 +9,16 @@ class CalendarView(QDialog):
     def __init__(self, parent=None, scheduled_dates=None, on_save_callback=None, max_dates=20, protected_dates=None):
         super().__init__(parent)
         self.setWindowTitle("Class Schedule Calendar")
-        self.setFixedSize(400, 400)
+
+        # --- PATCH: Use DB-driven sizing, font, and button styles ---
+        defaults = get_all_defaults()
+        font_family = defaults.get("form_font_family", "Segoe UI")
+        font_size = int(defaults.get("form_font_size", 12))
+        self.form_font = QFont(font_family, font_size)
+        self.setFont(self.form_font)
+        win_w = int(defaults.get("window_width", 400))
+        win_h = int(defaults.get("window_height", 400))
+        self.resize(win_w, win_h)
 
         self.max_dates = max_dates
         self.on_save_callback = on_save_callback
@@ -48,27 +57,31 @@ class CalendarView(QDialog):
         # Save and Close buttons in a row
         button_row = QVBoxLayout()
         button_layout = QHBoxLayout()
+        # --- PATCH: Button style from DB ---
+        button_bg = defaults.get("button_bg_color", "#1976d2")
+        button_fg = defaults.get("button_fg_color", "#ffffff")
+        button_font_size = int(defaults.get("button_font_size", 12))
+        button_font_bold = str(defaults.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
+        button_hover_bg = defaults.get("button_hover_bg_color", "#1565c0")
+        button_active_bg = defaults.get("button_active_bg_color", "#0d47a1")
+        button_border = defaults.get("button_border_color", "#1976d2")
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
         save_button = QPushButton("Save Changes")
+        save_button.setFont(self.form_font)
+        save_button.setStyleSheet(button_style)
         save_button.clicked.connect(self.save_changes)
         button_layout.addWidget(save_button)
-
         close_button = QPushButton("Close")
+        close_button.setFont(self.form_font)
+        close_button.setStyleSheet(button_style)
         close_button.clicked.connect(self.reject)
         button_layout.addWidget(close_button)
-
         button_row.addLayout(button_layout)
         layout.addLayout(button_row)
-
-        # Apply display preferences
-        display_settings = get_all_defaults()
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
 
     def highlight_today(self):
         """Highlight today's date in red without showing the blue selection box."""

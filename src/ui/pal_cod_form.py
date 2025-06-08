@@ -11,7 +11,8 @@ class PALCODForm(QDialog):
         form_settings = get_form_settings("PALCODForm") or {}
         defaults = get_all_defaults()
         self.form_font_size = int(form_settings.get("font_size") or defaults.get("form_font_size", 12))
-        self.form_font = QFont(form_settings.get("font_family", "Segoe UI"), self.form_font_size)
+        font_family = form_settings.get("font_family", defaults.get("form_font_family", "Segoe UI"))
+        self.form_font = QFont(font_family, self.form_font_size)
         win_w = form_settings.get("window_width")
         win_h = form_settings.get("window_height")
         if win_w and win_h:
@@ -22,10 +23,7 @@ class PALCODForm(QDialog):
         min_h = form_settings.get("min_height")
         if min_w and min_h:
             self.setMinimumSize(int(min_w), int(min_h))
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
+        # Remove max_width/max_height logic
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
@@ -80,14 +78,30 @@ class PALCODForm(QDialog):
 
         # Display the date
         date_label = QLabel(f"Date: {self.date}")
-        date_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
+        date_label.setFont(self.form_font)
+        date_label.setStyleSheet(f"font-weight: bold; font-size: {self.form_font_size+2}px; margin-bottom: 10px; color: {defaults.get('title_color', '#1976d2')};")
         layout.addWidget(date_label)
 
         # Optionally display the student name
         if show_student_name and self.student_name:
             student_label = QLabel(f"Student: {self.student_name}")
-            student_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 5px;")
+            student_label.setFont(self.form_font)
+            student_label.setStyleSheet(f"font-weight: bold; font-size: {self.form_font_size+1}px; margin-bottom: 5px; color: {defaults.get('form_fg_color', '#222222')};")
             layout.addWidget(student_label)
+
+        # --- PATCH: Button style from DB ---
+        button_bg = form_settings.get("button_bg_color", defaults.get("button_bg_color", "#1976d2"))
+        button_fg = form_settings.get("button_fg_color", defaults.get("button_fg_color", "#ffffff"))
+        button_font_size = int(form_settings.get("button_font_size", defaults.get("button_font_size", 12)))
+        button_font_bold = str(form_settings.get("button_font_bold", defaults.get("button_font_bold", "no"))).lower() in ("yes", "true", "1")
+        button_hover_bg = form_settings.get("button_hover_bg_color", defaults.get("button_hover_bg_color", "#1565c0"))
+        button_active_bg = form_settings.get("button_active_bg_color", defaults.get("button_active_bg_color", "#0d47a1"))
+        button_border = form_settings.get("button_border_color", defaults.get("button_border_color", "#1976d2"))
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
 
         # Buttons
         buttons = {
@@ -106,8 +120,8 @@ class PALCODForm(QDialog):
 
         for label, value in buttons.items():
             button = QPushButton(label)
-            if value == self.current_value:  # Highlight the current value
-                button.setStyleSheet("background-color: lightblue; font-weight: bold;")
+            button.setFont(self.form_font)
+            button.setStyleSheet(button_style if value != self.current_value else button_style + "background: lightblue; font-weight: bold;")
             button.clicked.connect(lambda _, v=value: self.update_column(v))
             layout.addWidget(button)
 

@@ -75,17 +75,15 @@ class StudentManager(QDialog):
             self.setMinimumSize(int(min_w), int(min_h))
         else:
             self.setMinimumSize(300, 200)
-        max_w = form_settings.get("max_width")
-        max_h = form_settings.get("max_height")
-        if max_w and max_h:
-            self.setMaximumSize(int(max_w), int(max_h))
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        # Remove legacy max_width and max_height logic
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
         font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
+        font_family = form_settings.get("font_family", "Segoe UI")
         from PyQt5.QtWidgets import QApplication
         from PyQt5.QtGui import QFont
-        QApplication.instance().setFont(QFont(form_settings.get("font_family", "Segoe UI"), font_size))
+        QApplication.instance().setFont(QFont(font_family, font_size))
+        self.form_font = QFont(font_family, font_size)
         # --- Apply display preferences (center/scale) if not overridden by per-form settings ---
         if not win_w or not win_h:
             display_settings = get_all_defaults()
@@ -97,6 +95,7 @@ class StudentManager(QDialog):
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
                 center_widget(self)
+        # --- PATCH END ---
 
         # Main layout
         layout = QVBoxLayout(self)
@@ -107,25 +106,53 @@ class StudentManager(QDialog):
         self.table.setHorizontalHeaderLabels(["Name", "Nickname", "Company No", "Note", "Active"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        # --- PATCH: Table style from DB ---
+        table_bg = form_settings.get("table_bg_color", default_settings.get("table_bg_color", "#ffffff"))
+        table_fg = form_settings.get("table_fg_color", default_settings.get("table_fg_color", "#222222"))
+        table_header_bg = form_settings.get("table_header_bg_color", default_settings.get("table_header_bg_color", "#1976d2"))
+        table_header_fg = form_settings.get("table_header_fg_color", default_settings.get("table_header_fg_color", "#ffffff"))
+        self.table.setStyleSheet(f"background: {table_bg}; color: {table_fg}; font-family: {font_family}; font-size: {font_size}pt;")
+        self.table.horizontalHeader().setStyleSheet(f"background: {table_header_bg}; color: {table_header_fg}; font-family: {font_family}; font-size: {font_size+2}pt; font-weight: bold;")
         self.populate_table()
         layout.addWidget(self.table)
 
         # Buttons (horizontal layout)
         button_layout = QHBoxLayout()
+        # --- PATCH: Button style from DB ---
+        button_bg = form_settings.get("button_bg_color", default_settings.get("button_bg_color", "#1976d2"))
+        button_fg = form_settings.get("button_fg_color", default_settings.get("button_fg_color", "#ffffff"))
+        button_font_size = int(form_settings.get("button_font_size", default_settings.get("button_font_size", 12)))
+        button_font_bold = str(form_settings.get("button_font_bold", default_settings.get("button_font_bold", "no"))).lower() in ("yes", "true", "1")
+        button_hover_bg = form_settings.get("button_hover_bg_color", default_settings.get("button_hover_bg_color", "#1565c0"))
+        button_active_bg = form_settings.get("button_active_bg_color", default_settings.get("button_active_bg_color", "#0d47a1"))
+        button_border = form_settings.get("button_border_color", default_settings.get("button_border_color", "#1976d2"))
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
 
         toggle_active_button = QPushButton("Toggle Active Status")
+        toggle_active_button.setFont(self.form_font)
+        toggle_active_button.setStyleSheet(button_style)
         toggle_active_button.clicked.connect(self.toggle_active_status)
         button_layout.addWidget(toggle_active_button)
 
         delete_button = QPushButton("Delete Student")
+        delete_button.setFont(self.form_font)
+        delete_button.setStyleSheet(button_style)
         delete_button.clicked.connect(self.delete_student)
         button_layout.addWidget(delete_button)
 
         edit_button = QPushButton("Edit Student")
+        edit_button.setFont(self.form_font)
+        edit_button.setStyleSheet(button_style)
         edit_button.clicked.connect(self.edit_student)
         button_layout.addWidget(edit_button)
 
         close_button = QPushButton("Close")
+        close_button.setFont(self.form_font)
+        close_button.setStyleSheet(button_style)
         close_button.clicked.connect(self.close_manager)
         button_layout.addWidget(close_button)
 

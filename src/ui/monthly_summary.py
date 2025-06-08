@@ -4,6 +4,9 @@ from datetime import datetime
 from collections import defaultdict
 from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
 
 def is_attended(value):
     """Check if an attendance value counts as a class held."""
@@ -99,18 +102,54 @@ def get_summary_text(teacher_name="Paul R"):
         lines.append(f"{month:<10} {row['total_hours']:<6} {row['total_travel']:<8} {row['total_bonus']:<7} {row['total_pay']:<10} {row['notes']}")
     return "\n".join(lines)
 
-class MonthlySummaryWindow:
-    def __init__(self):
-        super().__init__(...)
-        display_settings = get_all_defaults()
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
+class MonthlySummaryWindow(QDialog):
+    def __init__(self, teacher_name="Paul R"):
+        super().__init__()
+        # --- PATCH: Load per-form and global settings from DB ---
+        form_settings = get_all_defaults()  # No per-form settings, so use global
+        font_family = form_settings.get("form_font_family", "Segoe UI")
+        font_size = int(form_settings.get("form_font_size", 12))
+        self.form_font = QFont(font_family, font_size)
+        self.setFont(self.form_font)
+        win_w = int(form_settings.get("window_width", 700))
+        win_h = int(form_settings.get("window_height", 500))
+        self.resize(win_w, win_h)
+        self.setWindowTitle("Monthly Summary")
+        # --- PATCH: Apply display preferences ---
+        scale = str(form_settings.get("scale_windows", "1")) == "1"
+        center = str(form_settings.get("center_windows", "1")) == "1"
+        width_ratio = float(form_settings.get("window_width_ratio", 0.6))
+        height_ratio = float(form_settings.get("window_height_ratio", 0.6))
         if scale:
             scale_and_center(self, width_ratio, height_ratio)
         elif center:
             center_widget(self)
-
-if __name__ == "__main__":
-    print(get_summary_text("Paul R"))
+        # --- PATCH: Set background and label styles from DB ---
+        bg_color = form_settings.get("form_bg_color", "#e3f2fd")
+        fg_color = form_settings.get("form_fg_color", "#222222")
+        self.setStyleSheet(f"background: {bg_color}; color: {fg_color};")
+        # Layout
+        layout = QVBoxLayout(self)
+        summary_text = get_summary_text(teacher_name)
+        label = QLabel(summary_text)
+        label.setFont(self.form_font)
+        label.setStyleSheet(f"color: {fg_color}; font-size: {font_size}pt;")
+        label.setTextInteractionFlags(label.textInteractionFlags() | Qt.TextSelectableByMouse)
+        layout.addWidget(label)
+        close_btn = QPushButton("Close")
+        close_btn.setFont(self.form_font)
+        button_bg = form_settings.get("button_bg_color", "#1976d2")
+        button_fg = form_settings.get("button_fg_color", "#ffffff")
+        button_font_size = int(form_settings.get("button_font_size", 12))
+        button_font_bold = str(form_settings.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
+        button_hover_bg = form_settings.get("button_hover_bg_color", "#1565c0")
+        button_active_bg = form_settings.get("button_active_bg_color", "#0d47a1")
+        button_border = form_settings.get("button_border_color", "#1976d2")
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
+        close_btn.setStyleSheet(button_style)
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
