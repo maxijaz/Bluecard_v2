@@ -38,6 +38,35 @@ from logic.display import center_widget, scale_and_center, apply_window_flags
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+def show_message_dialog(parent, message, timeout=2000):
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+    from PyQt5.QtCore import Qt
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(message)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    msg_dialog.adjustSize()
+    parent_geo = parent.geometry() if parent else None
+    if parent_geo:
+        msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    msg_dialog.show()
+    QTimer.singleShot(timeout, msg_dialog.accept)
+
 SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
     ("show_company_no", "Company No"),
@@ -664,7 +693,6 @@ QTableView::item:selected {
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
-
         if adjusted_row < 0:
             print("Add Student button clicked")
             def refresh_callback():
@@ -674,7 +702,6 @@ QTableView::item:selected {
             default_attendance = self.get_default_attendance_for_new_student()
             student_form = StudentForm(self, self.class_id, {}, refresh_callback, default_attendance=default_attendance)
             student_form.exec_()
-            # --- PATCH: Open Bulk Import if requested ---
             if getattr(student_form, "bulk_import_requested", False):
                 student_form.open_bulk_import_dialog()
         else:
@@ -682,18 +709,16 @@ QTableView::item:selected {
             try:
                 student_id = list(self.students.keys())[adjusted_row]
                 student_data = self.students[student_id]
-
                 def refresh_callback():
                     print("Refreshing student table after editing a student...")
                     self.refresh_student_table()
                     self.frozen_table.selectionModel().clearSelection()  # Clear selection after editing
                 student_form = StudentForm(self, self.class_id, {}, refresh_callback, student_id, student_data)
                 student_form.exec_()
-                # --- PATCH: Open Bulk Import if requested ---
                 if getattr(student_form, "bulk_import_requested", False):
                     student_form.open_bulk_import_dialog()
             except IndexError:
-                QMessageBox.warning(self, "Error", "Invalid row selected. Please try again.")
+                show_message_dialog(self, "Invalid row selected. Please try again.")
 
     def remove_student(self):
         """Handle removing or managing students."""
@@ -702,29 +727,40 @@ QTableView::item:selected {
             student_manager = StudentManager(self, {}, self.class_id, self.refresh_student_table)
             student_manager.exec_()
             return
-
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1
         if adjusted_row < 0:
-            QMessageBox.warning(self, "Invalid Selection", "Cannot remove the 'Running Total' row.")
+            show_message_dialog(self, "Cannot remove the 'Running Total' row.")
             return
-
         student_id = list(self.students.keys())[adjusted_row]
         student_data = self.students[student_id]
-
-        confirm = QMessageBox.question(
-            self,
-            "Remove Student",
-            f"Are you sure you want to mark the student '{student_data['name']}' as inactive?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        if confirm == QMessageBox.Yes:
+        # Floating Yes/No dialog for confirmation
+        def confirm_remove():
             self.students[student_id]["active"] = "No"
-            update_student(student_id, self.students[student_id])
-            # print(f"Student '{student_data['name']}' marked as inactive.")
+            # Remove attendance before DB update
+            update_data = dict(self.students[student_id])
+            update_data.pop("attendance", None)
+            update_student(student_id, update_data)
             self.refresh_student_table()
-        else:
+        def cancel_remove():
             self.frozen_table.selectionModel().clearSelection()
+        dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        dialog.setModal(True)
+        layout = QVBoxLayout(dialog)
+        label = QLabel(f"Are you sure you want to mark the student '{student_data['name']}' as inactive?")
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        btn_row = QHBoxLayout()
+        btn_yes = QPushButton("Yes")
+        btn_no = QPushButton("No")
+        btn_yes.clicked.connect(lambda: (dialog.accept(), confirm_remove()))
+        btn_no.clicked.connect(lambda: (dialog.reject(), cancel_remove()))
+        btn_row.addWidget(btn_yes)
+        btn_row.addWidget(btn_no)
+        layout.addLayout(btn_row)
+        dialog.adjustSize()
+        dialog.move(self.mapToGlobal(self.geometry().center()) - dialog.rect().center())
+        dialog.exec_()
 
     def open_metadata_form(self):
         """Open the Metadata Form."""
@@ -983,7 +1019,7 @@ QTableView::item:selected {
 
         # Adjust for the "Running Total" row
         if selected_row == 0:
-            QMessageBox.warning(self, "Invalid Selection", "Cannot edit the 'Running Total' row.")
+            show_message_dialog(self, "Cannot edit the 'Running Total' row.")
             return
 
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
@@ -1187,48 +1223,4 @@ QTableView::item:selected {
         # Show or hide the scrollable table based on show_dates value
         show_dates = self.class_data.get("show_dates", "Yes")
         self.scrollable_table.setVisible(show_dates == "Yes")
-
-    def show_message_dialog(parent, text, duration=2000):
-        from PyQt5.QtCore import QTimer, Qt
-        from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
-        msg_defaults = get_message_defaults()
-        bg = msg_defaults.get("message_bg_color", "#2980f0")
-        fg = msg_defaults.get("message_fg_color", "#fff")
-        border = msg_defaults.get("message_border_color", "#1565c0")
-        border_width = msg_defaults.get("message_border_width", "3")
-        border_radius = msg_defaults.get("message_border_radius", "12")
-        padding = msg_defaults.get("message_padding", "18px 32px")
-        font_size = msg_defaults.get("message_font_size", "13")
-        font_bold = msg_defaults.get("message_font_bold", "true")
-        font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
-        style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
-        msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
-        msg_dialog.setModal(False)
-        layout = QVBoxLayout(msg_dialog)
-        label = QLabel(text)
-        label.setStyleSheet(style)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        msg_dialog.adjustSize()
-        screen = parent.window().screen() if hasattr(parent.window(), 'screen') else None
-        if screen:
-            scr_geo = screen.geometry()
-            x = scr_geo.x() + (scr_geo.width() - msg_dialog.width()) // 2
-            y = scr_geo.y() + (scr_geo.height() - msg_dialog.height()) // 2
-        else:
-            x = 400
-            y = 300
-        msg_dialog.move(x, y)
-        msg_dialog.show()
-        parent._msg_dialog = msg_dialog  # Keep reference to prevent GC
-        from PyQt5.QtCore import QTimer
-        QTimer.singleShot(duration, msg_dialog.close)
-
-    def get_default_attendance_for_new_student(self):
-        """Return a dict of {date: '-'} for all attendance dates in this class."""
-        attendance_dates = self.metadata.get("dates", [])
-        if not attendance_dates:
-            attendance_dates = self.get_attendance_dates()
-        return {date: "-" for date in attendance_dates}
 

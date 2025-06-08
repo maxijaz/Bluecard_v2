@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QMessageBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy, QHeaderView
+    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QRadioButton, QCheckBox, QTableWidget, QTableWidgetItem, QApplication, QInputDialog, QMenu, QWidget, QSizePolicy, QHeaderView
 )
 from PyQt5.QtCore import Qt, QTimer, QItemSelectionModel
 from PyQt5.QtGui import QFont, QColor
@@ -168,7 +168,7 @@ class StudentForm(QDialog):
         self.active_group.setExclusive(True)
         self.active_group.addButton(self.active_yes_btn)
         self.active_group.addButton(self.active_no_btn)
-        active_val = self.student_data.get("active", "yes").lower()
+        active_val = self.student_data.get("active", "Yes").lower()
         if active_val == "no":
             self.active_no_btn.setChecked(True)
         else:
@@ -220,7 +220,7 @@ class StudentForm(QDialog):
         label.setFont(font)
         return label
 
-    def show_message_dialog(self, message, timeout=2000):
+    def show_floating_message(self, message, timeout=2000):
         msg_defaults = get_message_defaults()
         bg = msg_defaults.get("message_bg_color", "#2980f0")
         fg = msg_defaults.get("message_fg_color", "#fff")
@@ -262,51 +262,54 @@ class StudentForm(QDialog):
         else:
             gender = ""
         # Active
-        active = "yes" if self.active_yes_btn.isChecked() else "no"
+        active = "Yes" if self.active_yes_btn.isChecked() else "No"
         score = self.score_entry.text().strip()
         pre_test = self.pre_test_entry.text().strip()
         post_test = self.post_test_entry.text().strip()
         note = self.note_entry.text().strip()
 
         if not name:
-            self.show_message_dialog("Name is required.")
+            self.show_floating_message("Name is required.")
             return
 
         if self.student_id:
-            # Edit existing student
-            student_record = {
-                "student_id": self.student_id,
-                "class_no": self.class_id,
+            # Update existing student
+            self.student_data.update({
                 "name": name,
                 "nickname": nickname,
                 "company_no": company_no,
                 "gender": gender,
+                "active": active,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
-                "note": note,
-                "active": active,
-                # Attendance is handled in a separate table; update if needed
-            }
-            update_student(self.student_id, student_record)
+                "note": note
+            })
+            update_student(self.student_id, self.student_data)
+            self.show_floating_message("Student updated.")
         else:
             # Add new student
-            student_id = self.generate_unique_student_id()
-            student_record = {
-                "student_id": student_id,
+            new_id = self.generate_unique_student_id()
+            new_student = {
+                "student_id": new_id,
                 "class_no": self.class_id,
                 "name": name,
                 "nickname": nickname,
                 "company_no": company_no,
                 "gender": gender,
+                "active": active,
                 "score": score,
                 "pre_test": pre_test,
                 "post_test": post_test,
-                "note": note,
-                "active": active,
-                # Attendance is handled in a separate table; insert if needed
+                "note": note
             }
-            insert_student(student_record)
+            insert_student(new_student)
+            # Insert attendance if present
+            if self.default_attendance:
+                from logic.db_interface import set_attendance
+                for date, status in self.default_attendance.items():
+                    set_attendance(self.class_id, new_id, date, status)
+            self.show_floating_message("Student added.")
 
         self.refresh_callback()
         self.accept()
@@ -316,9 +319,9 @@ class StudentForm(QDialog):
         existing_ids = [row["student_id"] for row in get_students_by_class(self.class_id)]
         idx = 1
         while True:
-            student_id = f"S{str(idx).zfill(3)}"
-            if student_id not in existing_ids:
-                return student_id
+            new_id = f"S{idx:03d}"
+            if new_id not in existing_ids:
+                return new_id
             idx += 1
 
     def open_bulk_import_dialog(self):
@@ -403,24 +406,14 @@ class StudentForm(QDialog):
                 menu.exec_(self.viewport().mapToGlobal(position))
 
             def confirm_delete_row(self, row):
-                from PyQt5.QtWidgets import QMessageBox
-                # Set default button to No for safety
-                reply = QMessageBox.question(
-                    self, "Delete Row", f"Delete row {row+1}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    self.removeRow(row)
+                self.parent.show_floating_message(f"Row {row+1} deleted.")
+                self.removeRow(row)
 
             def confirm_delete_column(self, col):
-                from PyQt5.QtWidgets import QMessageBox
                 header = self.horizontalHeaderItem(col).text() if self.horizontalHeaderItem(col) else f"Column {col+1}"
-                # Set default button to No for safety
-                reply = QMessageBox.question(
-                    self, "Clear Column", f"Clear all data in column '{header}'?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    for row in range(self.rowCount()):
-                        self.setItem(row, col, QTableWidgetItem(""))
+                self.parent.show_floating_message(f"Column '{header}' cleared.")
+                for row in range(self.rowCount()):
+                    self.setItem(row, col, QTableWidgetItem(""))
 
             def highlight_column(self, col):
                 # If already highlighted, remove highlight and return
@@ -634,7 +627,7 @@ class StudentForm(QDialog):
         def add_more_rows():
             current_rows = table.rowCount()
             if current_rows >= 150:
-                QMessageBox.warning(dialog, "Limit Reached", "Maximum of 150 rows allowed.")
+                self.show_floating_message("Maximum of 150 rows allowed.")
                 return
             rows_to_add, ok = QInputDialog.getInt(dialog, "Add Rows", "How many rows to add?", 10, 1, 150 - current_rows)
             if ok:
@@ -720,7 +713,7 @@ class StudentForm(QDialog):
             insert_student(student_record)
 
         self.refresh_callback()
-        self.show_message_dialog("Students imported successfully!")
+        self.show_floating_message("Students imported successfully!")
         dialog.accept()
 
     def capitalize_words(self, s):

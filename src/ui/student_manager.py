@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QHBoxLayout
+    QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QHBoxLayout
 )
 from PyQt5.QtCore import Qt, QTimer
 from src.logic.db_interface import update_student, insert_student, get_students_by_class, delete_student
@@ -12,13 +12,11 @@ def validate_student_data(student_data: dict) -> bool:
     required_fields = ["name", "gender", "active"]
     for field in required_fields:
         if field not in student_data or not student_data[field]:
-            QMessageBox.warning(None, "Invalid Data", f"Field '{field}' is required.")
+            show_message_dialog(None, f"Field '{field}' is required.")
             return False
-
     # Ensure the attendance field is initialized if missing
     if "attendance" not in student_data:
         student_data["attendance"] = {}
-
     return True
 
 def show_message_dialog(parent, message, timeout=2000):
@@ -199,8 +197,10 @@ class StudentManager(QDialog):
             current_status = self.students[student_id].get("active", "No")
             new_status = "No" if current_status == "Yes" else "Yes"
             self.students[student_id]["active"] = new_status
-            # --- PATCH: Update in DB ---
-            update_student(student_id, self.students[student_id])
+            # Remove attendance before DB update
+            student_data = dict(self.students[student_id])
+            student_data.pop("attendance", None)
+            update_student(student_id, student_data)
         self.populate_table()
         self.refresh_callback()
 
@@ -210,7 +210,6 @@ class StudentManager(QDialog):
         if not selected_rows:
             show_message_dialog(self, "Please select one or more students to delete.")
             return
-
         # Gather student IDs to delete, but only if Active == "No"
         deletable_ids = []
         undeletable_names = []
@@ -221,27 +220,37 @@ class StudentManager(QDialog):
                 deletable_ids.append(student_id)
             else:
                 undeletable_names.append(student.get("name", student_id))
-
         if not deletable_ids:
             show_message_dialog(self, "Only students with Active = No can be deleted.\nToggle Student Active Status = No then delete.")
             return
-
-        # Confirm deletion
-        confirm = QMessageBox.warning(
-            self,
-            "Delete Student(s)",
-            f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(deletable_ids)} student(s)?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        if confirm == QMessageBox.Yes:
+        # Custom floating confirmation dialog
+        def confirm_delete():
             for student_id in deletable_ids:
-                # --- PATCH: Delete from DB ---
                 delete_student(student_id)
             self.populate_table()
             self.refresh_callback()
-
             if undeletable_names:
                 show_message_dialog(self, "The following students were not deleted because they are still active:\n" + "\n".join(undeletable_names))
+        def cancel_delete():
+            pass
+        # Floating Yes/No dialog
+        dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        dialog.setModal(True)
+        layout = QVBoxLayout(dialog)
+        label = QLabel(f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(deletable_ids)} student(s)?")
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        btn_row = QHBoxLayout()
+        btn_yes = QPushButton("Yes")
+        btn_no = QPushButton("No")
+        btn_yes.clicked.connect(lambda: (dialog.accept(), confirm_delete()))
+        btn_no.clicked.connect(lambda: (dialog.reject(), cancel_delete()))
+        btn_row.addWidget(btn_yes)
+        btn_row.addWidget(btn_no)
+        layout.addLayout(btn_row)
+        dialog.adjustSize()
+        dialog.move(self.mapToGlobal(self.geometry().center()) - dialog.rect().center())
+        dialog.exec_()
 
     def edit_student(self):
         """Edit the selected student using StudentForm."""
@@ -254,6 +263,11 @@ class StudentManager(QDialog):
         student_data = self.students[student_id]
         form = StudentForm(self, self.class_id, self.data, self.refresh_callback, student_id=student_id, student_data=student_data)
         form.exec_()
+        # Remove attendance before DB update if form was accepted and data changed
+        if hasattr(form, 'student_data') and form.result() == QDialog.Accepted:
+            updated_data = dict(form.student_data)
+            updated_data.pop("attendance", None)
+            update_student(student_id, updated_data)
         self.populate_table()
 
     def close_manager(self):
