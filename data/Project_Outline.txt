@@ -220,10 +220,11 @@ mainform.py
 launcher.py
 archive_manager.py
 settings.py
+metadata_form.py 
+stylesheet.py
 
 NOT updated (still using legacy QMessageBox or unstyled messages):
 
-metadata_form.py (uses QMessageBox for validation, not floating styled messages)
 student_form.py
 student_manager.py
 show_hide_form.py
@@ -231,7 +232,9 @@ pal_cod_form.py
 monthly_summary.py
 htmlbluecard.py
 calendar.py
-stylesheet.py
+
+
+----- deleted -------
 import sip.py - deleted not used
 update_dates.py - deleted not used
 -----------------------------------------------------------------------

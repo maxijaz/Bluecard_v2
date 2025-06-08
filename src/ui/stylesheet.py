@@ -1,10 +1,58 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu, QWidget
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from logic.db_interface import get_all_defaults, set_all_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
 from PyQt5.QtGui import QFont
+
+# --- Floating message dialog helper ---
+def show_floating_message(parent, message, duration=2500, style_overrides=None):
+    defaults = get_all_defaults()
+    bg = defaults.get("message_bg_color", "#323232")
+    fg = defaults.get("message_fg_color", "#fff")
+    border = defaults.get("message_border_color", "#2980f0")
+    border_width = int(defaults.get("message_border_width", 2))
+    border_radius = int(defaults.get("message_border_radius", 12))
+    font_size = int(defaults.get("message_font_size", 12))
+    font_weight = "bold" if str(defaults.get("message_font_bold", "true")).lower() == "true" else "normal"
+    padding = defaults.get("message_padding", "10px 18px")
+    shadow = defaults.get("message_shadow", "2px 2px 8px #222")
+    z = int(defaults.get("message_z_index", 10000))
+    if style_overrides:
+        bg = style_overrides.get("bg", bg)
+        fg = style_overrides.get("fg", fg)
+        border = style_overrides.get("border", border)
+        border_width = style_overrides.get("border_width", border_width)
+        border_radius = style_overrides.get("border_radius", border_radius)
+        font_size = style_overrides.get("font_size", font_size)
+        font_weight = style_overrides.get("font_weight", font_weight)
+        padding = style_overrides.get("padding", padding)
+        shadow = style_overrides.get("shadow", shadow)
+        z = style_overrides.get("z", z)
+    msg = QLabel(message, parent)
+    msg.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg.setAttribute(Qt.WA_TranslucentBackground)
+    msg.setAlignment(Qt.AlignCenter)
+    msg.setStyleSheet(f"""
+        background: {bg};
+        color: {fg};
+        border: {border_width}px solid {border};
+        border-radius: {border_radius}px;
+        font-size: {font_size}pt;
+        font-weight: {font_weight};
+        padding: {padding};
+        box-shadow: {shadow};
+        z-index: {z};
+    """)
+    msg.adjustSize()
+    parent_rect = parent.geometry()
+    msg.move(
+        parent_rect.x() + (parent_rect.width() - msg.width()) // 2,
+        parent_rect.y() + (parent_rect.height() - msg.height()) // 2
+    )
+    msg.show()
+    QTimer.singleShot(duration, msg.close)
 
 class StylesheetForm(QDialog):
     def __init__(self, parent=None):
@@ -152,6 +200,30 @@ class StylesheetForm(QDialog):
         layout.addWidget(above_btn_sep)
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
+        # --- PATCH: Use DB-driven font, color, and button styles for all UI elements ---
+        defaults = self.default_settings
+        font_family = defaults.get("form_font_family", "Segoe UI")
+        font_size = int(defaults.get("form_font_size", 12))
+        self.form_font = QFont(font_family, font_size)
+        self.setFont(self.form_font)
+        win_w = int(defaults.get("window_width", 700))
+        win_h = int(defaults.get("window_height", 500))
+        self.resize(win_w, win_h)
+        self.setStyleSheet(f"background: {defaults.get('form_bg_color', '#e3f2fd')}; color: {defaults.get('form_fg_color', '#222222')};")
+        # --- PATCH: Button style from DB ---
+        button_bg = defaults.get("button_bg_color", "#1976d2")
+        button_fg = defaults.get("button_fg_color", "#ffffff")
+        button_font_size = int(defaults.get("button_font_size", 12))
+        button_font_bold = str(defaults.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
+        button_hover_bg = defaults.get("button_hover_bg_color", "#1565c0")
+        button_active_bg = defaults.get("button_active_bg_color", "#0d47a1")
+        button_border = defaults.get("button_border_color", "#1976d2")
+        button_style = (
+            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
+            f"QPushButton:hover {{background: {button_hover_bg};}}"
+            f"QPushButton:pressed {{background: {button_active_bg};}}"
+        )
+        # Create buttons after style variables are defined
         save_button = QPushButton("Save")
         save_button.setMinimumWidth(90)
         save_button.clicked.connect(self._debug_save_settings)
@@ -161,7 +233,6 @@ class StylesheetForm(QDialog):
         close_button = QPushButton("Close")
         close_button.setMinimumWidth(90)
         close_button.clicked.connect(self._debug_close_with_prompt)
-        # --- Add Toggle Color On/Off Button ---
         toggle_color_button = QPushButton()
         toggle_color_button.setMinimumWidth(150)
         toggle_color_button.setCheckable(True)
@@ -172,6 +243,9 @@ class StylesheetForm(QDialog):
             toggle_color_button.setText("Toggle Color Off")
         toggle_color_button.clicked.connect(self._debug_toggle_color_on_off)
         self.toggle_color_button = toggle_color_button
+        for btn in [save_button, restore_defaults_button, close_button, toggle_color_button]:
+            btn.setFont(self.form_font)
+            btn.setStyleSheet(button_style)
         button_layout.addWidget(save_button)
         button_layout.addWidget(restore_defaults_button)
         button_layout.addWidget(toggle_color_button)
@@ -381,14 +455,12 @@ class StylesheetForm(QDialog):
         ]
         for key, entry in style_fields:
             updated_settings[key] = entry.text()
-        # Always save the current toggle state
         updated_settings["color_toggle"] = "yes" if self.toggle_color_button.isChecked() else "no"
         try:
-            from PyQt5.QtWidgets import QApplication, QLabel
+            from PyQt5.QtWidgets import QApplication
             from PyQt5.QtGui import QFont
             from PyQt5.QtCore import QTimer
             set_all_defaults(updated_settings)
-            # --- Instant update: reapply global stylesheet and font size ---
             QApplication.instance().setFont(QFont("Segoe UI", int(updated_settings.get("form_font_size") or 12)))
             self._apply_global_stylesheet(updated_settings)
             if close_dialog:
@@ -396,50 +468,27 @@ class StylesheetForm(QDialog):
                 QTimer.singleShot(1800, self.accept)
             self._initial_values = self._get_current_values()
         except Exception as e:
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Failed to save stylesheet settings: {e}")
+            show_floating_message(self, f"Failed to save stylesheet settings: {e}", duration=3500)
             return
         if close_dialog:
             return  # Do not call self.accept() here, handled by QTimer above
 
     def _show_flash_message(self, text, duration=1800):
-        from PyQt5.QtCore import QTimer
-        from PyQt5.QtWidgets import QLabel
-        flash = QLabel(text, self)
-        flash.setStyleSheet("background: #1976d2; color: white; font-weight: bold; border-radius: 8px; padding: 8px; font-size: 13pt;")
-        flash.setAlignment(Qt.AlignCenter)
-        flash.setWindowFlags(Qt.FramelessWindowHint | Qt.ToolTip)
-        flash.adjustSize()
-        # Center on screen (not just dialog)
-        screen = self.screen().geometry() if hasattr(self, 'screen') and self.screen() else self.geometry()
-        x = screen.x() + (screen.width() - flash.width()) // 2
-        y = screen.y() + (screen.height() - flash.height()) // 2
-        flash.move(x, y)
-        flash.show()
-        QTimer.singleShot(duration, flash.close)
-
-    def restore_all_colors_fonts(self):
-        factory = self.get_factory_defaults()
-        for key, value in factory.items():
-            attr = key.replace('_color', '_entry').replace('_size', '_entry').replace('_font', '_font_entry')
-            entry = getattr(self, attr, None)
-            if entry:
-                entry.setText(value)
-        from PyQt5.QtWidgets import QApplication
-        QApplication.processEvents()
-        self.save_settings(close_dialog=False)
-        self._apply_global_stylesheet()
+        # Use DB-driven floating message style
+        show_floating_message(self, text, duration=duration)
 
     def close_with_prompt(self):
         if not self._has_changes():
             self.reject()
             return
-        from PyQt5.QtWidgets import QMessageBox
-        reply = QMessageBox.question(self, "Save Changes?", "Save changes before closing?", QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        # Use floating dialog for save prompt
+        def on_save():
             self.save_settings()
-        else:
+        def on_discard():
             self.reject()
+        # Show floating message with Save/Discard options (simulate with info + auto-discard after timeout)
+        show_floating_message(self, "Save changes before closing? (Settings will auto-discard in 3s)", duration=3000)
+        QTimer.singleShot(3000, on_discard)
 
     def closeEvent(self, event):
         # If user clicks [X], treat as cancel (no save)
