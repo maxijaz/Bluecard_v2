@@ -216,12 +216,13 @@ update_dates.py - deleted not used
 2. /ui files NOT updated to use the new message (QLabel/QDialog) style settings from factory defaults:
 Already updated (per your summary and code):
 
-mainform.py
 launcher.py
 archive_manager.py
 settings.py
 metadata_form.py 
 stylesheet.py
+
+mainform.py
 
 NOT updated (still using legacy QMessageBox or unstyled messages):
 

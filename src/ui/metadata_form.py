@@ -187,16 +187,21 @@ class MetadataForm(QDialog):
             # --- PATCH: Use teacher_defaults for new class, fallback for course_hours/class_time/max_classes ---
             if self.is_edit:
                 value = metadata.get(key, "")
+                # Ensure value is always a string for QLineEdit
+                if value is None:
+                    value = ""
+                elif not isinstance(value, str):
+                    value = str(value)
             else:
                 if key == "course_hours":
-                    value = self.teacher_defaults.get("def_coursehours", str(self.fallback_course_hours))
+                    value = str(self.teacher_defaults.get("def_coursehours", str(self.fallback_course_hours)))
                 elif key == "class_time":
-                    value = self.teacher_defaults.get("def_classtime", str(self.fallback_class_time))
+                    value = str(self.teacher_defaults.get("def_classtime", str(self.fallback_class_time)))
                 elif key == "max_classes":
                     value = str(self.fallback_max_classes)
                 else:
                     # For other fields, use teacher_defaults if present, else blank
-                    value = self.teacher_defaults.get(f"def_{key}", "")
+                    value = str(self.teacher_defaults.get(f"def_{key}", ""))
             field = QLineEdit(value)
             field.setFont(self.form_font)
             self.fields[key] = field
