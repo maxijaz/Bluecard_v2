@@ -693,6 +693,8 @@ QTableView::item:selected {
         """Handle adding or editing a student."""
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
+        # Only include active students for row mapping
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
         if adjusted_row < 0:
             print("Add Student button clicked")
             def refresh_callback():
@@ -707,7 +709,7 @@ QTableView::item:selected {
         else:
             print("Edit Student button clicked")
             try:
-                student_id = list(self.students.keys())[adjusted_row]
+                student_id = active_students[adjusted_row]
                 student_data = self.students[student_id]
                 def refresh_callback():
                     print("Refreshing student table after editing a student...")
@@ -729,11 +731,17 @@ QTableView::item:selected {
             return
         selected_row = self.frozen_table.currentIndex().row()
         adjusted_row = selected_row - 1
+        # Only include active students for row mapping
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
         if adjusted_row < 0:
             show_message_dialog(self, "Cannot remove the 'Running Total' row.")
             return
-        student_id = list(self.students.keys())[adjusted_row]
-        student_data = self.students[student_id]
+        try:
+            student_id = active_students[adjusted_row]
+            student_data = self.students[student_id]
+        except IndexError:
+            show_message_dialog(self, "Invalid row selected. Please try again.")
+            return
         # Floating Yes/No dialog for confirmation
         def confirm_remove():
             self.students[student_id]["active"] = "No"
@@ -1016,33 +1024,26 @@ QTableView::item:selected {
     def edit_student(self, index):
         """Open the StudentForm in Edit mode for the selected student."""
         selected_row = index.row()
-
-        # Adjust for the "Running Total" row
         if selected_row == 0:
             show_message_dialog(self, "Cannot edit the 'Running Total' row.")
             return
-
         adjusted_row = selected_row - 1  # Subtract 1 to skip the "Running Total" row
-
-        # Get the student ID and data for the adjusted row
-        student_id = list(self.students.keys())[adjusted_row]
-        student_data = self.students[student_id]
-
-        # Define a callback to refresh the student table after editing
+        # Only include active students for row mapping
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
+        try:
+            student_id = active_students[adjusted_row]
+            student_data = self.students[student_id]
+        except IndexError:
+            show_message_dialog(self, "Invalid row selected. Please try again.")
+            return
         def refresh_callback():
             print("Callback triggered: Refreshing student table...")
             self.refresh_student_table()
-
-        # Open the StudentForm in Edit mode
         student_form = StudentForm(self, self.class_id, {}, refresh_callback, student_id, student_data)
-
-        # Center the form relative to the Mainform
         student_form.move(
             self.geometry().center().x() - student_form.width() // 2,
             self.geometry().center().y() - student_form.height() // 2
         )
-
-        # Open the form as a modal dialog
         student_form.exec_()
         print("Calling refresh_student_table from edit_student")
         self.refresh_student_table()
