@@ -210,8 +210,8 @@ stylesheet.py
 
 NOT updated (likely still using legacy or hardcoded settings):
 
-import sip.py 
-update_dates.py
+import sip.py - deleted not used
+update_dates.py - deleted not used
 
 2. /ui files NOT updated to use the new message (QLabel/QDialog) style settings from factory defaults:
 Already updated (per your summary and code):
@@ -220,6 +220,7 @@ mainform.py
 launcher.py
 archive_manager.py
 settings.py
+
 NOT updated (still using legacy QMessageBox or unstyled messages):
 
 metadata_form.py (uses QMessageBox for validation, not floating styled messages)
@@ -231,8 +232,8 @@ monthly_summary.py
 htmlbluecard.py
 calendar.py
 stylesheet.py
-import sip.py
-update_dates.py
+import sip.py - deleted not used
+update_dates.py - deleted not used
 -----------------------------------------------------------------------
 
 # 1. Dataset_1 - data/001attendance_data.JSON 

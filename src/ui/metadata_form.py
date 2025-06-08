@@ -4,7 +4,7 @@ from datetime import datetime  # Import datetime
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QWidget, QFormLayout, QMessageBox, QCheckBox, QGridLayout, QFrame
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from logic.parser import save_data
 from .calendar import CalendarView  # Import CalendarView
 from logic.update_dates import update_dates, add_date, remove_date, modify_date  # Import the new functions
@@ -13,6 +13,59 @@ from ui.calendar import launch_calendar  # Import the shared function
 from logic.date_utils import warn_if_start_date_not_in_days
 from logic.db_interface import insert_class, update_class, get_all_defaults, get_class_by_id, get_form_settings, get_teacher_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
+
+# --- Floating message dialog helper ---
+def show_floating_message(parent, message, title=None, duration=2500, style_overrides=None):
+    """
+    Show a floating QLabel as a transient message, styled from DB defaults.
+    """
+    defaults = get_all_defaults()
+    bg = defaults.get("message_bg_color", "#323232")
+    fg = defaults.get("message_fg_color", "#fff")
+    border = defaults.get("message_border_color", "#2980f0")
+    border_width = int(defaults.get("message_border_width", 2))
+    border_radius = int(defaults.get("message_border_radius", 12))
+    font_size = int(defaults.get("message_font_size", 12))
+    font_weight = "bold" if str(defaults.get("message_font_bold", "true")).lower() == "true" else "normal"
+    padding = defaults.get("message_padding", "10px 18px")
+    shadow = defaults.get("message_shadow", "2px 2px 8px #222")
+    z = int(defaults.get("message_z_index", 10000))
+    # Allow style overrides
+    if style_overrides:
+        bg = style_overrides.get("bg", bg)
+        fg = style_overrides.get("fg", fg)
+        border = style_overrides.get("border", border)
+        border_width = style_overrides.get("border_width", border_width)
+        border_radius = style_overrides.get("border_radius", border_radius)
+        font_size = style_overrides.get("font_size", font_size)
+        font_weight = style_overrides.get("font_weight", font_weight)
+        padding = style_overrides.get("padding", padding)
+        shadow = style_overrides.get("shadow", shadow)
+        z = style_overrides.get("z", z)
+    msg = QLabel(message, parent)
+    msg.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg.setAttribute(Qt.WA_TranslucentBackground)
+    msg.setAlignment(Qt.AlignCenter)
+    msg.setStyleSheet(f"""
+        background: {bg};
+        color: {fg};
+        border: {border_width}px solid {border};
+        border-radius: {border_radius}px;
+        font-size: {font_size}pt;
+        font-weight: {font_weight};
+        padding: {padding};
+        box-shadow: {shadow};
+        z-index: {z};
+    """)
+    msg.adjustSize()
+    # Center in parent
+    parent_rect = parent.geometry()
+    msg.move(
+        parent_rect.x() + (parent_rect.width() - msg.width()) // 2,
+        parent_rect.y() + (parent_rect.height() - msg.height()) // 2
+    )
+    msg.show()
+    QTimer.singleShot(duration, msg.close)
 
 class MetadataForm(QDialog):
     class_saved = pyqtSignal(str)  # Signal to notify when a class is saved
@@ -284,17 +337,16 @@ class MetadataForm(QDialog):
 
         class_no = self.fields["class_no"].text().strip().upper()
         if not class_no:
-            QMessageBox.warning(self, "Validation Error", "Class No is required.")
+            show_floating_message(self, "Class No is required.", title="Validation Error")
             return
 
         # --- PATCH: Check for duplicate class_no in the database ---
         if not self.is_edit:
             if get_class_by_id(class_no):
-                QMessageBox.warning(
+                show_floating_message(
                     self,
-                    "Duplicate Class ID",
-                    f"Class ID '{class_no}' already exists in the database.\n"
-                    "Please enter a different Class ID."
+                    f"Class ID '{class_no}' already exists in the database.\nPlease enter a different Class ID.",
+                    title="Duplicate Class ID"
                 )
                 self.fields["class_no"].setFocus()
                 self.fields["class_no"].selectAll()
@@ -306,21 +358,20 @@ class MetadataForm(QDialog):
         # --- Block save if Start Date is invalid ---
         start_date = metadata.get("start_date", "")
         if not start_date:
-            QMessageBox.warning(
+            show_floating_message(
                 self,
-                "Missing Start Date",
-                "Start Date is required. Please enter a valid date or click [Pick] to select from the calendar."
+                "Start Date is required. Please enter a valid date or click [Pick] to select from the calendar.",
+                title="Missing Start Date"
             )
             self.fields["start_date"].setFocus()
             return
         try:
             datetime.strptime(start_date, "%d/%m/%Y")
         except ValueError:
-            QMessageBox.warning(
+            show_floating_message(
                 self,
-                "Invalid Start Date",
-                "Start Date must be in DD/MM/YYYY format and be a real date.\n"
-                "Please enter a valid date or click [Pick] to select from the calendar."
+                "Start Date must be in DD/MM/YYYY format and be a real date.\nPlease enter a valid date or click [Pick] to select from the calendar.",
+                title="Invalid Start Date"
             )
             self.fields["start_date"].setFocus()
             self.fields["start_date"].selectAll()
@@ -472,11 +523,10 @@ class MetadataForm(QDialog):
         try:
             datetime.strptime(start_date, "%d/%m/%Y")
         except ValueError:
-            QMessageBox.warning(
+            show_floating_message(
                 self,
-                "Invalid Start Date",
-                "Start Date must be in DD/MM/YYYY format and be a real date.\n"
-                "Please enter a valid date or click [Pick] to select from the calendar."
+                "Start Date must be in DD/MM/YYYY format and be a real date.\nPlease enter a valid date or click [Pick] to select from the calendar.",
+                title="Invalid Start Date"
             )
             self.fields["start_date"].setFocus()
             self.fields["start_date"].selectAll()
