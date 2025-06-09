@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu, QWidget
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu, QWidget,
+    QListWidget, QListWidgetItem, QStackedWidget, QFormLayout, QScrollArea
 )
 from PyQt5.QtCore import Qt, QTimer
-from logic.db_interface import get_all_defaults, set_all_defaults
-from logic.display import center_widget, scale_and_center, apply_window_flags
 from PyQt5.QtGui import QFont
+from logic.db_interface import get_all_defaults, set_all_defaults, get_form_settings, get_teacher_defaults
 
 # --- Floating message dialog helper ---
 def show_floating_message(parent, message, duration=2500, style_overrides=None):
@@ -59,440 +59,150 @@ class StylesheetForm(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Stylesheet Settings")
         self.setWindowModality(Qt.ApplicationModal)
-        # Add minimize, maximize, and close buttons
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        self.default_settings = self.load_default_settings()
-        # --- PATCH: Read color_toggle from defaults and set toggle state ---
-        self.color_toggle = self.default_settings.get("color_toggle", "yes").lower() in ("yes", "on", "true", "1")
+        self.default_font = QFont("Arial", 11)
+        self.sidebar_width = 200
         self.init_ui()
-        # --- Track initial state for change detection (after UI fields are created) ---
-        self._initial_values = self._get_current_values()
-        from logic.db_interface import get_all_defaults
-        display_settings = get_all_defaults()
-        from logic.display import center_widget, scale_and_center, apply_window_flags
-        scale = str(display_settings.get("scale_windows", "1")) == "1"
-        center = str(display_settings.get("center_windows", "1")) == "1"
-        width_ratio = float(display_settings.get("window_width_ratio", 0.6))
-        height_ratio = float(display_settings.get("window_height_ratio", 0.6))
-        if scale:
-            scale_and_center(self, width_ratio, height_ratio)
-        elif center:
-            center_widget(self)
-
-    def load_default_settings(self):
-        return get_all_defaults()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        style_heading = QLabel("Stylesheet")
-        style_heading.setObjectName("formTitle")
-        style_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
-        layout.addWidget(style_heading)
-        # Separator 1: under heading
-        heading_sep = QWidget()
-        heading_sep.setFixedHeight(4)
-        heading_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
-        layout.addWidget(heading_sep)
-        # Instructional text under heading
-        info_label = QLabel("Change values by clicking [...] to change the colours of forms and size of fonts here.\nRestore all colours and fonts button for factory restore. Toggle colours on or off")
-        info_label.setStyleSheet("font-size: 9.5pt; color: #444444;")
-        info_label.setWordWrap(True)
-        layout.addWidget(info_label)
-        # Separator 2: under info text
-        info_sep = QWidget()
-        info_sep.setFixedHeight(4)
-        info_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
-        layout.addWidget(info_sep)
-        layout.addSpacing(12)
-        style_grid = QGridLayout()
-        style_grid.setHorizontalSpacing(16)
-        style_grid.setVerticalSpacing(6)
-        style_grid.setContentsMargins(0, 0, 0, 0)
-        def bold_right_label(text):
-            lbl = QLabel(text)
-            lbl.setStyleSheet("font-weight: bold;")
-            lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            return lbl
-        style_fields = [
-            ("Form Title Color", "form_title", "form_title_color", "color", "#222222"),
-            ("Form BG Color", "form_bg", "form_bg_color", "color", "#e3f2fd"),
-            ("Form Text Color", "form_fg", "form_fg_color", "color", "#222222"),
-            ("Form Border Color", "form_border", "form_border_color", "color", "#1976d2"),
-            ("Form Font Size", "form_font", "form_font_size", "font", "12"),
-            ("Metadata BG Color", "metadata_bg", "metadata_bg_color", "color", "#e3f2fd"),
-            ("Metadata Text Color", "metadata_fg", "metadata_fg_color", "color", "#222222"),
-            ("Metadata Font Size", "metadata_font", "metadata_font_size", "font", "12"),
-            ("Table BG Color", "table_bg", "table_bg_color", "color", "#ffffff"),
-            ("Button BG Color", "button_bg", "button_bg_color", "color", "#1976d2"),
-            ("Button Text Color", "button_fg", "button_fg_color", "color", "#ffffff"),
-            ("Button Border Color", "button_border", "button_border_color", "color", "#1976d2"),
-            ("Button Font Size", "button_font", "button_font_size", "font", "12"),
-            ("Table Header BG Color", "table_header_bg", "table_header_bg_color", "color", "#1976d2"),
-            ("Table Header Text Color", "table_header_fg", "table_header_fg_color", "color", "#ffffff"),
-            ("Table Header Font Size", "table_header_font", "table_header_font_size", "font", "12"),
-            ("Table Text Color", "table_fg", "table_fg_color", "color", "#222222"),
-            ("Table Font Size", "table_font", "table_font_size", "font", "12"),
+        main_layout = QHBoxLayout(self)
+
+        # Sidebar navigation
+        sidebar = QListWidget()
+        sidebar.setFixedWidth(self.sidebar_width + 50)  # Increase width by 50px
+        sidebar.setFont(self.default_font)
+        sidebar.setStyleSheet("background-color: #f0f0f0;")
+
+        # Add navigation items in the desired order
+        navigation_items = [
+            "Teacher Defaults",  # First
+            "Global Settings",   # Second
         ]
-        def pick_color(entry):
-            color = QColorDialog.getColor()
-            if color.isValid():
-                entry.setText(color.name())
-        font_sizes = ["6", "8", "10", "11", "12", "13", "14", "15", "16", "18", "20", "22", "24", "26", "28", "30"]
-        def pick_font_size(entry):
-            menu = QMenu()
-            for size in font_sizes:
-                action = menu.addAction(size)
-                action.triggered.connect(lambda checked, s=size: entry.setText(s))
-            menu.exec_(entry.mapToGlobal(entry.rect().bottomRight()))
-        for i in range(9):
-            if i < len(style_fields):
-                label_text, area, key, typ, default = style_fields[i]
-                label = bold_right_label(label_text + ":")
-                if typ == "color":
-                    entry = QLineEdit(self.default_settings.get(key, default))
-                    btn = QPushButton("…")
-                    btn.setFixedWidth(28)
-                    btn.clicked.connect(lambda _, e=entry: pick_color(e))
-                elif typ == "font":
-                    entry = QLineEdit(str(self.default_settings.get(key, default)))
-                    btn = QPushButton("…")
-                    btn.setFixedWidth(28)
-                    btn.clicked.connect(lambda _, e=entry: pick_font_size(e))
-                entry.setMinimumWidth(140)
-                entry.setMaximumWidth(300)
-                entry.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                setattr(self, f"{area}_entry", entry)
-                style_grid.addWidget(label, i, 0)
-                style_grid.addWidget(entry, i, 1)
-                style_grid.addWidget(btn, i, 2)
-        for i in range(9, 18):
-            if i < len(style_fields):
-                label_text, area, key, typ, default = style_fields[i]
-                label = bold_right_label(label_text + ":")
-                if typ == "color":
-                    entry = QLineEdit(self.default_settings.get(key, default))
-                    btn = QPushButton("…")
-                    btn.setFixedWidth(28)
-                    btn.clicked.connect(lambda _, e=entry: pick_color(e))
-                elif typ == "font":
-                    entry = QLineEdit(str(self.default_settings.get(key, default)))
-                    btn = QPushButton("…")
-                    btn.setFixedWidth(28)
-                    btn.clicked.connect(lambda _, e=entry: pick_font_size(e))
-                entry.setMinimumWidth(140)
-                entry.setMaximumWidth(300)
-                entry.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-                setattr(self, f"{area}_entry", entry)
-                style_grid.addWidget(label, i-9, 3)
-                style_grid.addWidget(entry, i-9, 4)
-                style_grid.addWidget(btn, i-9, 5)
-        layout.addLayout(style_grid)
-        # Add a 20px vertical spacer under both columns
-        spacer = QWidget()
-        spacer.setFixedHeight(20)
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        layout.addWidget(spacer)
-        layout.addStretch(1)
-        # Separator 3: above buttons
-        above_btn_sep = QWidget()
-        above_btn_sep.setFixedHeight(4)
-        above_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
-        layout.addWidget(above_btn_sep)
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-        # --- PATCH: Use DB-driven font, color, and button styles for all UI elements ---
-        defaults = self.default_settings
-        font_family = defaults.get("form_font_family", "Segoe UI")
-        font_size = int(defaults.get("form_font_size", 12))
-        self.form_font = QFont(font_family, font_size)
-        self.setFont(self.form_font)
-        win_w = int(defaults.get("window_width", 700))
-        win_h = int(defaults.get("window_height", 500))
-        self.resize(win_w, win_h)
-        self.setStyleSheet(f"background: {defaults.get('form_bg_color', '#e3f2fd')}; color: {defaults.get('form_fg_color', '#222222')};")
-        # --- PATCH: Button style from DB ---
-        button_bg = defaults.get("button_bg_color", "#1976d2")
-        button_fg = defaults.get("button_fg_color", "#ffffff")
-        button_font_size = int(defaults.get("button_font_size", 12))
-        button_font_bold = str(defaults.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
-        button_hover_bg = defaults.get("button_hover_bg_color", "#1565c0")
-        button_active_bg = defaults.get("button_active_bg_color", "#0d47a1")
-        button_border = defaults.get("button_border_color", "#1976d2")
-        button_style = (
-            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
-            f"QPushButton:hover {{background: {button_hover_bg};}}"
-            f"QPushButton:pressed {{background: {button_active_bg};}}"
-        )
-        # Create buttons after style variables are defined
+        # Add all forms alphabetically
+        forms = ["Archive Manager", "Bulk Import Students", "Calendar View", "Launcher", "Mainform", "Metadata Form", "Monthly Summary", "Settings Form", "Student Form"]
+        navigation_items.extend([f"Settings for {form}" for form in sorted(forms)])
+
+        for name in navigation_items:
+            item = QListWidgetItem(name)
+            item.setTextAlignment(Qt.AlignLeft)  # Align text to the left
+            sidebar.addItem(item)
+
+        # Stack for main content
+        self.stack = QStackedWidget(self)
+        self.stack.setFont(self.default_font)
+
+        # Add pages to the stack
+        self.stack.addWidget(self.create_teacher_defaults_page())
+        self.stack.addWidget(self.create_global_settings_page())
+        for form_name in sorted(forms):
+            self.stack.addWidget(self.create_form_settings_page(form_name))
+
+        # Connect navigation
+        sidebar.currentRowChanged.connect(self.stack.setCurrentIndex)
+        sidebar.setCurrentRow(0)
+
+        main_layout.addWidget(sidebar)
+        main_layout.addWidget(self.stack)
+
+    def create_global_settings_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+
+        label = QLabel("Global Settings")
+        label.setFont(self.default_font)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+
+        form_layout = QFormLayout()
+        global_settings = get_all_defaults()
+        for key, value in global_settings.items():
+            form_layout.addRow(key.replace("_", " ").capitalize() + ":", QLineEdit(str(value)))
+        scroll_layout.addLayout(form_layout)
+
+        scroll_content.setLayout(scroll_layout)
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
+
         save_button = QPushButton("Save")
-        save_button.setMinimumWidth(90)
-        save_button.clicked.connect(self._debug_save_settings)
-        restore_defaults_button = QPushButton("Restore All Colors/Fonts")
-        restore_defaults_button.setMinimumWidth(150)
-        restore_defaults_button.clicked.connect(self._debug_restore_all_colors_fonts)
-        close_button = QPushButton("Close")
-        close_button.setMinimumWidth(90)
-        close_button.clicked.connect(self._debug_close_with_prompt)
-        toggle_color_button = QPushButton()
-        toggle_color_button.setMinimumWidth(150)
-        toggle_color_button.setCheckable(True)
-        toggle_color_button.setChecked(self.color_toggle)
-        if self.color_toggle:
-            toggle_color_button.setText("Toggle Color On")
-        else:
-            toggle_color_button.setText("Toggle Color Off")
-        toggle_color_button.clicked.connect(self._debug_toggle_color_on_off)
-        self.toggle_color_button = toggle_color_button
-        for btn in [save_button, restore_defaults_button, close_button, toggle_color_button]:
-            btn.setFont(self.form_font)
-            btn.setStyleSheet(button_style)
+        restore_button = QPushButton("Restore Defaults")
+        layout.addWidget(save_button)
+        layout.addWidget(restore_button)
+
+        return page
+
+    def create_form_settings_page(self, form_name):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+
+        label = QLabel(f"Settings for {form_name}")
+        label.setFont(self.default_font)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+
+        form_layout = QFormLayout()
+        form_settings = get_form_settings(form_name.replace(" ", ""))  # Remove spaces for DB lookup
+        for key, value in form_settings.items():
+            form_layout.addRow(key.replace("_", " ").capitalize() + ":", QLineEdit(str(value)))
+        scroll_layout.addLayout(form_layout)
+
+        scroll_content.setLayout(scroll_layout)
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
+
+        save_button = QPushButton("Save")
+        restore_button = QPushButton("Restore Defaults")
+        layout.addWidget(save_button)
+        layout.addWidget(restore_button)
+
+        return page
+
+    def create_teacher_defaults_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+
+        layout.setContentsMargins(10, 10, 10, 10)  # Add consistent margins
+        layout.setSpacing(10)  # Adjust spacing for better alignment
+
+        label = QLabel("Teacher Defaults")
+        label.setFont(self.default_font)
+        label.setAlignment(Qt.AlignCenter)  # Center the title at the top
+        layout.addWidget(label)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+
+        form_layout = QFormLayout()
+        teacher_defaults = get_teacher_defaults()
+        for key, value in teacher_defaults.items():
+            form_layout.addRow(key.replace("_", " ").capitalize() + ":", QLineEdit(str(value)))
+        scroll_layout.addLayout(form_layout)
+
+        scroll_content.setLayout(scroll_layout)
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
+
+        save_button = QPushButton("Save")
+        restore_button = QPushButton("Restore Defaults")
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        button_layout = QHBoxLayout()
         button_layout.addWidget(save_button)
-        button_layout.addWidget(restore_defaults_button)
-        button_layout.addWidget(toggle_color_button)
-        button_layout.addWidget(close_button)
-        button_layout.addStretch(1)
+        button_layout.addWidget(restore_button)
         layout.addLayout(button_layout)
-        # Separator 4: below buttons
-        below_btn_sep = QWidget()
-        below_btn_sep.setFixedHeight(4)
-        below_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
-        layout.addWidget(below_btn_sep)
-        layout.addSpacing(16)
-        # --- PATCH: Apply color mode at form open ---
-        if not self.color_toggle:
-            self.toggle_color_on_off(init=True)
-        # --- PATCH: Use DB-driven font, color, and button styles for all UI elements ---
-        defaults = self.default_settings
-        font_family = defaults.get("form_font_family", "Segoe UI")
-        font_size = int(defaults.get("form_font_size", 12))
-        self.form_font = QFont(font_family, font_size)
-        self.setFont(self.form_font)
-        win_w = int(defaults.get("window_width", 700))
-        win_h = int(defaults.get("window_height", 500))
-        self.resize(win_w, win_h)
-        self.setStyleSheet(f"background: {defaults.get('form_bg_color', '#e3f2fd')}; color: {defaults.get('form_fg_color', '#222222')};")
-        # --- PATCH: Button style from DB ---
-        button_bg = defaults.get("button_bg_color", "#1976d2")
-        button_fg = defaults.get("button_fg_color", "#ffffff")
-        button_font_size = int(defaults.get("button_font_size", 12))
-        button_font_bold = str(defaults.get("button_font_bold", "no")).lower() in ("yes", "true", "1")
-        button_hover_bg = defaults.get("button_hover_bg_color", "#1565c0")
-        button_active_bg = defaults.get("button_active_bg_color", "#0d47a1")
-        button_border = defaults.get("button_border_color", "#1976d2")
-        button_style = (
-            f"QPushButton {{background: {button_bg}; color: {button_fg}; border: 2px solid {button_border}; font-size: {button_font_size}pt; font-weight: {'bold' if button_font_bold else 'normal'};}}"
-            f"QPushButton:hover {{background: {button_hover_bg};}}"
-            f"QPushButton:pressed {{background: {button_active_bg};}}"
-        )
-        for btn in [save_button, restore_defaults_button, close_button, toggle_color_button]:
-            btn.setFont(self.form_font)
-            btn.setStyleSheet(button_style)
 
-    def _get_current_values(self):
-        """Return a dict of all current field values, including toggle."""
-        values = {}
-        style_fields = [
-            ("form_title_color", self.form_title_entry),
-            ("form_bg_color", self.form_bg_entry),
-            ("form_fg_color", self.form_fg_entry),
-            ("form_border_color", self.form_border_entry),
-            ("form_font_size", self.form_font_entry),
-            ("metadata_bg_color", self.metadata_bg_entry),
-            ("metadata_fg_color", self.metadata_fg_entry),
-            ("metadata_font_size", self.metadata_font_entry),
-            ("table_bg_color", self.table_bg_entry),
-            ("button_bg_color", self.button_bg_entry),
-            ("button_fg_color", self.button_fg_entry),
-            ("button_border_color", self.button_border_entry),
-            ("button_font_size", self.button_font_entry),
-            ("table_header_bg_color", self.table_header_bg_entry),
-            ("table_header_fg_color", self.table_header_fg_entry),
-            ("table_header_font_size", self.table_header_font_entry),
-            ("table_fg_color", self.table_fg_entry),
-            ("table_font_size", self.table_font_entry),
-        ]
-        for key, entry in style_fields:
-            values[key] = entry.text() if entry else ""
-        values["color_toggle"] = "yes" if getattr(self, "toggle_color_button", None) and self.toggle_color_button.isChecked() else "no"
-        return values
-
-    def _has_changes(self):
-        """Return True if any field (including toggle) has changed since open."""
-        return self._get_current_values() != self._initial_values
-
-    def get_factory_defaults(self):
-        """Return a dict of factory default color/font values."""
-        return {
-            "form_title_color": "#222222",
-            "form_bg_color": "#e3f2fd",
-            "form_fg_color": "#222222",
-            "form_border_color": "#1976d2",
-            "form_font_size": "12",
-            "metadata_bg_color": "#e3f2fd",
-            "metadata_fg_color": "#222222",
-            "metadata_font_size": "12",
-            "table_bg_color": "#ffffff",
-            "button_bg_color": "#1976d2",
-            "button_fg_color": "#ffffff",
-            "button_border_color": "#1976d2",
-            "button_font_size": "12",
-            "table_header_bg_color": "#1976d2",
-            "table_header_fg_color": "#ffffff",
-            "table_header_font_size": "12",
-            "table_fg_color": "#222222",
-            "table_font_size": "12",
-        }
-
-    def get_toggle_on_values(self):
-        """Return a dict of color/font values for toggle ON (all white/black, font 12)."""
-        return {
-            "form_title_color": "#000000",
-            "form_bg_color": "#ffffff",
-            "form_fg_color": "#000000",
-            "form_border_color": "#000000",
-            "form_font_size": "12",
-            "metadata_bg_color": "#ffffff",
-            "metadata_fg_color": "#000000",
-            "metadata_font_size": "12",
-            "table_bg_color": "#ffffff",
-            "button_bg_color": "#ffffff",
-            "button_fg_color": "#000000",
-            "button_border_color": "#000000",
-            "button_font_size": "12",
-            "table_header_bg_color": "#ffffff",
-            "table_header_fg_color": "#000000",
-            "table_header_font_size": "12",
-            "table_fg_color": "#000000",
-            "table_font_size": "12",
-        }
-
-    def toggle_color_on_off(self, init=False):
-        from logic.db_interface import set_all_defaults, get_all_defaults
-        from PyQt5.QtWidgets import QApplication
-        if self.toggle_color_button.isChecked():
-            # Toggle ON: set all fields to white/black/font 12
-            toggle_on = self.get_toggle_on_values()
-            for key, value in toggle_on.items():
-                attr = key.replace('_color', '_entry').replace('_size', '_entry').replace('_font', '_font_entry')
-                entry = getattr(self, attr, None)
-                if entry:
-                    entry.setText(value)
-            QApplication.processEvents()
-            self.save_settings(close_dialog=False)
-            self.toggle_color_button.setChecked(True)
-            self.toggle_color_button.setText("Toggle Color On")
-            self._apply_global_stylesheet(self._get_current_values())
-            if not init:
-                set_all_defaults({"color_toggle": "yes"})
-        else:
-            # Toggle OFF: restore factory defaults
-            factory = self.get_factory_defaults()
-            for key, value in factory.items():
-                attr = key.replace('_color', '_entry').replace('_size', '_entry').replace('_font', '_font_entry')
-                entry = getattr(self, attr, None)
-                if entry:
-                    entry.setText(value)
-            QApplication.processEvents()
-            self.save_settings(close_dialog=False)
-            self.toggle_color_button.setChecked(False)
-            self.toggle_color_button.setText("Toggle Color Off")
-            self._apply_global_stylesheet(self._get_current_values())
-            if not init:
-                set_all_defaults({"color_toggle": "no"})
-
-    def _apply_global_stylesheet(self, updated_settings=None):
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtGui import QFont
-        if updated_settings is None:
-            updated_settings = self._get_current_values()
-        form_font_size = int(updated_settings.get("form_font_size") or 12)
-        button_font_size = int(updated_settings.get("button_font_size") or form_font_size)
-        table_font_size = int(updated_settings.get("table_font_size") or form_font_size)
-        table_header_font_size = int(updated_settings.get("table_header_font_size") or form_font_size)
-        form_bg_color = updated_settings.get("form_bg_color", "#e3f2fd")
-        button_bg_color = updated_settings.get("button_bg_color", "#1976d2")
-        button_fg_color = updated_settings.get("button_fg_color", "#ffffff")
-        table_bg_color = updated_settings.get("table_bg_color", "#ffffff")
-        table_fg_color = updated_settings.get("table_fg_color", "#222222")
-        table_header_bg_color = updated_settings.get("table_header_bg_color", "#1976d2")
-        table_header_fg_color = updated_settings.get("table_header_fg_color", "#ffffff")
-        form_title_color = updated_settings.get("form_title_color", "#222222")
-        form_border_color = updated_settings.get("form_border_color", "#1976d2")
-        style = f"""
-            QWidget {{ background-color: {form_bg_color}; }}
-            QLabel, QLineEdit {{ font-size: {form_font_size}pt; }}
-            QLabel#formTitle {{ color: {form_title_color}; }}
-            QLineEdit, QComboBox {{ border: 1px solid {form_border_color}; }}
-            QPushButton {{ background-color: {button_bg_color}; color: {button_fg_color}; font-size: {button_font_size}pt; }}
-            QTableView, QTableWidget {{ background-color: {table_bg_color}; }}
-            QHeaderView::section {{ background-color: {table_header_bg_color}; color: {table_header_fg_color}; font-size: {table_header_font_size}pt; }}
-            QTableWidget::item {{ color: {table_fg_color}; font-size: {table_font_size}pt; }}
-        """
-        QApplication.instance().setStyleSheet(style)
-        QApplication.instance().setStyle(QApplication.instance().style())
-
-    def save_settings(self, close_dialog=True):
-        updated_settings = {}
-        style_fields = [
-            ("form_title_color", self.form_title_entry),
-            ("form_bg_color", self.form_bg_entry),
-            ("form_fg_color", self.form_fg_entry),
-            ("form_border_color", self.form_border_entry),
-            ("form_font_size", self.form_font_entry),
-            ("metadata_bg_color", self.metadata_bg_entry),
-            ("metadata_fg_color", self.metadata_fg_entry),
-            ("metadata_font_size", self.metadata_font_entry),
-            ("table_bg_color", self.table_bg_entry),
-            ("button_bg_color", self.button_bg_entry),
-            ("button_fg_color", self.button_fg_entry),
-            ("button_border_color", self.button_border_entry),
-            ("button_font_size", self.button_font_entry),
-            ("table_header_bg_color", self.table_header_bg_entry),
-            ("table_header_fg_color", self.table_header_fg_entry),
-            ("table_header_font_size", self.table_header_font_entry),
-            ("table_fg_color", self.table_fg_entry),
-            ("table_font_size", self.table_font_entry),
-        ]
-        for key, entry in style_fields:
-            updated_settings[key] = entry.text()
-        updated_settings["color_toggle"] = "yes" if self.toggle_color_button.isChecked() else "no"
-        try:
-            from PyQt5.QtWidgets import QApplication
-            from PyQt5.QtGui import QFont
-            from PyQt5.QtCore import QTimer
-            set_all_defaults(updated_settings)
-            QApplication.instance().setFont(QFont("Segoe UI", int(updated_settings.get("form_font_size") or 12)))
-            self._apply_global_stylesheet(updated_settings)
-            if close_dialog:
-                self._show_flash_message("Stylesheet settings saved!", duration=1800)
-                QTimer.singleShot(1800, self.accept)
-            self._initial_values = self._get_current_values()
-        except Exception as e:
-            show_floating_message(self, f"Failed to save stylesheet settings: {e}", duration=3500)
-            return
-        if close_dialog:
-            return  # Do not call self.accept() here, handled by QTimer above
-
-    def _show_flash_message(self, text, duration=1800):
-        # Use DB-driven floating message style
-        show_floating_message(self, text, duration=duration)
-
-    def close_with_prompt(self):
-        if not self._has_changes():
-            self.reject()
-            return
-        # Use floating dialog for save prompt
-        def on_save():
-            self.save_settings()
-        def on_discard():
-            self.reject()
-        # Show floating message with Save/Discard options (simulate with info + auto-discard after timeout)
-        show_floating_message(self, "Save changes before closing? (Settings will auto-discard in 3s)", duration=3000)
-        QTimer.singleShot(3000, on_discard)
-
-    def closeEvent(self, event):
-        # If user clicks [X], treat as cancel (no save)
-        event.accept()
+        return page
 
     def _debug_save_settings(self, *args, **kwargs):
         print("[DEBUG] Save button clicked. Current values:", self._get_current_values())
