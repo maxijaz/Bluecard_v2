@@ -592,10 +592,10 @@
       "button_error_border_color": "#e53935"
     },
     "SettingsForm": {
-      "window_width": 600,
-      "window_height": 500,
-      "min_width": 400,
-      "min_height": 300,
+      "window_width": 300,
+      "window_height": 450,
+      "min_width": 300,
+      "min_height": 450,
       "resizable": "yes",
       "window_controls": "standard",
       "form_font_family": "Segoe UI",

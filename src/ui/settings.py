@@ -53,7 +53,7 @@ class SettingsForm(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         metadata_col = QVBoxLayout()
-        metadata_heading = QLabel("Default Metadata (Teacher Defaults)")
+        metadata_heading = QLabel("Teacher Defaults")
         metadata_heading.setStyleSheet("font-weight: bold; font-size: 14pt;")
         metadata_col.addWidget(metadata_heading)
         # Separator 1: under heading
@@ -62,7 +62,7 @@ class SettingsForm(QDialog):
         heading_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
         metadata_col.addWidget(heading_sep)
         # Info text
-        info_label = QLabel("Set default values here for all new classes. All values can be changed by editing metadata.")
+        info_label = QLabel("Set default values here for all new classes. \nAll values can be changed by editing metadata.")
         info_label.setStyleSheet("font-size: 9.5pt; color: #444444;")
         info_label.setWordWrap(True)
         metadata_col.addWidget(info_label)
@@ -93,11 +93,11 @@ class SettingsForm(QDialog):
             entry.setStyleSheet("padding-left: 8px; padding-right: 16px;")  # Add left padding for symmetry
             self.entries[key] = entry
             form_layout.addRow(bold_metadata_label(key.replace("def_", "").capitalize() + ":"), entry)
-            # Add a 20px vertical spacer after 'Bonus'
+            # Add a 5px vertical spacer after 'Bonus'
             if key == "def_bonus":
                 form_layout.addRow(QWidget())  # Add an empty row for spacing
                 spacer = QWidget()
-                spacer.setFixedHeight(20)
+                spacer.setFixedHeight(5)
                 spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
                 form_layout.addRow(spacer)
         metadata_col.addLayout(form_layout)
@@ -110,7 +110,7 @@ class SettingsForm(QDialog):
         above_btn_sep.setFixedHeight(4)
         above_btn_sep.setStyleSheet("background-color: #444444; border-radius: 2px;")
         layout.addWidget(above_btn_sep)
-        # Buttons (Save, Cancel, Check Factory Defaults) in one row
+        # Buttons (Save, Cancel) in one row (removed Check Factory Defaults)
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
         save_button = QPushButton("Save and Close")
@@ -119,12 +119,8 @@ class SettingsForm(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.setMinimumWidth(90)
         cancel_button.clicked.connect(self.reject)
-        check_defaults_btn = QPushButton("Check Factory Defaults")
-        check_defaults_btn.setMinimumWidth(180)
-        check_defaults_btn.clicked.connect(self.check_factory_defaults)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
-        button_layout.addWidget(check_defaults_btn)
         button_layout.addStretch(1)
         layout.addLayout(button_layout)
         # Separator 4: below buttons
@@ -141,41 +137,6 @@ class SettingsForm(QDialog):
                 widget = field_widget.widget()
                 if isinstance(widget, QLineEdit):
                     widget.setStyleSheet("padding-right: 16px;")
-
-    def check_factory_defaults(self):
-        """Check DB defaults vs factory_defaults.json and show differences."""
-        try:
-            from logic.build_sqlite_db import check_factory_defaults_vs_db
-            from logic.db_interface import get_connection
-            # Get DB connection
-            conn = get_connection()
-            # Load factory defaults from JSON
-            factory_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'factory_defaults.json')
-            with open(factory_path, 'r', encoding='utf-8') as f:
-                factory_defaults = json.load(f)
-            result = check_factory_defaults_vs_db(conn, factory_defaults)
-            conn.close()
-            if not result or (isinstance(result, str) and result.strip() == "OK"):
-                QMessageBox.information(self, "Factory Defaults Check", "All settings match factory defaults.")
-            else:
-                # Show differences in a scrollable dialog
-                dlg = QDialog(self)
-                dlg.setWindowTitle("Factory Defaults Differences")
-                dlg.resize(700, 500)
-                vbox = QVBoxLayout(dlg)
-                label = QLabel("Differences between DB and factory_defaults.json:")
-                vbox.addWidget(label)
-                from PyQt5.QtWidgets import QTextEdit
-                text = QTextEdit()
-                text.setReadOnly(True)
-                text.setText(str(result))
-                vbox.addWidget(text)
-                btn = QPushButton("Close")
-                btn.clicked.connect(dlg.accept)
-                vbox.addWidget(btn)
-                dlg.exec_()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to check factory defaults:\n{e}")
 
     def save_settings(self):
         """Save teacher defaults to the DB."""
