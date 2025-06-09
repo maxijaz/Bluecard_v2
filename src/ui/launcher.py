@@ -182,6 +182,7 @@ class Launcher(QMainWindow):
         self.layout.addLayout(button_layout_row2)
 
         self.table.setStyleSheet("QTableWidget::item:focus { outline: none; }")
+        self.table.horizontalHeader().setSectionsClickable(False)
 
     def set_table_column_widths(self):
         # This method is no longer used for stretching columns. Remove or leave empty.
