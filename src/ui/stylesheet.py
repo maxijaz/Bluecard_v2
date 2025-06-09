@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QSizePolicy, QColorDialog, QMenu, QWidget,
-    QListWidget, QListWidgetItem, QStackedWidget, QFormLayout, QScrollArea
+    QListWidget, QListWidgetItem, QStackedWidget, QFormLayout, QScrollArea, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
@@ -130,8 +130,13 @@ class StylesheetForm(QDialog):
 
         save_button = QPushButton("Save")
         restore_button = QPushButton("Restore Defaults")
-        layout.addWidget(save_button)
-        layout.addWidget(restore_button)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(restore_button)
+        layout.addLayout(button_layout)
+
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
 
         return page
 
@@ -161,8 +166,13 @@ class StylesheetForm(QDialog):
 
         save_button = QPushButton("Save")
         restore_button = QPushButton("Restore Defaults")
-        layout.addWidget(save_button)
-        layout.addWidget(restore_button)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(restore_button)
+        layout.addLayout(button_layout)
+
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
 
         return page
 
@@ -195,14 +205,26 @@ class StylesheetForm(QDialog):
 
         save_button = QPushButton("Save")
         restore_button = QPushButton("Restore Defaults")
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
         button_layout = QHBoxLayout()
         button_layout.addWidget(save_button)
         button_layout.addWidget(restore_button)
         layout.addLayout(button_layout)
 
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+
+        restore_button.clicked.connect(lambda: self.confirm_restore_defaults())
+
         return page
+
+    def confirm_restore_defaults(self):
+        reply = QMessageBox.question(self, 'Confirm Restore Defaults', 'Are you sure you want to restore defaults?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.restore_all_colors_fonts()  # Call with no arguments
+            show_floating_message(self, "Defaults restored successfully.", 3000)
+        else:
+            show_floating_message(self, "Restore defaults canceled.", 3000)
 
     def _debug_save_settings(self, *args, **kwargs):
         print("[DEBUG] Save button clicked. Current values:", self._get_current_values())
