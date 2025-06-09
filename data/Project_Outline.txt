@@ -223,11 +223,14 @@ metadata_form.py
 stylesheet.py
 
 mainform.py
+student_form.py
 
 NOT updated (still using legacy QMessageBox or unstyled messages):
 
-student_form.py
 student_manager.py
+resizable = "yes"
+window_controls = "standard"
+
 show_hide_form.py
 pal_cod_form.py
 monthly_summary.py

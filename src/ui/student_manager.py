@@ -19,7 +19,11 @@ def validate_student_data(student_data: dict) -> bool:
         student_data["attendance"] = {}
     return True
 
-def show_message_dialog(parent, message, timeout=2000):
+def show_message_dialog(parent, message, timeout=2000, buttons=None):
+    """
+    Show a floating message dialog. If buttons is provided, it should be a list of (label, callback) tuples.
+    If buttons is None, show an auto-closing info dialog.
+    """
     msg_defaults = get_message_defaults()
     bg = msg_defaults.get("message_bg_color", "#2980f0")
     fg = msg_defaults.get("message_fg_color", "#fff")
@@ -31,22 +35,33 @@ def show_message_dialog(parent, message, timeout=2000):
     font_bold = msg_defaults.get("message_font_bold", "true")
     font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
     style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
-    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+    from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
     from PyQt5.QtCore import Qt
     msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
     msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
-    msg_dialog.setModal(False)
+    msg_dialog.setModal(True if buttons else False)
     layout = QVBoxLayout(msg_dialog)
     label = QLabel(message)
     label.setStyleSheet(style)
     label.setAlignment(Qt.AlignCenter)
     layout.addWidget(label)
+    if buttons:
+        btn_row = QHBoxLayout()
+        for btn_text, btn_callback in buttons:
+            btn = QPushButton(btn_text)
+            btn.setStyleSheet(f"background: {bg}; color: {fg}; border-radius: {border_radius}px; font-size: {font_size}pt; font-weight: {font_weight}; padding: 6px 18px;")
+            btn.clicked.connect(lambda _, cb=btn_callback: (msg_dialog.accept(), cb() if cb else None))
+            btn_row.addWidget(btn)
+        layout.addLayout(btn_row)
     msg_dialog.adjustSize()
-    # Center the dialog on the parent
-    parent_geo = parent.geometry()
-    msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    parent_geo = parent.geometry() if parent else None
+    if parent_geo:
+        msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
     msg_dialog.show()
-    QTimer.singleShot(timeout, msg_dialog.accept)
+    if not buttons:
+        QTimer.singleShot(timeout, msg_dialog.accept)
+    else:
+        msg_dialog.exec_()
 
 class StudentManager(QDialog):
     def __init__(self, parent, data, class_id, refresh_callback):
@@ -156,6 +171,17 @@ class StudentManager(QDialog):
 
         layout.addLayout(button_layout)
 
+        resizable = str(form_settings.get("resizable", "yes")).lower() in ("yes", "true", "1")
+        window_controls = form_settings.get("window_controls", "standard")
+        if resizable:
+            self.setSizeGripEnabled(True)
+        else:
+            self.setSizeGripEnabled(False)
+        if window_controls == "standard":
+            self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+
     def populate_table(self):
         # --- PATCH: Reload students from DB ---
         self.students = {row["student_id"]: row for row in get_students_by_class(self.class_id)}
@@ -223,7 +249,7 @@ class StudentManager(QDialog):
         if not deletable_ids:
             show_message_dialog(self, "Only students with Active = No can be deleted.\nToggle Student Active Status = No then delete.")
             return
-        # Custom floating confirmation dialog
+        # Floating Yes/No dialog using DB-driven style
         def confirm_delete():
             for student_id in deletable_ids:
                 delete_student(student_id)
@@ -233,24 +259,11 @@ class StudentManager(QDialog):
                 show_message_dialog(self, "The following students were not deleted because they are still active:\n" + "\n".join(undeletable_names))
         def cancel_delete():
             pass
-        # Floating Yes/No dialog
-        dialog = QDialog(self, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        dialog.setModal(True)
-        layout = QVBoxLayout(dialog)
-        label = QLabel(f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(deletable_ids)} student(s)?")
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        btn_row = QHBoxLayout()
-        btn_yes = QPushButton("Yes")
-        btn_no = QPushButton("No")
-        btn_yes.clicked.connect(lambda: (dialog.accept(), confirm_delete()))
-        btn_no.clicked.connect(lambda: (dialog.reject(), cancel_delete()))
-        btn_row.addWidget(btn_yes)
-        btn_row.addWidget(btn_no)
-        layout.addLayout(btn_row)
-        dialog.adjustSize()
-        dialog.move(self.mapToGlobal(self.geometry().center()) - dialog.rect().center())
-        dialog.exec_()
+        show_message_dialog(
+            self,
+            f"Deleting these students will remove all data and is unrecoverable.\nAre you sure you want to delete {len(deletable_ids)} student(s)?",
+            buttons=[("Yes", confirm_delete), ("No", cancel_delete)]
+        )
 
     def edit_student(self):
         """Edit the selected student using StudentForm."""
