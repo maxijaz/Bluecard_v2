@@ -2,11 +2,11 @@ import json
 import os
 from datetime import datetime
 from collections import defaultdict
-from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults
+from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults, get_message_defaults
 from logic.display import center_widget, scale_and_center, apply_window_flags
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 def is_attended(value):
     """Check if an attendance value counts as a class held."""
@@ -102,6 +102,45 @@ def get_summary_text(teacher_name="Paul R"):
         lines.append(f"{month:<10} {row['total_hours']:<6} {row['total_travel']:<8} {row['total_bonus']:<7} {row['total_pay']:<10} {row['notes']}")
     return "\n".join(lines)
 
+# Floating message dialog for future use (DB-driven style)
+def show_message_dialog(parent, message, timeout=2000, buttons=None):
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(True if buttons else False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(message)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    if buttons:
+        btn_row = QHBoxLayout()
+        for btn_text, btn_callback in buttons:
+            btn = QPushButton(btn_text)
+            btn.setStyleSheet(f"background: {bg}; color: {fg}; border-radius: {border_radius}px; font-size: {font_size}pt; font-weight: {font_weight}; padding: 6px 18px;")
+            btn.clicked.connect(lambda _, cb=btn_callback: (msg_dialog.accept(), cb() if cb else None))
+            btn_row.addWidget(btn)
+        layout.addLayout(btn_row)
+    msg_dialog.adjustSize()
+    parent_geo = parent.geometry() if parent else None
+    if parent_geo:
+        msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    msg_dialog.show()
+    if not buttons:
+        QTimer.singleShot(timeout, msg_dialog.accept)
+    else:
+        msg_dialog.exec_()
+
 class MonthlySummaryWindow(QDialog):
     def __init__(self, teacher_name="Paul R"):
         super().__init__()
@@ -114,6 +153,17 @@ class MonthlySummaryWindow(QDialog):
         win_w = int(form_settings.get("window_width", 700))
         win_h = int(form_settings.get("window_height", 500))
         self.resize(win_w, win_h)
+        # --- PATCH: Resizability and window controls ---
+        resizable = str(form_settings.get("resizable", "yes")).lower() in ("yes", "true", "1")
+        window_controls = form_settings.get("window_controls", "standard")
+        if resizable:
+            self.setSizeGripEnabled(True)
+        else:
+            self.setSizeGripEnabled(False)
+        if window_controls == "standard":
+            self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
         self.setWindowTitle("Monthly Summary")
         # --- PATCH: Apply display preferences ---
         scale = str(form_settings.get("scale_windows", "1")) == "1"

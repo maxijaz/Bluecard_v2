@@ -228,18 +228,13 @@ student_manager.py
 show_hide_form.py
 pal_cod_form.py
 calendar.py
-
-
-NOT updated (still using legacy QMessageBox or unstyled messages):
-
-
-resizable = "yes"
-window_controls = "standard"
-
 monthly_summary.py
 htmlbluecard.py
 
+NOT updated (still using legacy QMessageBox or unstyled messages):
 
+resizable = "yes"
+window_controls = "standard"
 
 ----- deleted -------
 import sip.py - deleted not used

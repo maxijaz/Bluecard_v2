@@ -9,6 +9,9 @@ from threading import Timer
 from datetime import datetime, timedelta
 from logic.db_interface import get_all_classes, get_class_by_id, get_students_by_class, get_attendance_by_student, get_all_defaults
 from PyQt5.QtGui import QFont
+# Utility: Floating message dialog for PyQt5 (for future use if embedded in a PyQt5 window)
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+from PyQt5.QtCore import Qt
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -34,13 +37,69 @@ def get_html_style():
     border_color = defaults.get("form_border_color", "#1976d2")
     return f"body {{ font-family: '{font_family}'; font-size: {font_size}pt; color: {fg_color}; background: {bg_color}; }} table, th, td {{ border: 1px solid {border_color}; }}"
 
+# Utility: Generate a styled HTML message using DB-driven style
+def get_styled_html_message(message, message_type="info"):
+    defaults = get_all_defaults()
+    bg_color = defaults.get("message_bg_color", "#2980f0")
+    fg_color = defaults.get("message_fg_color", "#ffffff")
+    border_color = defaults.get("message_border_color", "#1565c0")
+    border_width = defaults.get("message_border_width", 3)
+    border_radius = defaults.get("message_border_radius", 12)
+    padding = defaults.get("message_padding", "18px 32px")
+    font_size = defaults.get("message_font_size", 13)
+    font_weight = "bold" if defaults.get("message_font_bold", True) else "normal"
+    # Optionally, use different colors for error/info
+    if message_type == "error":
+        border_color = defaults.get("form_error_border_color", "#e53935")
+        bg_color = "#fff0f0"
+        fg_color = "#e53935"
+    return f"""
+    <div style='background:{bg_color};color:{fg_color};border:{border_width}px solid {border_color};border-radius:{border_radius}px;padding:{padding};font-size:{font_size}pt;font-weight:{font_weight};margin:32px auto;text-align:center;max-width:600px;'>
+        {message}
+    </div>
+    """
+
+def show_floating_message(parent, message, duration=2500):
+    """Show a floating message dialog with DB-driven style."""
+    defaults = get_all_defaults()
+    bg_color = defaults.get("message_bg_color", "#2980f0")
+    fg_color = defaults.get("message_fg_color", "#ffffff")
+    border_color = defaults.get("message_border_color", "#1565c0")
+    border_width = int(defaults.get("message_border_width", 3))
+    border_radius = int(defaults.get("message_border_radius", 12))
+    padding = defaults.get("message_padding", "18px 32px")
+    font_size = int(defaults.get("message_font_size", 13))
+    font_bold = defaults.get("message_font_bold", True)
+
+    dialog = QDialog(parent)
+    dialog.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
+    dialog.setAttribute(Qt.WA_TranslucentBackground)
+    dialog.setModal(False)
+    label = QLabel(message)
+    label.setAlignment(Qt.AlignCenter)
+    font = label.font()
+    font.setPointSize(font_size)
+    font.setBold(font_bold)
+    label.setFont(font)
+    label.setStyleSheet(f"background: {bg_color}; color: {fg_color}; border: {border_width}px solid {border_color}; border-radius: {border_radius}px; padding: {padding};")
+    layout = QVBoxLayout()
+    layout.addWidget(label)
+    dialog.setLayout(layout)
+    dialog.adjustSize()
+    dialog.show()
+    # Auto-close after duration
+    QTimer = __import__('PyQt5.QtCore').QtCore.QTimer
+    QTimer.singleShot(duration, dialog.accept)
+    return dialog
+
 @app.route("/")
 def home():
     """Serve the HTML content."""
     # Load data from the database
     all_classes = get_all_classes()
     if not all_classes:
-        return "<h2>No classes found in the database.</h2>"
+        # Use DB-driven styled message for error
+        return get_styled_html_message("<h2>No classes found in the database.</h2>", message_type="error")
 
     class_row = all_classes[0]
     class_id = class_row["class_no"]
@@ -200,7 +259,8 @@ def download_pdf():
     # Load data from the database (same as in home())
     all_classes = get_all_classes()
     if not all_classes:
-        return "<h2>No classes found in the database.</h2>"
+        # Use DB-driven styled message for error
+        return get_styled_html_message("<h2>No classes found in the database.</h2>", message_type="error")
 
     class_row = all_classes[0]
     class_id = class_row["class_no"]
@@ -341,3 +401,8 @@ if __name__ == "__main__":
     # Start the Flask app in a separate thread to ensure the browser opens reliably
     Timer(1.0, open_browser).start()
     app.run(debug=True, use_reloader=False)  # Set use_reloader=False to prevent double run
+
+# NOTE: This file is a Flask-based HTML report generator, not a PyQt5 form.
+# - QLabel/QDialog floating message dialogs and window settings are NOT applicable here.
+# - All error/info messages returned by Flask routes use the DB-driven style in their HTML output for consistency.
+# - If this file is ever used in a PyQt5 context, import and use the floating message dialog utility from mainform.py or similar.
