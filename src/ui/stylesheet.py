@@ -135,8 +135,9 @@ class StylesheetForm(QDialog):
         button_layout.addWidget(restore_button)
         layout.addLayout(button_layout)
 
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        # Updated button styles to adhere to factory defaults.
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
 
         return page
 
@@ -171,8 +172,9 @@ class StylesheetForm(QDialog):
         button_layout.addWidget(restore_button)
         layout.addLayout(button_layout)
 
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        # Updated button styles to adhere to factory defaults.
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
 
         return page
 
@@ -210,8 +212,9 @@ class StylesheetForm(QDialog):
         button_layout.addWidget(restore_button)
         layout.addLayout(button_layout)
 
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; font-weight: bold; border-radius: 5px; padding: 5px;")
+        # Updated button styles to adhere to factory defaults.
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; border-radius: 5px; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
 
         restore_button.clicked.connect(lambda: self.confirm_restore_defaults())
 
