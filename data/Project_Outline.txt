@@ -224,10 +224,11 @@ stylesheet.py
 
 mainform.py
 student_form.py
+student_manager.py
 
 NOT updated (still using legacy QMessageBox or unstyled messages):
 
-student_manager.py
+
 resizable = "yes"
 window_controls = "standard"
 
