@@ -2,10 +2,10 @@ import json
 import os
 from datetime import datetime
 from collections import defaultdict
-from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults, get_message_defaults
+from logic.db_interface import get_all_classes, get_students_by_class, get_attendance_by_student, get_all_defaults, get_message_defaults, get_form_settings
 from logic.display import center_widget, scale_and_center, apply_window_flags
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QDialog
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt, QTimer
 
 def is_attended(value):
@@ -141,30 +141,39 @@ def show_message_dialog(parent, message, timeout=2000, buttons=None):
     else:
         msg_dialog.exec_()
 
-class MonthlySummaryWindow(QDialog):
+class MonthlySummaryWindow(QWidget):
     def __init__(self, teacher_name="Paul R"):
         super().__init__()
+        # --- PATCH: Set a default window icon to avoid '?' on Windows ---
+        self.setWindowIcon(QIcon())  # Set your app icon here if you have one
         # --- PATCH: Load per-form and global settings from DB ---
-        form_settings = get_all_defaults()  # No per-form settings, so use global
+        form_settings = get_form_settings("MonthlySummaryWindow") or get_all_defaults()
         font_family = form_settings.get("form_font_family", "Segoe UI")
         font_size = int(form_settings.get("form_font_size", 12))
         self.form_font = QFont(font_family, font_size)
         self.setFont(self.form_font)
         win_w = int(form_settings.get("window_width", 700))
         win_h = int(form_settings.get("window_height", 500))
-        self.resize(win_w, win_h)
-        # --- PATCH: Resizability and window controls ---
         resizable = str(form_settings.get("resizable", "yes")).lower() in ("yes", "true", "1")
         window_controls = form_settings.get("window_controls", "standard")
-        if resizable:
-            self.setSizeGripEnabled(True)
-        else:
-            self.setSizeGripEnabled(False)
+        # --- PATCH: Set window flags (with Qt.Window) before any sizing ---
+        flags = Qt.Window
         if window_controls == "standard":
-            self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+            flags |= Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
         else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+            flags |= Qt.WindowCloseButtonHint
+            flags &= ~Qt.WindowMaximizeButtonHint
+        # --- PATCH: Remove the '?' help button by clearing Qt.WindowContextHelpButtonHint ---
+        flags &= ~Qt.WindowContextHelpButtonHint
+        self.setWindowFlags(flags)
+        if resizable:
+            self.setMinimumSize(300, 200)
+            self.resize(win_w, win_h)
+        else:
+            self.setFixedSize(win_w, win_h)
         self.setWindowTitle("Monthly Summary")
+        # --- REMOVE FORCE MAXIMIZE ON OPEN ---
+        # QTimer.singleShot(0, self.showMaximized)
         # --- PATCH: Apply display preferences ---
         scale = str(form_settings.get("scale_windows", "1")) == "1"
         center = str(form_settings.get("center_windows", "1")) == "1"
@@ -201,5 +210,5 @@ class MonthlySummaryWindow(QDialog):
             f"QPushButton:pressed {{background: {button_active_bg};}}"
         )
         close_btn.setStyleSheet(button_style)
-        close_btn.clicked.connect(self.accept)
+        close_btn.clicked.connect(self.close)
         layout.addWidget(close_btn)

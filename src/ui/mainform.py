@@ -1274,3 +1274,16 @@ QTableView::item:selected {
         # Return a dict with all dates set to '-'
         return {date: '-' for date in attendance_dates}
 
+    def open_calendar_view(self):
+        """Open the calendar dialog for managing class dates."""
+        from .calendar import launch_calendar
+        scheduled_dates = self.metadata.get("dates", [])
+        students = self.students
+        max_classes = int(self.metadata.get("max_classes", 10))
+        def on_save_callback(new_dates):
+            # Save the new dates to metadata and refresh UI as needed
+            self.metadata["dates"] = new_dates
+            # Optionally, refresh the table or UI here
+            self.refresh_table() if hasattr(self, "refresh_table") else None
+        launch_calendar(self, scheduled_dates, students, max_classes, on_save_callback)
+

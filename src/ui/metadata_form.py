@@ -28,8 +28,6 @@ def show_floating_message(parent, message, title=None, duration=2500, style_over
     font_size = int(defaults.get("message_font_size", 12))
     font_weight = "bold" if str(defaults.get("message_font_bold", "true")).lower() == "true" else "normal"
     padding = defaults.get("message_padding", "10px 18px")
-    shadow = defaults.get("message_shadow", "2px 2px 8px #222")
-    z = int(defaults.get("message_z_index", 10000))
     # Allow style overrides
     if style_overrides:
         bg = style_overrides.get("bg", bg)
@@ -40,8 +38,6 @@ def show_floating_message(parent, message, title=None, duration=2500, style_over
         font_size = style_overrides.get("font_size", font_size)
         font_weight = style_overrides.get("font_weight", font_weight)
         padding = style_overrides.get("padding", padding)
-        shadow = style_overrides.get("shadow", shadow)
-        z = style_overrides.get("z", z)
     msg = QLabel(message, parent)
     msg.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
     msg.setAttribute(Qt.WA_TranslucentBackground)
@@ -54,9 +50,14 @@ def show_floating_message(parent, message, title=None, duration=2500, style_over
         font-size: {font_size}pt;
         font-weight: {font_weight};
         padding: {padding};
-        box-shadow: {shadow};
-        z-index: {z};
     """)
+    # Add drop shadow effect (Qt-native)
+    from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+    shadow_effect = QGraphicsDropShadowEffect(msg)
+    shadow_effect.setBlurRadius(8)
+    shadow_effect.setOffset(2, 2)
+    shadow_effect.setColor(Qt.black)
+    msg.setGraphicsEffect(shadow_effect)
     msg.adjustSize()
     # Center in parent
     parent_rect = parent.geometry()

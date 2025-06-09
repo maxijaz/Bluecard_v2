@@ -329,10 +329,14 @@ class Launcher(QMainWindow):
         archive_manager.exec_()  # Open the Archive Manager as a modal dialog
 
     def open_ttr(self):
-        """Open the TTR."""
-        summary_text = get_summary_text(teacher_name="Paul R")  # Or use a variable for teacher
-        dlg = MonthlySummaryDialog(summary_text, self)
-        dlg.exec_()
+        """Open the Monthly Summary as a top-level window (maximizable, resizable, standard window)."""
+        from ui.monthly_summary import MonthlySummaryWindow
+        # Store reference to prevent garbage collection
+        if not hasattr(self, '_monthly_summary_windows'):
+            self._monthly_summary_windows = []
+        window = MonthlySummaryWindow()
+        window.show()
+        self._monthly_summary_windows.append(window)
 
     def open_stylesheet(self):
         from ui.stylesheet import StylesheetForm

@@ -69,10 +69,12 @@ class CalendarView(QDialog):
             self.setSizeGripEnabled(True)
         else:
             self.setSizeGripEnabled(False)
-        if window_controls == "standard":
-            self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+        # --- PATCH: Remove the '?' help button and enable maximize/minimize/close for dialogs ---
+        flags = self.windowFlags()
+        flags |= Qt.Window
+        flags |= Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint
+        flags &= ~Qt.WindowContextHelpButtonHint
+        self.setWindowFlags(flags)
 
         self.max_dates = max_dates
         self.on_save_callback = on_save_callback
