@@ -1121,17 +1121,58 @@ QTableView::item:selected {
         # This should update the metadata display if needed
         pass
 
-    def open_pal_cod_form(self, col=None):
-        """Open the PAL/COD form. If col is provided, pass it to the form."""
-        # You may want to pass more context depending on your PALCODForm signature
-        form = PALCODForm(self, self.class_id, col)
-        form.exec_()
+    def open_pal_cod_form(self, column_index=None):
+        """Open the PALCODForm to update attendance for a column (header workflow)."""
+        from .pal_cod_form import open_pal_cod_form
+        return open_pal_cod_form(self, column_index)
 
-    def open_calendar_view(self):
-        """Open the calendar view for managing dates."""
-        # You may want to pass more context depending on your CalendarView signature
-        calendar = CalendarView(self, self.class_id)
-        calendar.exec_()
+    def edit_attendance_field(self, index):
+        """Edit the attendance field for the selected cell (cell workflow)."""
+        from .pal_cod_form import PALCODForm, show_message_dialog
+        row = index.row()
+        col = index.column()
+        # Row 0 is running total, not editable
+        if row == 0:
+            return
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+        if col < 0 or col >= len(attendance_dates):
+            show_message_dialog(self, "Invalid date column selected.")
+            return
+        date = attendance_dates[col]
+        # Only include active students for row mapping
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
+        student_index = row - 1
+        if student_index < 0 or student_index >= len(active_students):
+            show_message_dialog(self, "Invalid student row selected.")
+            return
+        student_id = active_students[student_index]
+        student_data = self.students[student_id]
+        student_name = student_data.get("name", "")
+        # PALCODForm: cell workflow (single student/date)
+        pal_cod_form = PALCODForm(
+            self,
+            col,  # column_index
+            None,  # update_column_callback (not used for single cell)
+            student_data["attendance"].get(date, "-"),  # current_value
+            date,
+            student_name=student_name,
+            show_cod_cia=True,
+            show_student_name=True,
+            refresh_cell_callback=None,
+            row=row
+        )
+        if hasattr(pal_cod_form, '_blocked') and pal_cod_form._blocked:
+            return
+        if pal_cod_form.exec_() == QDialog.Accepted:
+            new_value = pal_cod_form.selected_value
+            # Update the student's attendance for this date
+            self.students[student_id]["attendance"][date] = new_value
+            # Save to DB
+            from logic.db_interface import set_attendance
+            set_attendance(self.class_id, student_id, date, new_value)
+            self.refresh_student_table()
 
     def highlight_column(self, column_index):
         """Highlight the entire column when a header is clicked. (Stub)"""
@@ -1141,10 +1182,6 @@ QTableView::item:selected {
     def ensure_max_teaching_dates(self):
         """Ensure the number of teaching dates matches max_classes. (Stub)"""
         # Implement logic if needed, or leave as a stub for now
-        pass
-
-    def edit_attendance_field(self, index):
-        """Edit the attendance field for the selected cell. (Stub)"""
         pass
 
     def scroll_to_today(self, headers, today_str):

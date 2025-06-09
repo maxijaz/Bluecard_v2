@@ -1,8 +1,50 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCalendarWidget, QPushButton, QMessageBox, QHBoxLayout
-from PyQt5.QtCore import QDate
-from PyQt5.QtGui import QTextCharFormat, QColor, QFont
-from logic.display import center_widget, scale_and_center, apply_window_flags
-from logic.db_interface import get_all_defaults
+from PyQt5.QtCore import QTimer, Qt, QDate
+from PyQt5.QtGui import QFont, QTextCharFormat, QColor
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QCalendarWidget
+from logic.db_interface import get_all_defaults, get_message_defaults
+
+
+def show_message_dialog(parent, message, timeout=2000, buttons=None):
+    """
+    Show a floating message dialog. If buttons is provided, it should be a list of (label, callback) tuples.
+    If buttons is None, show an auto-closing info dialog.
+    """
+    msg_defaults = get_message_defaults()
+    bg = msg_defaults.get("message_bg_color", "#2980f0")
+    fg = msg_defaults.get("message_fg_color", "#fff")
+    border = msg_defaults.get("message_border_color", "#1565c0")
+    border_width = msg_defaults.get("message_border_width", "3")
+    border_radius = msg_defaults.get("message_border_radius", "12")
+    padding = msg_defaults.get("message_padding", "18px 32px")
+    font_size = msg_defaults.get("message_font_size", "13")
+    font_bold = msg_defaults.get("message_font_bold", "true")
+    font_weight = "bold" if str(font_bold).lower() in ("1", "true", "yes") else "normal"
+    style = f"background: {bg}; color: {fg}; border: {border_width}px solid {border}; padding: {padding}; font-size: {font_size}pt; font-weight: {font_weight}; border-radius: {border_radius}px;"
+    msg_dialog = QDialog(parent, Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    msg_dialog.setAttribute(Qt.WA_TranslucentBackground)
+    msg_dialog.setModal(True if buttons else False)
+    layout = QVBoxLayout(msg_dialog)
+    label = QLabel(message)
+    label.setStyleSheet(style)
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    if buttons:
+        btn_row = QHBoxLayout()
+        for btn_text, btn_callback in buttons:
+            btn = QPushButton(btn_text)
+            btn.setStyleSheet(f"background: {bg}; color: {fg}; border-radius: {border_radius}px; font-size: {font_size}pt; font-weight: {font_weight}; padding: 6px 18px;")
+            btn.clicked.connect(lambda _, cb=btn_callback: (msg_dialog.accept(), cb() if cb else None))
+            btn_row.addWidget(btn)
+        layout.addLayout(btn_row)
+    msg_dialog.adjustSize()
+    parent_geo = parent.geometry() if parent else None
+    if parent_geo:
+        msg_dialog.move(parent.mapToGlobal(parent_geo.center()) - msg_dialog.rect().center())
+    msg_dialog.show()
+    if not buttons:
+        QTimer.singleShot(timeout, msg_dialog.accept)
+    else:
+        msg_dialog.exec_()
 
 
 class CalendarView(QDialog):
@@ -19,6 +61,18 @@ class CalendarView(QDialog):
         win_w = int(defaults.get("window_width", 400))
         win_h = int(defaults.get("window_height", 400))
         self.resize(win_w, win_h)
+
+        # --- PATCH: Resizability and window controls ---
+        resizable = str(defaults.get("resizable", "yes")).lower() in ("yes", "true", "1")
+        window_controls = defaults.get("window_controls", "standard")
+        if resizable:
+            self.setSizeGripEnabled(True)
+        else:
+            self.setSizeGripEnabled(False)
+        if window_controls == "standard":
+            self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
 
         self.max_dates = max_dates
         self.on_save_callback = on_save_callback
@@ -117,11 +171,9 @@ class CalendarView(QDialog):
         """Toggle the selection of a date."""
         print("Before toggle:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
         if date in self.protected_dates:
-            QMessageBox.warning(
+            show_message_dialog(
                 self,
-                "Protected Date",
-                "This date cannot be changed because it has attendance data.\n"
-                "Click column header date on the Bluecard table and clear data to be able to change the date of a grey protected field on the calendar."
+                "This date cannot be changed because it has attendance data.\nClick column header date on the Bluecard table and clear data to be able to change the date of a grey protected field on the calendar."
             )
             return
 
@@ -130,8 +182,8 @@ class CalendarView(QDialog):
             self.clear_highlight(date)
         else:
             if len(self.selected_dates) == self.max_dates:
-                QMessageBox.warning(self, "Limit Reached", f"You can only select up to {self.max_dates} dates.")
-                return  # Only block when trying to add one more than allowed
+                show_message_dialog(self, f"You can only select up to {self.max_dates} dates.")
+                return
             self.selected_dates.add(date)
             self.highlight_dates([date])
         print("After toggle:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
@@ -140,11 +192,11 @@ class CalendarView(QDialog):
         """Save the selected dates."""
         print("Saving selected dates:", [d.toString("dd/MM/yyyy") for d in self.selected_dates])
         if len(self.selected_dates) > self.max_dates:
-            QMessageBox.warning(self, "Too Many Dates", f"Please select up to {self.max_dates} dates.")
+            show_message_dialog(self, f"Please select up to {self.max_dates} dates.")
             return
 
         if not self.selected_dates:
-            QMessageBox.warning(self, "No Dates Selected", "Please select at least one date.")
+            show_message_dialog(self, "Please select at least one date.")
             return
 
         # Sort and filter out invalid dates
