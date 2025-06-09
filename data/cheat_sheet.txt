@@ -6,7 +6,7 @@ VS Code | By Paul
 ==============================
 Use this panel to *understand*, *ask for advice*, or *explore improvements*.
 
-My list:
+My list: ✓✓
 windows min/max
 Add minimize, maximize, and close buttons to this window using setWindowFlags.
 

@@ -65,6 +65,7 @@ class ArchiveManager(QDialog):
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.horizontalHeader().setSectionsClickable(False)
         layout.addWidget(self.table)
 
         # Populate the table
