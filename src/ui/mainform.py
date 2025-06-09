@@ -243,9 +243,11 @@ class Mainform(QMainWindow):
     def __init__(self, class_id, data, theme):
         super().__init__()
         # --- PATCH: Load per-form settings from DB ---
-        form_settings = get_form_settings("Mainform") or {}
-        self.setWindowTitle(f"Class Information - {class_id}")
+        form_settings = get_form_settings("Mainform") or {}        
+        # self.setWindowTitle(f"Class Information - {class_id}")
         win_w = form_settings.get("window_width")
+        # Remove duplicate super().__init__() call below (should only be called once at the top)
+
         win_h = form_settings.get("window_height")
         if win_w and win_h:
             self.resize(int(win_w), int(win_h))
@@ -260,6 +262,7 @@ class Mainform(QMainWindow):
         # REMOVED: max_width and max_height logic
 
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        self.setWindowTitle(f"Class Information - {class_id}")
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         from logic.db_interface import get_all_defaults
         self.default_settings = get_all_defaults()
@@ -278,8 +281,6 @@ class Mainform(QMainWindow):
                 scale_and_center(self, width_ratio, height_ratio)
             elif center:
                 center_widget(self)
-
-        super().__init__()
         self.class_id = class_id
         self.theme = theme
 
