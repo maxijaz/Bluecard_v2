@@ -1225,3 +1225,15 @@ QTableView::item:selected {
         show_dates = self.class_data.get("show_dates", "Yes")
         self.scrollable_table.setVisible(show_dates == "Yes")
 
+    def get_default_attendance_for_new_student(self):
+        """Return a default attendance dictionary for a new student, with all dates set to '-'."""
+        # Use self.metadata to get the list of attendance dates
+        attendance_dates = []
+        if hasattr(self, 'metadata') and self.metadata:
+            attendance_dates = self.metadata.get('dates', [])
+        # If not available, fallback to get_attendance_dates()
+        if not attendance_dates and hasattr(self, 'get_attendance_dates'):
+            attendance_dates = self.get_attendance_dates()
+        # Return a dict with all dates set to '-'
+        return {date: '-' for date in attendance_dates}
+

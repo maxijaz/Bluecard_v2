@@ -285,7 +285,10 @@ class StudentForm(QDialog):
                 "post_test": post_test,
                 "note": note
             })
-            update_student(self.student_id, self.student_data)
+            # Remove attendance before DB update
+            data_to_update = dict(self.student_data)
+            data_to_update.pop("attendance", None)
+            update_student(self.student_id, data_to_update)
             self.show_floating_message("Student updated.")
         else:
             # Add new student
@@ -561,6 +564,37 @@ class StudentForm(QDialog):
                                     new_item.setBackground(QColor('#2196f3'))
                                     self.setItem(row, col, new_item)
                     return
+                # Only allow edit on double click in table cells
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).isValid() and self.indexAt(event.pos()).column() != -1:
+                    self.setEditTriggers(QTableWidget.AllEditTriggers)
+                    self.edit(self.indexAt(event.pos()))
+                    self.setEditTriggers(QTableWidget.NoEditTriggers)
+                    return
+                super().mouseDoubleClickEvent(event)
+
+            def mouseDoubleClickEvent(self, event):
+                # Double click row header: offer to clear row
+                if event.button() == Qt.LeftButton and self.indexAt(event.pos()).column() == -1:
+                    row = self.indexAt(event.pos()).row()
+                    if row == -1:
+                        return
+                    # Replace legacy QMessageBox with floating dialog using DB-driven style
+                    def on_confirm():
+                        self.clearRow(row)
+                        # Optionally, show a success message
+                        self.parent().show_floating_message("Row cleared.")
+
+                    def on_cancel():
+                        pass  # Do nothing
+
+                    # Use parent's show_floating_message with Yes/No buttons
+                    self.parent().show_floating_message(
+                        "Clear this row? This will erase all data in the row.",
+                        buttons=[("Yes", on_confirm), ("No", on_cancel)],
+                        style_from_db=True
+                    )
+                    return
+
                 # Only allow edit on double click in table cells
                 if event.button() == Qt.LeftButton and self.indexAt(event.pos()).isValid() and self.indexAt(event.pos()).column() != -1:
                     self.setEditTriggers(QTableWidget.AllEditTriggers)
