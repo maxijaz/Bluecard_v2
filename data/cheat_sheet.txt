@@ -14,7 +14,7 @@ Add minimize, maximize, and close buttons to this window using setWindowFlags.
 # Set window title to "My Form Name"
 # root.title("My Form Name")
 
-git reset --hard 79c22d34cff9c0f58657e49a233242c16758011a
+git reset --hard 2e78403a72a0881cc89a0d58498faf27d626a172
 git push origin HEAD --force
 
 New line = \n

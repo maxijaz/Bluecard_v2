@@ -326,7 +326,7 @@ class Mainform(QMainWindow):
         if "dates" not in self.metadata or not self.metadata["dates"]:
             # Generate dates if missing
             max_classes_str = self.metadata.get("max_classes", "10")
-            max_classes = int(max_classes_str.split()[0])
+            max_classes = parse_max_classes(max_classes_str)
             start_date_str = self.metadata.get("start_date", "")
             days_str = self.metadata.get("days", "")
             try:
@@ -816,7 +816,7 @@ QTableView::item:selected {
             return self.metadata["dates"]
 
         max_classes_str = self.metadata.get("max_classes", "10")
-        max_classes = int(max_classes_str.split()[0])  # Extract the numeric part
+        max_classes = parse_max_classes(max_classes_str)
 
         start_date_str = self.metadata.get("start_date", "")
         days_str = self.metadata.get("days", "")
@@ -1339,7 +1339,15 @@ QTableView::item:selected {
         from .calendar import launch_calendar
         scheduled_dates = self.metadata.get("dates", [])
         students = self.students
-        max_classes = int(self.metadata.get("max_classes", 10))
+        # PATCH: Robustly parse max_classes as int, even if string is like '20 x 2 = 40.0'
+        max_classes_raw = self.metadata.get("max_classes", 10)
+        try:
+            if isinstance(max_classes_raw, int):
+                max_classes = max_classes_raw
+            else:
+                max_classes = int(str(max_classes_raw).split()[0])
+        except Exception:
+            max_classes = 10
         def on_save_callback(new_dates):
             # Save the new dates to metadata and refresh UI as needed
             self.metadata["dates"] = new_dates
@@ -1376,4 +1384,13 @@ QTableView::item:selected {
             column_index = selected_columns[0].column()
             print(f"[DEBUG] Selected column index: {column_index}")
         self.open_pal_cod_form(column_index=column_index)
+
+def parse_max_classes(val, default=10):
+    """Safely extract the leading integer from max_classes, even if it's a display string."""
+    try:
+        if isinstance(val, int):
+            return val
+        return int(str(val).split()[0])
+    except Exception:
+        return default
 
