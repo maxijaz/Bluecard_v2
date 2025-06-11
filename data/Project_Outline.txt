@@ -190,6 +190,7 @@ Action Steps
     "toggle_checked_fg_color": "#ffffff"
 },
 
+---------------------------------------------------------------------
 
 1. /ui files NOT updated to use factory defaults (global/form/class settings):
 Already updated (based on your summary and code):
@@ -240,9 +241,8 @@ window_controls = "standard"
 import sip.py - deleted not used
 update_dates.py - deleted not used
 
-
-GitHub Copilot
-Certainly! Here are recommended window titles for your forms, based on their function and standard UI conventions:
+-----------------------------------------------------------------------------
+Here are recommended window titles for your forms, based on their function and standard UI conventions:
 
 self.setWindowTitle("Bluecard Launcher")
 
@@ -262,6 +262,53 @@ MonthlySummaryWindow	  TTR Monthly Summary ✓
 StylesheetForm	          Stylesheet Editor ✓
 HtmlBluecard	          HTML Bluecard Report
 -----------------------------------------------------------------------
+Explanation of "Global" and "Forms" Settings:
+
+Global Settings:
+Purpose: These settings define application-wide defaults that apply to all forms and UI components unless overridden by form-specific settings.
+Location: Stored under the "global" key in factory_defaults.json and the defaults table in the database.
+
+Examples:
+form_font_family: Default font for all forms.
+form_bg_color: Background color for all forms.
+button_bg_color: Default button background color.
+message_bg_color: Background color for floating messages.
+
+Application:
+When a form or UI component is initialized, it first checks for form-specific settings. If not found, it falls back to global settings.
+Example: If form_font_family is not defined for a specific form, the application uses the global form_font_family.
+
+Forms Settings:
+Purpose: These settings are specific to individual forms and override global settings for that form.
+Location: Stored under the "forms" key in factory_defaults.json and the form_settings table in the database.
+
+Examples:
+window_width and window_height: Dimensions for a specific form.
+title_color: Title text color for a specific form.
+button_hover_bg_color: Button hover color for a specific form.
+
+Application:
+When a form is initialized, it loads its settings from the form_settings table or factory_defaults.json.
+Example: PALCODForm may have a unique button_hover_bg_color that overrides the global setting.
+
+How the Application Applies Settings:
+
+Initialization:
+Forms call get_form_settings(form_name) to fetch their specific settings.
+If a setting is not found, the application calls get_all_defaults() to fetch the global setting.
+
+Fallback Mechanism:
+If a form-specific setting is missing, the application uses the corresponding global setting.
+Example: If button_font_size is not defined for StudentForm, the application uses the global button_font_size.
+
+Dynamic Updates:
+Users can modify settings via the UI (e.g., StylesheetForm or SettingsForm).
+Changes are saved to the database using set_form_settings or set_all_defaults.
+
+Reset to Factory Defaults:
+The application can reset settings to their original values from factory_defaults.json.
+
+-------------------------------------------------------------------------
 
 # 1. Dataset_1 - data/001attendance_data.JSON 
 
