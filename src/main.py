@@ -18,6 +18,7 @@ import os
 import json
 import shutil
 import sys
+import logging
 from PyQt5.QtWidgets import QApplication
 from logic import parser
 from logic.db_interface import get_form_settings, get_all_defaults
@@ -25,6 +26,14 @@ from ui.launcher import Launcher
 
 # Add the project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Configure logging
+logging.basicConfig(
+    filename="debug.log",
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filemode="w"  # Overwrite the log file each time the application runs
+)
 
 DEFAULT_THEME = "normal"
 TEST_MODE = os.getenv("BLUECARD_TEST_MODE") == "1"  # optional environment toggle
@@ -58,8 +67,10 @@ def start_launcher():
     # --- PATCH: Load per-form settings for Launcher ---
     try:
         form_settings = get_form_settings("Launcher") or {}
+        logging.debug(f"Launcher form settings: {form_settings}")
         from PyQt5.QtGui import QFont
         default_settings = get_all_defaults()
+        logging.debug(f"Default settings: {default_settings}")
         def get_setting(key, fallback):
             val = form_settings.get(key)
             if val is not None and str(val).strip() != "":
@@ -69,6 +80,7 @@ def start_launcher():
         font_family = get_setting("font_family", "Segoe UI")
         app.setFont(QFont(font_family, form_font_size))
     except Exception as e:
+        logging.error(f"Failed to apply per-form settings for Launcher: {e}")
         print(f"[WARN] Could not apply per-form settings for Launcher: {e}")
     try:
         launcher = Launcher(theme)
@@ -92,6 +104,7 @@ def start_launcher():
     sys.exit(exit_code)
 
 if __name__ == "__main__":
+    logging.debug("Application started.")
     try:
         # Optional: clean up environment for testing
         if TEST_MODE:

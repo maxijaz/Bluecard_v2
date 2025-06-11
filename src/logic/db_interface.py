@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+import logging
 
 # Dynamically resolve the path to the database
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "001attendance.db"
@@ -181,13 +182,26 @@ def set_all_defaults(defaults_dict):
     """Set or update multiple defaults in the database (including color_toggle)."""
     conn = get_connection()
     cursor = conn.cursor()
+    # Add logging for defaults_dict
+    logging.debug(f"Defaults dictionary passed: {defaults_dict}")
     for key, value in defaults_dict.items():
-        cursor.execute(
-            "INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)",
-            (key, str(value))
-        )
-    conn.commit()
-    conn.close()
+        # Add logging to debug database operations
+        logging.debug(f"Setting default: {key} = {value}")
+        try:
+            cursor.execute(
+                "INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)",
+                (key, str(value))
+            )
+        except Exception as e:
+            logging.error(f"Error inserting default {key}: {e}")
+    # Add logging to confirm transaction success
+    try:
+        conn.commit()
+        logging.debug("Transaction committed successfully.")
+    except Exception as e:
+        logging.error(f"Error committing transaction: {e}")
+    finally:
+        conn.close()
 
 def insert_date(class_no, date, note=""):
     """Insert a date for a class into the dates table."""

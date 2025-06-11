@@ -280,16 +280,24 @@ def recreate_db(db_path=DB_PATH):
     """)
     print("Created tables")
 
+    # Ensure defaults are loaded
+    defaults_path = os.path.join(DATA_DIR, "teacher_defaults.json")
+    if not os.path.exists(defaults_path):
+        print(f"No default.json found at {defaults_path}")
+        return
+    with open(defaults_path, "r", encoding="utf-8") as f:
+        defaults = json.load(f)
+
     # --- PATCH: Insert teacher_defaults into teacher_defaults table ---
     teacher_defaults = {
-        "def_teacher": "Paul R",
-        "def_teacher_no": "A20049",
-        "def_coursehours": "40",
-        "def_classtime": "2",
-        "def_rate": "520",
-        "def_ccp": "120",
-        "def_travel": "200",
-        "def_bonus": "1000"
+        "def_teacher": defaults.get("def_teacher", "Paul R"),
+        "def_teacher_no": defaults.get("def_teacher_no", "A20049"),
+        "def_coursehours": defaults.get("def_coursehours", "40"),
+        "def_classtime": defaults.get("def_classtime", "2"),
+        "def_rate": defaults.get("def_rate", "520"),
+        "def_ccp": defaults.get("def_ccp", "120"),
+        "def_travel": defaults.get("def_travel", "200"),
+        "def_bonus": defaults.get("def_bonus", "1000")
     }
     cursor.executemany("INSERT OR REPLACE INTO teacher_defaults (key, value) VALUES (?, ?)", teacher_defaults.items())
     print("Inserted teacher defaults")

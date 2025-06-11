@@ -206,8 +206,11 @@ class StylesheetForm(QDialog):
 
         form_layout = QFormLayout()
         teacher_defaults = get_teacher_defaults()
+        # Assign unique objectName values to QLineEdit widgets
         for key, value in teacher_defaults.items():
-            form_layout.addRow(key.replace("_", " ").capitalize() + ":", QLineEdit(str(value)))
+            line_edit = QLineEdit(str(value))
+            line_edit.setObjectName(key)  # Set objectName to the key
+            form_layout.addRow(key.replace("_", " ").capitalize() + ":", line_edit)
         scroll_layout.addLayout(form_layout)
 
         scroll_content.setLayout(scroll_layout)
@@ -227,6 +230,9 @@ class StylesheetForm(QDialog):
 
         restore_button.clicked.connect(lambda: self.confirm_restore_defaults())
 
+        # Connect the Save button to the save_settings method
+        save_button.clicked.connect(self.save_settings)
+
         return page
 
     def confirm_restore_defaults(self):
@@ -239,26 +245,47 @@ class StylesheetForm(QDialog):
             show_floating_message(self, "Restore defaults canceled.", 3000)
 
     def restore_all_colors_fonts(self):
-        """Restore all colors and fonts to their default values."""
+        """Restore all colors and fonts to their default values for all forms."""
         try:
+            logging.debug("Restore Defaults button clicked.")
             defaults = get_all_defaults()
-            # Logic to reset colors and fonts based on defaults
-            # Example: Resetting stylesheet settings
-            self.setStyleSheet(defaults.get("stylesheet", ""))
+            logging.debug(f"Defaults fetched: {defaults}")
+            for i in range(self.stack.count()):
+                page = self.stack.widget(i)
+                for widget in page.findChildren(QLineEdit):
+                    key = widget.objectName()
+                    if key in defaults:
+                        widget.setText(defaults[key])
+            logging.debug("Restore operation completed for all forms.")
             show_floating_message(self, "Defaults restored successfully.", 3000)
         except Exception as e:
-            print(f"[ERROR] Failed to restore defaults: {e}")
+            logging.error(f"Failed to restore defaults: {e}")
             show_floating_message(self, "Failed to restore defaults.", 3000)
 
+    # Improved save_settings method with better debugging
     def save_settings(self):
-        """Save the current settings."""
+        """Save the current settings for all forms."""
         try:
-            # Logic to save current settings
-            current_values = self._get_current_values()
+            logging.debug("Save button clicked.")
+            current_values = {}
+            for i in range(self.stack.count()):
+                page = self.stack.widget(i)
+                logging.debug(f"Processing page: {page.objectName()}")
+                for widget in page.findChildren(QLineEdit):
+                    key = widget.objectName()
+                    value = widget.text()
+                    logging.debug(f"Widget found - Key: {key}, Value: {value}")
+                    # Filter out widgets with empty keys
+                    if key:
+                        if key in current_values:
+                            logging.warning(f"Duplicate key detected: {key}")
+                        current_values[key] = value
+            logging.debug(f"Current values to save: {current_values}")
             set_all_defaults(current_values)
+            logging.debug("Save operation completed for all forms.")
             show_floating_message(self, "Data saved successfully.", 3000)
         except Exception as e:
-            print(f"[ERROR] Failed to save settings: {e}")
+            logging.error(f"Failed to save settings: {e}")
             show_floating_message(self, "Failed to save data.", 3000)
 
     def _get_current_values(self):
