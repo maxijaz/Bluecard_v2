@@ -101,7 +101,7 @@ class MetadataForm(QDialog):
         # REMOVED: max_width and max_height logic
 
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        self.setWindowTitle("Class Metadata")
+        self.setWindowTitle("Course Metadata")
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
         font_size = int(form_settings.get("font_size") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))

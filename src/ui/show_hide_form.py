@@ -91,7 +91,7 @@ def show_message_dialog(parent, message, timeout=2000, buttons=None):
 class ShowHideForm(QDialog):
     def __init__(self, parent, class_id, on_save_callback=None):
         super().__init__(parent)
-        self.setWindowTitle("Show / Hide Columns & Colour Scheme")
+        self.setWindowTitle("Show/Hide Columns and Colors")
         self.class_id = class_id
         self.on_save_callback = on_save_callback
         self.class_data = get_class_by_id(class_id)  # <-- Load from classes table
@@ -145,7 +145,7 @@ class ShowHideForm(QDialog):
         # Header row
         header_layout = QHBoxLayout()
         header_label_style = f"color: {defaults.get('title_color', '#1976d2')}; font-size: {defaults.get('title_font_size', 14)}pt; font-weight: {'bold' if str(defaults.get('title_font_bold', True)).lower() in ('1','true','yes') else 'normal'};"
-        for text in ("<b>Choose columns to show/hide</b>", "<b>P/A/L colour scheme</b>", "<b>Column Width</b>"):
+        for text in ("<b>Columns: Show/Width</b>", "<b>P/A/L colors</b>"):
             lbl = QLabel(text)
             lbl.setStyleSheet(header_label_style)
             header_layout.addWidget(lbl)

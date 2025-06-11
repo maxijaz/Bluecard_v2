@@ -171,7 +171,7 @@ class MonthlySummaryWindow(QWidget):
             self.resize(win_w, win_h)
         else:
             self.setFixedSize(win_w, win_h)
-        self.setWindowTitle("Monthly Summary")
+        self.setWindowTitle("TTR Monthly Summary")
         # --- REMOVE FORCE MAXIMIZE ON OPEN ---
         # QTimer.singleShot(0, self.showMaximized)
         # --- PATCH: Apply display preferences ---

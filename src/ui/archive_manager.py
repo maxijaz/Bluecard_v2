@@ -17,7 +17,7 @@ class ArchiveManager(QDialog):
         self.archived_classes = archived_classes  # Dictionary of archived classes
         self.refresh_callback = refresh_callback  # Store the callback
 
-        self.setWindowTitle("Archived Classes")
+        self.setWindowTitle("Archived Manager")
         form_settings = get_form_settings("ArchiveManager") or {}
         win_w = form_settings.get("window_width")
         win_h = form_settings.get("window_height")

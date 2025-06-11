@@ -252,14 +252,14 @@ Mainform	              Bluecard Main ✓
 Launcher	              Bluecard Launcher ✓
 ArchiveManager	          Archive Manager ✓
 SettingsForm / Settings	  Settings ✓
-MetadataForm	          Class Metadata
-StudentForm	              Student Details
-StudentManager	          Student Manager
-ShowHideForm	          Show/Hide Columns
+MetadataForm	          Course Metadata ✓
+StudentForm	              Add/Edit Student ✓
+StudentManager	          Student Manager ✓
+ShowHideForm	          Show/Hide Columns and Colors ✓
 PALCODForm	              PAL/COD Editor
 CalendarView	          Class Shedule Calendar ✓
-MonthlySummaryWindow	  Monthly Summary
-StylesheetForm	          Stylesheet Editor
+MonthlySummaryWindow	  TTR Monthly Summary ✓
+StylesheetForm	          Stylesheet Editor ✓
 HtmlBluecard	          HTML Bluecard Report
 -----------------------------------------------------------------------
 

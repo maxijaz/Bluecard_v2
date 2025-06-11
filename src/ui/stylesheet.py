@@ -57,7 +57,7 @@ def show_floating_message(parent, message, duration=2500, style_overrides=None):
 class StylesheetForm(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Stylesheet Settings")
+        self.setWindowTitle("Stylesheet Editor")
         self.setWindowModality(Qt.ApplicationModal)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
         self.default_font = QFont("Arial", 11)

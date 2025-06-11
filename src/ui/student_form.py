@@ -36,6 +36,7 @@ class StudentForm(QDialog):
         if max_w and max_h:
             self.setMaximumSize(int(max_w), int(max_h))
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
+        self.setWindowTitle("Add/Edit Student Details")
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         default_settings = get_all_defaults()
         font_size = int(form_settings.get("window_width") or default_settings.get("form_font_size", default_settings.get("button_font_size", 12)))
