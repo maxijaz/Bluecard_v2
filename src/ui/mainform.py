@@ -527,7 +527,7 @@ class Mainform(QMainWindow):
         # Connect buttons to their respective methods
         add_edit_student_btn.clicked.connect(self.add_edit_student)
         remove_student_btn.clicked.connect(self.remove_student)
-        pal_cod_btn.clicked.connect(self.open_pal_cod_form)  # Connect to the new form
+        pal_cod_btn.clicked.connect(lambda: self.debug_pal_cod_button_click())  # Connect to the debug method
         html_button.clicked.connect(self.run_html_output)
         metadata_form_btn.clicked.connect(self.open_metadata_form)
         manage_dates_btn.clicked.connect(self.open_calendar_view)
@@ -1136,63 +1136,43 @@ QTableView::item:selected {
         self.last_clicked_header_index = section_index
 
     def open_pal_cod_form(self, column_index=None):
-        """Open the PALCODForm to update attendance for a column (header workflow)."""
-        if column_index is None:
-            # Use the last clicked header index if available
-            if self.last_clicked_header_index is not None:
-                column_index = self.last_clicked_header_index
-            else:
-                # Attempt to get the selected column index from the scrollable table
-                selected_columns = self.scrollable_table.selectionModel().selectedColumns()
-                if not selected_columns:
-                    show_message_dialog(self, "Please select a valid date column header in the attendance table before using PAL/COD.")
-                    return
-                column_index = selected_columns[0].column()
-
-        print(f"[DEBUG] Selected column index: {column_index}")
-
-        # Fallback mechanism if column_index is invalid
-        if column_index is None or not isinstance(column_index, int):
-            show_message_dialog(self, "Invalid column index detected.")
-            return
-
+        """Open the PALCODForm to update attendance."""
         attendance_dates = self.metadata.get("dates", [])
+
+        # Fallback mechanism if metadata is empty
         if not attendance_dates:
+            print("[DEBUG] Metadata 'dates' is empty, invoking fallback mechanism.")
             attendance_dates = self.get_attendance_dates()
+
+        # Handle NoneType column_index
+        if column_index is None:
+            print("[DEBUG] No column index provided, defaulting to 0.")
+            column_index = 0
+
+        # Validate column index
         if column_index < 0 or column_index >= len(attendance_dates):
-            show_message_dialog(self, "Invalid date column selected.")
+            print(f"[DEBUG] Calculated column_index is invalid: {column_index}")
+            show_message_dialog(self, "Invalid column index detected.")
             return
 
         date = attendance_dates[column_index]
         print(f"[DEBUG] Date for selected column: {date}")
 
-        # Exclude row 0 (running total) and inactive students
-        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
-        if not active_students:
-            show_message_dialog(self, "No active students found.")
+        # --- Block if the header is not a real date (e.g., "Date1", "date2", "Empty-1") ---
+        if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
+            show_message_dialog(
+                self,
+                "Cannot set P/A/L for this column. Please add real dates first before attempting to change attendance."
+            )
             return
 
-        # PALCODForm: column workflow (all students/date)
-        pal_cod_form = PALCODForm(
-            self,
-            column_index,  # column_index
-            self.update_column_values,  # update_column_callback
-            None,  # current_value (not used for column-wide updates)
-            date,
-            show_cod_cia=False,
-            show_student_name=False
-        )
+        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=False, show_student_name=True)
         if hasattr(pal_cod_form, '_blocked') and pal_cod_form._blocked:
+            print("[DEBUG] PALCODForm: Dialog was blocked, not calling exec_()")
             return
         if pal_cod_form.exec_() == QDialog.Accepted:
             new_value = pal_cod_form.selected_value
-            # Update attendance for all active students
-            for student_id in active_students:
-                self.students[student_id]["attendance"][date] = new_value
-                # Save to DB
-                from logic.db_interface import set_attendance
-                set_attendance(self.class_id, student_id, date, new_value)
-            self.refresh_student_table()
+            self.update_column_values(column_index, new_value)
 
     def header_double_click(self, section_index):
         """Handle double-click on a header to open PALCODForm."""
@@ -1377,4 +1357,16 @@ QTableView::item:selected {
             from logic.db_interface import set_attendance
             set_attendance(self.class_id, student_id, date, new_value)
         self.refresh_student_table()
+
+    def debug_pal_cod_button_click(self):
+        print("[DEBUG] PAL/COD button clicked.")
+        # Retrieve the selected column index from the table
+        selected_columns = self.scrollable_table.selectionModel().selectedColumns()
+        if not selected_columns:
+            print("[DEBUG] No column selected, defaulting to column index 0.")
+            column_index = 0
+        else:
+            column_index = selected_columns[0].column()
+            print(f"[DEBUG] Selected column index: {column_index}")
+        self.open_pal_cod_form(column_index=column_index)
 

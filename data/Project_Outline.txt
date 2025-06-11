@@ -191,6 +191,8 @@ Action Steps
 },
 
 ---------------------------------------------------------------------
+Run PowerShell:
+PS C:\Temp\Bluecard_v2> & "C:\Users\Spencer\AppData\Local\Programs\Python\Python313\python.exe" "C:\Temp\Bluecard_v2\src\main.py"
 
 1. /ui files NOT updated to use factory defaults (global/form/class settings):
 Already updated (based on your summary and code):
