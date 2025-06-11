@@ -1139,26 +1139,27 @@ QTableView::item:selected {
         """Open the PALCODForm to update attendance."""
         attendance_dates = self.metadata.get("dates", [])
 
-        # Fallback mechanism if metadata is empty
+        # Ensure attendance_dates is populated
         if not attendance_dates:
-            print("[DEBUG] Metadata 'dates' is empty, invoking fallback mechanism.")
             attendance_dates = self.get_attendance_dates()
+            self.metadata["dates"] = attendance_dates
 
-        # Handle NoneType column_index
         if column_index is None:
-            print("[DEBUG] No column index provided, defaulting to 0.")
-            column_index = 0
+            show_message_dialog(
+                self,
+                "Please select a valid date column header in the attendance table before using PAL/COD."
+            )
+            return
 
-        # Validate column index
         if column_index < 0 or column_index >= len(attendance_dates):
-            print(f"[DEBUG] Calculated column_index is invalid: {column_index}")
-            show_message_dialog(self, "Invalid column index detected.")
+            show_message_dialog(
+                self,
+                "Invalid column index detected."
+            )
             return
 
         date = attendance_dates[column_index]
-        print(f"[DEBUG] Date for selected column: {date}")
 
-        # --- Block if the header is not a real date (e.g., "Date1", "date2", "Empty-1") ---
         if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
             show_message_dialog(
                 self,
@@ -1166,10 +1167,16 @@ QTableView::item:selected {
             )
             return
 
-        pal_cod_form = PALCODForm(self, column_index, self.update_column_values, None, date, show_cod_cia=False, show_student_name=True)
-        if hasattr(pal_cod_form, '_blocked') and pal_cod_form._blocked:
-            print("[DEBUG] PALCODForm: Dialog was blocked, not calling exec_()")
-            return
+        pal_cod_form = PALCODForm(
+            self,
+            column_index,
+            self.update_column_values,
+            None,
+            date,
+            show_cod_cia=True,
+            show_student_name=False
+        )
+
         if pal_cod_form.exec_() == QDialog.Accepted:
             new_value = pal_cod_form.selected_value
             self.update_column_values(column_index, new_value)
