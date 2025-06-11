@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QTime
 from PyQt5.QtGui import QColor, QFont
 from logic.parser import load_data, save_data
 from ui.student_form import StudentForm
-from .metadata_form import MetadataForm
+from ui.metadata_form import MetadataForm
 from .student_manager import StudentManager
 from datetime import datetime, timedelta
 import PyQt5.sip  # Import PyQt5.sip to bridge PyQt5 and Tkinter
@@ -609,6 +609,11 @@ class Mainform(QMainWindow):
         # Connect double-click signal to edit_student method
         self.frozen_table.doubleClicked.connect(self.edit_student)
 
+        # Connect the double-click event of the header to the `header_double_click` method
+        header = self.scrollable_table.horizontalHeader()
+        header.sectionDoubleClicked.connect(self.header_double_click)
+        print("[DEBUG] Connected header double-click event to header_double_click method.")
+
         self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
 
         # Set size policies and stretch factors for proper alignment
@@ -1062,6 +1067,9 @@ QTableView::item:selected {
                 self.scrollable_table.setCurrentIndex(QModelIndex())
         return super().eventFilter(obj, event)
 
+    # Add a variable to track the last clicked header section index
+    last_clicked_header_index = None
+
     FROZEN_COLUMN_WIDTHS = {
         "#": 30, # mapped to db width_row_number = 30
         "Name": 150, # mapped to db width_name = 150
@@ -1122,10 +1130,74 @@ QTableView::item:selected {
         # This should update the metadata display if needed
         pass
 
+    def track_header_click(self, section_index):
+        """Track the last clicked header section index."""
+        print(f"[DEBUG] Header clicked section index: {section_index}")
+        self.last_clicked_header_index = section_index
+
     def open_pal_cod_form(self, column_index=None):
         """Open the PALCODForm to update attendance for a column (header workflow)."""
-        from .pal_cod_form import open_pal_cod_form
-        return open_pal_cod_form(self, column_index)
+        if column_index is None:
+            # Use the last clicked header index if available
+            if self.last_clicked_header_index is not None:
+                column_index = self.last_clicked_header_index
+            else:
+                # Attempt to get the selected column index from the scrollable table
+                selected_columns = self.scrollable_table.selectionModel().selectedColumns()
+                if not selected_columns:
+                    show_message_dialog(self, "Please select a valid date column header in the attendance table before using PAL/COD.")
+                    return
+                column_index = selected_columns[0].column()
+
+        print(f"[DEBUG] Selected column index: {column_index}")
+
+        # Fallback mechanism if column_index is invalid
+        if column_index is None or not isinstance(column_index, int):
+            show_message_dialog(self, "Invalid column index detected.")
+            return
+
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+        if column_index < 0 or column_index >= len(attendance_dates):
+            show_message_dialog(self, "Invalid date column selected.")
+            return
+
+        date = attendance_dates[column_index]
+        print(f"[DEBUG] Date for selected column: {date}")
+
+        # Exclude row 0 (running total) and inactive students
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
+        if not active_students:
+            show_message_dialog(self, "No active students found.")
+            return
+
+        # PALCODForm: column workflow (all students/date)
+        pal_cod_form = PALCODForm(
+            self,
+            column_index,  # column_index
+            self.update_column_values,  # update_column_callback
+            None,  # current_value (not used for column-wide updates)
+            date,
+            show_cod_cia=False,
+            show_student_name=False
+        )
+        if hasattr(pal_cod_form, '_blocked') and pal_cod_form._blocked:
+            return
+        if pal_cod_form.exec_() == QDialog.Accepted:
+            new_value = pal_cod_form.selected_value
+            # Update attendance for all active students
+            for student_id in active_students:
+                self.students[student_id]["attendance"][date] = new_value
+                # Save to DB
+                from logic.db_interface import set_attendance
+                set_attendance(self.class_id, student_id, date, new_value)
+            self.refresh_student_table()
+
+    def header_double_click(self, section_index):
+        """Handle double-click on a header to open PALCODForm."""
+        print(f"[DEBUG] Double-clicked header section index: {section_index}")
+        self.open_pal_cod_form(section_index)
 
     def edit_attendance_field(self, index):
         """Edit the attendance field for the selected cell (cell workflow)."""
@@ -1287,4 +1359,22 @@ QTableView::item:selected {
             # Optionally, refresh the table or UI here
             self.refresh_table() if hasattr(self, "refresh_table") else None
         launch_calendar(self, scheduled_dates, students, max_classes, on_save_callback)
+
+    def update_column_values(self, column_index, new_value):
+        """Update attendance values for all students in the specified column."""
+        attendance_dates = self.metadata.get("dates", [])
+        if not attendance_dates:
+            attendance_dates = self.get_attendance_dates()
+        if column_index < 0 or column_index >= len(attendance_dates):
+            show_message_dialog(self, "Invalid column index.")
+            return
+
+        date = attendance_dates[column_index]
+        active_students = [sid for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"]
+        for student_id in active_students:
+            self.students[student_id]["attendance"][date] = new_value
+            # Save to DB
+            from logic.db_interface import set_attendance
+            set_attendance(self.class_id, student_id, date, new_value)
+        self.refresh_student_table()
 
