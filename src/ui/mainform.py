@@ -929,6 +929,10 @@ QTableView::item:selected {
         # --- PATCH: Always reload metadata from DB before using dates ---
         self.class_data = get_class_by_id(self.class_id)
         self.metadata = self.class_data
+        # --- PATCH: Load dates from DB dates table ---
+        from logic.db_interface import get_dates_by_class
+        dates_from_db = get_dates_by_class(self.class_id)
+        self.metadata["dates"] = dates_from_db
         print(f"[DEBUG] Reloaded metadata from DB: dates={self.metadata.get('dates', [])}")
 
         # --- PATCH: Ensure attendance_dates is always valid ---
