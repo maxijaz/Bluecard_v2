@@ -251,7 +251,7 @@ Form/Class Name	          Recommended Title
 Mainform	              Bluecard Main ✓
 Launcher	              Bluecard Launcher ✓
 ArchiveManager	          Archive Manager ✓
-SettingsForm / Settings	  Settings ✓
+SettingsForm        	  Settings ✓
 MetadataForm	          Course Metadata ✓
 StudentForm	              Add/Edit Student ✓
 StudentManager	          Student Manager ✓
