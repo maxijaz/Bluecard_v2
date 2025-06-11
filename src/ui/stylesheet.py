@@ -79,7 +79,9 @@ class StylesheetForm(QDialog):
             "Global Settings",   # Second
         ]
         # Add all forms alphabetically
-        forms = ["Archive Manager", "Bulk Import Students", "Calendar View", "Launcher", "Mainform", "Metadata Form", "Monthly Summary", "Settings Form", "Student Form"]
+        forms = [
+            "Archive Manager", "Bulk Import Students", "Calendar View", "Launcher", "Mainform", "Metadata Form", "Monthly Summary", "Settings Form", "Student Form", "Student Manager", "Show/Hide Columns and Colors", "PAL/COD Editor", "Stylesheet Editor"
+        ]
         navigation_items.extend([f"Settings for {form}" for form in sorted(forms)])
 
         for name in navigation_items:
@@ -156,7 +158,7 @@ class StylesheetForm(QDialog):
         scroll_layout = QVBoxLayout(scroll_content)
 
         form_layout = QFormLayout()
-        form_settings = get_form_settings(form_name.replace(" ", ""))  # Remove spaces for DB lookup
+        form_settings = get_form_settings(form_name.replace(" ", "")) or get_all_defaults()  # Fallback to global settings
         for key, value in form_settings.items():
             form_layout.addRow(key.replace("_", " ").capitalize() + ":", QLineEdit(str(value)))
         scroll_layout.addLayout(form_layout)
