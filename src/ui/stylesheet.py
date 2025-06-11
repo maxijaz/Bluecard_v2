@@ -5,6 +5,15 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from logic.db_interface import get_all_defaults, set_all_defaults, get_form_settings, get_teacher_defaults
+import logging
+
+# Configure logging
+logging.basicConfig(
+    filename="debug.log",
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filemode="w"  # Overwrite the log file each time the application runs
+)
 
 # --- Floating message dialog helper ---
 def show_floating_message(parent, message, duration=2500, style_overrides=None):
@@ -42,8 +51,6 @@ def show_floating_message(parent, message, duration=2500, style_overrides=None):
         font-size: {font_size}pt;
         font-weight: {font_weight};
         padding: {padding};
-        box-shadow: {shadow};
-        z-index: {z};
     """)
     msg.adjustSize()
     parent_rect = parent.geometry()
@@ -138,8 +145,8 @@ class StylesheetForm(QDialog):
         layout.addLayout(button_layout)
 
         # Updated button styles to adhere to factory defaults.
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
 
         return page
 
@@ -175,8 +182,8 @@ class StylesheetForm(QDialog):
         layout.addLayout(button_layout)
 
         # Updated button styles to adhere to factory defaults.
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
 
         return page
 
@@ -215,8 +222,8 @@ class StylesheetForm(QDialog):
         layout.addLayout(button_layout)
 
         # Updated button styles to adhere to factory defaults.
-        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
-        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; } pressed { background-color: #0d47a1; }")
+        save_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
+        restore_button.setStyleSheet("background-color: #1976d2; color: #ffffff; border: 1px solid #1976d2; font-size: 12pt; font-weight: normal; padding: 5px; hover { background-color: #1565c0; border: 2px solid #1565c0; } pressed { background-color: #0d47a1; border: 3px solid #0d47a1; }")
 
         restore_button.clicked.connect(lambda: self.confirm_restore_defaults())
 
@@ -231,19 +238,63 @@ class StylesheetForm(QDialog):
         else:
             show_floating_message(self, "Restore defaults canceled.", 3000)
 
-    def _debug_save_settings(self, *args, **kwargs):
-        print("[DEBUG] Save button clicked. Current values:", self._get_current_values())
-        self.save_settings(*args, **kwargs)
+    def restore_all_colors_fonts(self):
+        """Restore all colors and fonts to their default values."""
+        try:
+            defaults = get_all_defaults()
+            # Logic to reset colors and fonts based on defaults
+            # Example: Resetting stylesheet settings
+            self.setStyleSheet(defaults.get("stylesheet", ""))
+            show_floating_message(self, "Defaults restored successfully.", 3000)
+        except Exception as e:
+            print(f"[ERROR] Failed to restore defaults: {e}")
+            show_floating_message(self, "Failed to restore defaults.", 3000)
 
-    def _debug_restore_all_colors_fonts(self, *args, **kwargs):
-        print("[DEBUG] Restore All Colors/Fonts button clicked.")
-        self.restore_all_colors_fonts()  # Call with no arguments
-        print("[DEBUG] After restore, current values:", self._get_current_values())
+    def save_settings(self):
+        """Save the current settings."""
+        try:
+            # Logic to save current settings
+            current_values = self._get_current_values()
+            set_all_defaults(current_values)
+            show_floating_message(self, "Data saved successfully.", 3000)
+        except Exception as e:
+            print(f"[ERROR] Failed to save settings: {e}")
+            show_floating_message(self, "Failed to save data.", 3000)
 
-    def _debug_toggle_color_on_off(self, *args, **kwargs):
-        print(f"[DEBUG] Toggle Color button clicked. Checked: {self.toggle_color_button.isChecked()}")
-        self.toggle_color_on_off()  # Call with no arguments
-        print("[DEBUG] After toggle, current values:", self._get_current_values())
+    def _get_current_values(self):
+        """Helper method to collect current values from form fields."""
+        # Example implementation: Collect values from form fields
+        current_values = {}
+        for i in range(self.stack.count()):
+            page = self.stack.widget(i)
+            for widget in page.findChildren(QLineEdit):
+                key = widget.objectName()
+                value = widget.text()
+                current_values[key] = value
+        return current_values
+
+    def _debug_save_settings(self):
+        """Debugging method for Save button."""
+        try:
+            current_values = self._get_current_values()
+            logging.debug(f"Current values to save: {current_values}")
+            set_all_defaults(current_values)
+            logging.debug("Save operation completed.")
+            show_floating_message(self, "Data saved successfully.", 3000)
+        except Exception as e:
+            logging.error(f"Failed to save settings: {e}")
+            show_floating_message(self, "Failed to save data.", 3000)
+
+    def _debug_restore_defaults(self):
+        """Debugging method for Restore Defaults button."""
+        try:
+            logging.debug("Restore Defaults button clicked.")
+            self.restore_all_colors_fonts()
+            logging.debug("Restore operation completed.")
+            show_floating_message(self, "Defaults restored successfully.", 3000)
+        except Exception as e:
+            logging.error(f"Failed to restore defaults: {e}")
+            show_floating_message(self, "Failed to restore defaults.", 3000)
 
     def _debug_close_with_prompt(self, *args, **kwargs):
         print("[DEBUG] Close button clicked. Has changes:", self._has_changes())
