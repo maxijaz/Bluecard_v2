@@ -817,6 +817,10 @@ QTableView::item:selected {
         else:
             attendance_dates = []
 
+        # --- PATCH: Remove dates marked as CIA/HOL/COD in date_status ---
+        date_status = self.metadata.get("date_status", {})
+        attendance_dates = [d for d in attendance_dates if date_status.get(d, "") not in ("CIA", "HOL", "COD")]
+
         max_classes_str = self.metadata.get("max_classes", "10")
         try:
             max_classes = int(str(max_classes_str).split()[0])
@@ -845,14 +849,14 @@ QTableView::item:selected {
         attendance_dates = [d for d in attendance_dates if d != "--/--/--"]
         attendance_dates = list(dict.fromkeys(attendance_dates))
 
-        # Remove all CIA/HOL/COD dates from attendance_dates before generating new ones
+        # Remove all CIA/HOL/COD dates from attendance_dates before generating new ones (already done above)
         def is_real_class_date(date_str):
             for student in self.students.values():
                 att = student.get("attendance", {})
                 if att.get(date_str, "-") in ["CIA", "HOL", "COD"]:
                     return False
             return True
-        attendance_dates = [d for d in attendance_dates if is_real_class_date(d)]
+        # attendance_dates = [d for d in attendance_dates if is_real_class_date(d)]
         print("[DEBUG] attendance_dates after removing CIA/HOL/COD:", attendance_dates)
         print(f"[DEBUG] max_classes: {max_classes}, weekdays: {weekdays}, start_date: {start_date}")
         if attendance_dates:
@@ -863,10 +867,7 @@ QTableView::item:selected {
         # Now generate new dates if needed
         if len(attendance_dates) < max_classes:
             if attendance_dates:
-                try:
-                    last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
-                except ValueError:
-                    last_date = start_date
+                last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
             else:
                 last_date = start_date
 
@@ -874,9 +875,10 @@ QTableView::item:selected {
             current_date = last_date + timedelta(days=1) if last_date else datetime.now()
             while len(attendance_dates) + len(new_dates) < max_classes and weekdays and current_date:
                 if current_date.weekday() in weekdays:
-                    date_str = current_date.strftime("%d/%m/%Y")
-                    if date_str not in attendance_dates and date_str not in new_dates:
-                        new_dates.append(date_str)
+                    new_date_str = current_date.strftime("%d/%m/%Y")
+                    # Don't add if already in attendance_dates or marked as CIA/HOL/COD
+                    if new_date_str not in attendance_dates and date_status.get(new_date_str, "") not in ("CIA", "HOL", "COD"):
+                        new_dates.append(new_date_str)
                 current_date += timedelta(days=1)
             print("[DEBUG] new_dates generated:", new_dates)
             attendance_dates += new_dates
@@ -924,11 +926,19 @@ QTableView::item:selected {
         # Only include students who are active
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
 
+        # --- PATCH: Always reload metadata from DB before using dates ---
+        self.class_data = get_class_by_id(self.class_id)
+        self.metadata = self.class_data
+        print(f"[DEBUG] Reloaded metadata from DB: dates={self.metadata.get('dates', [])}")
+
         # --- PATCH: Ensure attendance_dates is always valid ---
         attendance_dates = self.metadata.get("dates", [])
         if not attendance_dates:
+            print("[DEBUG] No dates in metadata, generating new attendance_dates.")
             attendance_dates = self.get_attendance_dates()
             self.metadata["dates"] = attendance_dates
+        else:
+            print("[DEBUG] Loaded attendance_dates from metadata.")
 
         # Initialize totals for all fields
         total_cia = 0
