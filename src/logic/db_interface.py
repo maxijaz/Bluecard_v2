@@ -297,3 +297,20 @@ def get_message_defaults():
             d[key] = row["value"]
     conn.close()
     return d
+
+def get_dates_by_class(class_no):
+    """Fetch all dates for a class from the dates table, sorted chronologically."""
+    from datetime import datetime
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT date FROM dates WHERE class_no = ?", (class_no,))
+    rows = cursor.fetchall()
+    conn.close()
+    # Return as a list of date strings, sorted chronologically if possible
+    date_list = [row[0] for row in rows]
+    def date_key(d):
+        try:
+            return datetime.strptime(d, "%d/%m/%Y")
+        except Exception:
+            return d  # fallback for placeholders or invalid dates
+    return sorted(date_list, key=date_key)
