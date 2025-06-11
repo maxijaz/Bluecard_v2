@@ -177,6 +177,9 @@ class PALCODForm(QDialog):
     def update_column(self, value):
         def on_confirm():
             self.selected_value = value
+            if self.update_column_callback:
+                print(f"[DEBUG] PALCODForm: Calling update_column_callback({self.column_index}, {value})")
+                self.update_column_callback(self.column_index, value)
             self.accept()
             # Refresh the cell if callback is provided
             if self.refresh_cell_callback and self.row is not None:
@@ -191,6 +194,9 @@ class PALCODForm(QDialog):
 
     def select_value(self, value):
         self.selected_value = value
+        if self.update_column_callback:
+            print(f"[DEBUG] PALCODForm: Calling update_column_callback({self.column_index}, {value})")
+            self.update_column_callback(self.column_index, value)
         self.accept()
         # Refresh the cell if callback is provided
         if self.refresh_cell_callback and self.row is not None:

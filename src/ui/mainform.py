@@ -811,13 +811,17 @@ QTableView::item:selected {
         super().resizeEvent(event)  # Call the base class implementation
 
     def get_attendance_dates(self):
-        """Get all unique attendance dates dynamically based on start_date, days, and max_classes."""
+        """Get all unique attendance dates dynamically based on start_date, days, and max_classes, always returning max_classes dates."""
         if "dates" in self.metadata:
-            return self.metadata["dates"]
+            attendance_dates = list(self.metadata["dates"])
+        else:
+            attendance_dates = []
 
         max_classes_str = self.metadata.get("max_classes", "10")
-        max_classes = parse_max_classes(max_classes_str)
-
+        try:
+            max_classes = int(str(max_classes_str).split()[0])
+        except Exception:
+            max_classes = 10
         start_date_str = self.metadata.get("start_date", "")
         days_str = self.metadata.get("days", "")
 
@@ -825,7 +829,7 @@ QTableView::item:selected {
         try:
             start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
         except ValueError:
-            start_date = None  # If StartDate is invalid or missing, fallback to placeholders
+            start_date = None
 
         # Parse Days into weekday indices (0=Monday, 1=Tuesday, ..., 6=Sunday)
         weekdays = []
@@ -836,20 +840,53 @@ QTableView::item:selected {
             }
             weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
 
-        # Generate dates dynamically
-        dates = []
-        if start_date and weekdays:
-            current_date = start_date
-            while len(dates) < max_classes:
-                if current_date.weekday() in weekdays:
-                    dates.append(current_date.strftime("%d/%m/%Y"))
-                current_date += timedelta(days=1)  # Move to the next day
+        # Remove placeholders and duplicates
+        print("[DEBUG] Original attendance_dates before patch:", attendance_dates)
+        attendance_dates = [d for d in attendance_dates if d != "--/--/--"]
+        attendance_dates = list(dict.fromkeys(attendance_dates))
 
-        # Fallback to placeholders if no valid dates are generated
-        if not dates:
-            dates = ["--/--/--" for _ in range(max_classes)]
-        return dates
+        # Remove all CIA/HOL/COD dates from attendance_dates before generating new ones
+        def is_real_class_date(date_str):
+            for student in self.students.values():
+                att = student.get("attendance", {})
+                if att.get(date_str, "-") in ["CIA", "HOL", "COD"]:
+                    return False
+            return True
+        attendance_dates = [d for d in attendance_dates if is_real_class_date(d)]
+        print("[DEBUG] attendance_dates after removing CIA/HOL/COD:", attendance_dates)
+        print(f"[DEBUG] max_classes: {max_classes}, weekdays: {weekdays}, start_date: {start_date}")
+        if attendance_dates:
+            print(f"[DEBUG] last_date for extension: {attendance_dates[-1]}")
+        else:
+            print("[DEBUG] No real class dates, using start_date for extension.")
+
+        # Now generate new dates if needed
+        if len(attendance_dates) < max_classes:
+            if attendance_dates:
+                try:
+                    last_date = datetime.strptime(attendance_dates[-1], "%d/%m/%Y")
+                except ValueError:
+                    last_date = start_date
+            else:
+                last_date = start_date
+
+            new_dates = []
+            current_date = last_date + timedelta(days=1) if last_date else datetime.now()
+            while len(attendance_dates) + len(new_dates) < max_classes and weekdays and current_date:
+                if current_date.weekday() in weekdays:
+                    date_str = current_date.strftime("%d/%m/%Y")
+                    if date_str not in attendance_dates and date_str not in new_dates:
+                        new_dates.append(date_str)
+                current_date += timedelta(days=1)
+            print("[DEBUG] new_dates generated:", new_dates)
+            attendance_dates += new_dates
+        if len(attendance_dates) < max_classes:
+            print(f"[DEBUG] Adding {max_classes - len(attendance_dates)} placeholders.")
+            attendance_dates += ["--/--/--"] * (max_classes - len(attendance_dates))
+        print("[DEBUG] Final attendance_dates returned:", attendance_dates)
+        return attendance_dates
     
+
     def select_row_in_both_tables(self, row):
         self._syncing_selection = True
         try:
@@ -1178,8 +1215,11 @@ QTableView::item:selected {
         )
 
         if pal_cod_form.exec_() == QDialog.Accepted:
-            new_value = pal_cod_form.selected_value
-            self.update_column_values(column_index, new_value)
+            # PATCH: Only now recalculate and update dates
+            new_dates = self.get_attendance_dates()
+            if new_dates != self.metadata.get("dates", []):
+                self.metadata["dates"] = new_dates
+            self.refresh_student_table()
 
     def header_double_click(self, section_index):
         """Handle double-click on a header to open PALCODForm."""
@@ -1356,7 +1396,7 @@ QTableView::item:selected {
         launch_calendar(self, scheduled_dates, students, max_classes, on_save_callback)
 
     def update_column_values(self, column_index, new_value):
-        """Update attendance values for all students in the specified column."""
+        print(f"[DEBUG] update_column_values called: column_index={column_index}, new_value={new_value}")
         attendance_dates = self.metadata.get("dates", [])
         if not attendance_dates:
             attendance_dates = self.get_attendance_dates()
@@ -1369,8 +1409,25 @@ QTableView::item:selected {
         for student_id in active_students:
             self.students[student_id]["attendance"][date] = new_value
             # Save to DB
-            from logic.db_interface import set_attendance
+            from logic.db_interface import set_attendance, insert_date
             set_attendance(self.class_id, student_id, date, new_value)
+
+        # --- PATCH: Mark date as CIA/HOL/COD in the dates table if needed ---
+        if new_value in ("CIA", "HOL", "COD"):
+            # Save to DB (dates table) and in-memory metadata if needed
+            try:
+                insert_date(self.class_id, date, new_value)
+            except Exception as e:
+                print(f"[DEBUG] Failed to insert date status for {date}: {e}")
+            # Optionally, keep a parallel structure in metadata
+            if "date_status" not in self.metadata:
+                self.metadata["date_status"] = {}
+            self.metadata["date_status"][date] = new_value
+        else:
+            # If clearing CIA/HOL/COD, remove from date_status
+            if "date_status" in self.metadata and date in self.metadata["date_status"]:
+                del self.metadata["date_status"][date]
+
         self.refresh_student_table()
 
     def debug_pal_cod_button_click(self):
