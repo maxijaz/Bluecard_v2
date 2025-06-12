@@ -250,7 +250,7 @@ self.setWindowTitle("Bluecard Launcher")
 
 Recommended Window        Titles
 Form/Class Name	          Recommended Title
-Mainform	              Bluecard Main ✓
+Mainform	              Bluecard Attendance ✓
 Launcher	              Bluecard Launcher ✓
 ArchiveManager	          Archive Manager ✓
 SettingsForm        	  Settings ✓

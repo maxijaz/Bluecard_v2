@@ -262,7 +262,7 @@ class Mainform(QMainWindow):
         # REMOVED: max_width and max_height logic
 
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        self.setWindowTitle(f"Class Information - {class_id}")
+        self.setWindowTitle(f"Bluecard Attendance - {class_id}")
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         from logic.db_interface import get_all_defaults
         self.default_settings = get_all_defaults()

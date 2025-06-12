@@ -31,70 +31,16 @@ DB_PATH = os.path.join(DATA_DIR, DB_FILENAME)
 # JSON_FILENAME = "001attendance_data.json"
 # JSON_PATH = os.path.join(DATA_DIR, JSON_FILENAME)
 
-# --- BEGIN: Embedded attendance data (formerly from 001attendance_data.json) ---
-ATTENDANCE_DATA = {
-    "classes": {
-        "OLO123": {
-            "metadata": {
-                "class_no": "OLO123",
-                "company": "Acer",
-                "consultant": "James",
-                "teacher": "Paul R",
-                "teacher_no": "A20049",
-                "room": "Small building 2nd Floor",
-                "course_book": "IEX Pre Inter",
-                "start_date": "01/05/2025",
-                "finish_date": "01/05/2026",
-                "time": "17:00 - 19:00",
-                "notes": "Nice Group",
-                "rate": "520",
-                "ccp": "120",
-                "travel": "200",
-                "bonus": "1000",
-                "course_hours": "40",
-                "class_time": "2",
-                "max_classes": "20 x 2 = 40.0",
-                "days": "Monday, Tuesday, Wednesday, Thursday, Friday", 
-                "cod_cia": "0 COD 0 CIA 0 HOL",
-                "dates": [
-                    "01/05/2025", "02/05/2025", "05/05/2025", "06/05/2025", "07/05/2025", "08/05/2025", "09/05/2025", "12/05/2025", "13/05/2025", "14/05/2025", "15/05/2025", "16/05/2025", "19/05/2025", "20/05/2025", "21/05/2025", "22/05/2025", "23/05/2025", "26/05/2025", "27/05/2025", "28/05/2025"
-                ],
-            },
-            "students": {
-                "S001": {
-                    "name": "Paul",
-                    "nickname": "Monkey King",
-                    "company_no": "A123456",
-                    "gender": "Male",
-                    "score": "65% B",
-                    "pre_test": "58%",
-                    "post_test": "98%",
-                    "note": "Good Student",
-                    "active": "Yes",
-                    "attendance": {
-                        "01/05/2025": "P", "02/05/2025": "A", "05/05/2025": "P", "06/05/2025": "L", "07/05/2025": "P", "08/05/2025": "A", "09/05/2025": "P", "12/05/2025": "L", "13/05/2025": "P", "14/05/2025": "P", "15/05/2025": "A", "16/05/2025": "P", "19/05/2025": "P", "20/05/2025": "L", "21/05/2025": "P", "22/05/2025": "A", "23/05/2025": "P", "26/05/2025": "P", "27/05/2025": "L", "28/05/2025": "P"                    
-                    }
-                },
-                "S002": {
-                    "name": "Jeerapha Suadee",
-                    "nickname": "Small Monkey",
-                    "company_no": "A321564s",
-                    "gender": "Female",
-                    "score": "55% D",
-                    "pre_test": "55%",
-                    "post_test": "85%",
-                    "note": "Pain in Butt",
-                    "active": "Yes",
-                    "attendance": {
-                        "01/05/2025": "P", "02/05/2025": "A", "05/05/2025": "P", "06/05/2025": "L", "07/05/2025": "P", "08/05/2025": "A", "09/05/2025": "P", "12/05/2025": "L", "13/05/2025": "P", "14/05/2025": "P", "15/05/2025": "A", "16/05/2025": "P", "19/05/2025": "P", "20/05/2025": "L", "21/05/2025": "P", "22/05/2025": "A", "23/05/2025": "P", "26/05/2025": "P", "27/05/2025": "L", "28/05/2025": "P"
-                    }
-                }
-            },
-            "archive": "No"
-        }
-    }
-}
-# --- END: Embedded attendance data ---
+# --- BEGIN: Load attendance data from external JSON file ---
+FACTORY_STUDENTS_JSON = os.path.join(DATA_DIR, "factory_students.json")
+
+def load_factory_students():
+    if not os.path.exists(FACTORY_STUDENTS_JSON):
+        print(f"Sample data file not found: {FACTORY_STUDENTS_JSON}")
+        return None
+    with open(FACTORY_STUDENTS_JSON, "r", encoding="utf-8") as f:
+        return json.load(f)
+# --- END: Load attendance data from external JSON file ---
 
 def recreate_db(db_path=DB_PATH):
     if os.path.exists(db_path):
@@ -308,10 +254,72 @@ def recreate_db(db_path=DB_PATH):
     conn.commit()
     return conn
 
-def import_data(conn, data):
+def merge_metadata_with_defaults(meta, class_defaults):
+    """Merge class metadata with defaults. Precedence: meta > class_defaults > fallback."""
+    fallback = {
+        "company": "",
+        "consultant": "",
+        "teacher": "",
+        "teacher_no": "",
+        "room": "",
+        "course_book": "",
+        "start_date": "",
+        "finish_date": "",
+        "time": "",
+        "notes": "",
+        "rate": "0",
+        "ccp": "0",
+        "travel": "0",
+        "bonus": "0",
+        "course_hours": "0",
+        "class_time": "0",
+        "max_classes": "20",
+        "days": "",
+        "cod_cia": "",
+        "archive": "No",
+        "show_nickname": "Yes",
+        "show_company_no": "Yes",
+        "show_score": "Yes",
+        "show_pretest": "Yes",
+        "show_posttest": "Yes",
+        "show_attn": "Yes",
+        "show_p": "Yes",
+        "show_a": "Yes",
+        "show_l": "Yes",
+        "show_note": "Yes",
+        "show_dates": "Yes",
+        "width_row_number": "30",
+        "width_name": "150",
+        "width_nickname": "100",
+        "width_company_no": "100",
+        "width_score": "65",
+        "width_pretest": "65",
+        "width_posttest": "65",
+        "width_attn": "50",
+        "width_p": "30",
+        "width_a": "30",
+        "width_l": "30",
+        "width_note": "150",
+        "width_date": "50",
+        "bgcolor_p": "#c8e6c9",
+        "bgcolor_a": "#ffcdd2",
+        "bgcolor_l": "#fff9c4",
+        "bgcolor_cod": "#c8e6c9",
+        "bgcolor_cia": "#ffcdd2",
+        "bgcolor_hol": "#ffcdd2",
+        "dates": []
+    }
+    merged = dict(fallback)
+    merged.update({k: v for k, v in class_defaults.items() if v not in (None, "")})
+    merged.update({k: v for k, v in meta.items() if v not in (None, "")})
+    return merged
+
+def import_data(conn, data, factory_defaults=None):
     cursor = conn.cursor()
+    class_defaults = factory_defaults.get("classes", {}).get("default", {}) if factory_defaults else {}
     for class_no, class_data in data["classes"].items():
-        meta = class_data["metadata"]        
+        meta = class_data["metadata"]
+        meta = merge_metadata_with_defaults(meta, class_defaults)
         cursor.execute("""
             INSERT OR REPLACE INTO classes (
                 class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
@@ -325,9 +333,9 @@ def import_data(conn, data):
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
-            meta.get("max_classes", ""), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
+            meta.get("max_classes", "20"), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
             meta.get("show_nickname", "Yes"), meta.get("show_company_no", "Yes"), meta.get("show_score", "Yes"), meta.get("show_pretest", "Yes"), meta.get("show_posttest", "Yes"), meta.get("show_attn", "Yes"), meta.get("show_p", "Yes"), meta.get("show_a", "Yes"), meta.get("show_l", "Yes"), meta.get("show_note", "Yes"),
-            "Yes",  # show_dates default to Yes
+            meta.get("show_dates", "Yes"),
             int(meta.get("width_row_number", 30)), int(meta.get("width_name", 150)), int(meta.get("width_nickname", 100)), int(meta.get("width_company_no", 100)), int(meta.get("width_score", 65)), int(meta.get("width_pretest", 65)), int(meta.get("width_posttest", 65)), int(meta.get("width_attn", 50)), int(meta.get("width_p", 30)), int(meta.get("width_a", 30)), int(meta.get("width_l", 30)), int(meta.get("width_note", 150)), int(meta.get("width_date", 50)),
             meta.get("bgcolor_p", "#c8e6c9"), meta.get("bgcolor_a", "#ffcdd2"), meta.get("bgcolor_l", "#fff9c4"), meta.get("bgcolor_cod", "#c8e6c9"), meta.get("bgcolor_cia", "#ffcdd2"), meta.get("bgcolor_hol", "#ffcdd2")
         ))
@@ -657,7 +665,14 @@ def main():
     import_form_settings_from_factory(conn, factory_defaults)
     import_class_defaults_from_factory(conn, factory_defaults)
     import_factory_defaults_table(conn, factory_defaults)
-    import_data(conn, ATTENDANCE_DATA)
+
+    # Load sample attendance/class/student data from factory_students.json
+    sample_data = load_factory_students()
+    if sample_data:
+        import_data(conn, sample_data)
+    else:
+        print("No sample attendance/class/student data loaded.")
+
     # Check for mismatches
     check_factory_defaults_vs_db(conn, factory_defaults, strict=args.strict_factory_check)
     cursor = conn.cursor()
