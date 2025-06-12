@@ -171,26 +171,13 @@ class PALCODForm(QDialog):
             button = QPushButton(label)
             button.setFont(self.form_font)
             button.setStyleSheet(button_style if value != self.current_value else button_style + "background: lightblue; font-weight: bold;")
-            button.clicked.connect(lambda _, v=value: self.update_column(v))
+            # Remove confirmation: set value immediately on click
+            button.clicked.connect(lambda _, v=value: self.select_value(v))
             layout.addWidget(button)
 
     def update_column(self, value):
-        def on_confirm():
-            self.selected_value = value
-            if self.update_column_callback:
-                print(f"[DEBUG] PALCODForm: Calling update_column_callback({self.column_index}, {value})")
-                self.update_column_callback(self.column_index, value)
-            self.accept()
-            # Refresh the cell if callback is provided
-            if self.refresh_cell_callback and self.row is not None:
-                self.refresh_cell_callback(self.row, self.column_index)
-        def on_cancel():
-            pass
-        show_message_dialog(
-            self,
-            f"Are you sure you want to set this field to '{value}'?",
-            buttons=[("Yes", on_confirm), ("No", on_cancel)]
-        )
+        # Deprecated: no confirmation dialog needed
+        self.select_value(value)
 
     def select_value(self, value):
         self.selected_value = value

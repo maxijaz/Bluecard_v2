@@ -929,58 +929,9 @@ QTableView::item:selected {
         # --- PATCH: Always reload metadata from DB before using dates ---
         self.class_data = get_class_by_id(self.class_id)
         self.metadata = self.class_data
-        # --- PATCH: Load dates from DB dates table ---
+        # --- PATCH: Ensure metadata['dates'] is always set after DB reload ---
         from logic.db_interface import get_dates_by_class
-        dates_from_db = get_dates_by_class(self.class_id)
-        self.metadata["dates"] = dates_from_db
-        print(f"[DEBUG] Reloaded metadata from DB: dates={self.metadata.get('dates', [])}")
-
-        # --- PATCH: Ensure attendance_dates is always valid ---
-        attendance_dates = self.metadata.get("dates", [])
-        if not attendance_dates:
-            print("[DEBUG] No dates in metadata, generating new attendance_dates.")
-            attendance_dates = self.get_attendance_dates()
-            self.metadata["dates"] = attendance_dates
-        else:
-            print("[DEBUG] Loaded attendance_dates from metadata.")
-
-        # Initialize totals for all fields
-        total_cia = 0
-        total_cod = 0
-        total_hol = 0
-
-        # Calculate CIA, COD, HOL totals by searching scrollable_data
-        scrollable_data = [
-            [student.get("attendance", {}).get(date, "-") for date in attendance_dates]
-            for student in self.students.values()
-        ]
-
-        for col_index in range(len(attendance_dates)):
-            column_values = [row[col_index] for row in scrollable_data]
-            if "CIA" in column_values:
-                total_cia += 1
-            if "COD" in column_values:
-                total_cod += 1
-            if "HOL" in column_values:
-                total_hol += 1
-
-        # Update the metadata with COD/CIA/HOL totals and save to DB
-        self.metadata["cod_cia"] = f"{total_cod} COD / {total_cia} CIA / {total_hol} HOL"
-
-        # Only save DB columns (exclude non-schema keys like "dates")
-        db_columns = {
-            "class_no", "company", "room", "consultant", "teacher", "course_book",
-            "course_hours", "class_time", "max_classes", "start_date", "finish_date",
-            "days", "notes", "cod_cia", "archive", "show_nickname", "show_company_no",
-            "show_score", "show_pretest", "show_posttest", "show_attn", "show_p",
-            "show_l", "show_a"
-        }
-        db_metadata = {k: v for k, v in self.metadata.items() if k in db_columns}
-        update_class(self.class_id, db_metadata)
-
-        # --- PATCH: Reload metadata from DB before refreshing UI ---
-        self.class_data = get_class_by_id(self.class_id)
-        self.metadata = self.class_data
+        self.metadata["dates"] = get_dates_by_class(self.class_id)
 
         self.refresh_metadata()  # Only call once here!
 
@@ -1018,6 +969,8 @@ QTableView::item:selected {
             else:
                 running_total_row.append("-")
         frozen_data.append(running_total_row)
+        # --- Use DB-driven attendance_dates for all attendance columns ---
+        attendance_dates = self.metadata.get("dates", [])
         # Add student rows
         for idx, student in enumerate(active_students.values()):
             row = []
@@ -1188,36 +1141,27 @@ QTableView::item:selected {
 
     def open_pal_cod_form(self, column_index=None):
         """Open the PALCODForm to update attendance."""
+        from .pal_cod_form import PALCODForm, show_message_dialog
+        import re
+        print(f"[DEBUG] open_pal_cod_form: self.metadata = {self.metadata}")  # Print full metadata for debugging
         attendance_dates = self.metadata.get("dates", [])
-
-        # Ensure attendance_dates is populated
+        # --- CRITICAL: Only use DB-driven attendance_dates, never fallback/generate here ---
         if not attendance_dates:
-            attendance_dates = self.get_attendance_dates()
-            self.metadata["dates"] = attendance_dates
-
+            show_message_dialog(self, "No attendance dates available. Please check your class schedule.")
+            print("[DEBUG] No dates in metadata. Aborting PALCODForm.")
+            return
         if column_index is None:
-            show_message_dialog(
-                self,
-                "Please select a valid date column header in the attendance table before using PAL/COD."
-            )
+            print("[DEBUG] open_pal_cod_form called with column_index=None")
             return
-
         if column_index < 0 or column_index >= len(attendance_dates):
-            show_message_dialog(
-                self,
-                "Invalid column index detected."
-            )
+            print(f"[DEBUG] Invalid column_index: {column_index} for attendance_dates length {len(attendance_dates)}")
             return
-
+        # Header index N always maps to attendance_dates[N]
         date = attendance_dates[column_index]
-
-        if not (len(date) == 10 and date[2] == "/" and date[5] == "/" and date.replace("/", "").isdigit()):
-            show_message_dialog(
-                self,
-                "Cannot set P/A/L for this column. Please add real dates first before attempting to change attendance."
-            )
+        print(f"[DEBUG] open_pal_cod_form: column_index={column_index}, date='{date}'")
+        if not re.match(r"^\d{2}/\d{2}/\d{4}$", date):
+            print(f"[DEBUG] Skipping PALCODForm: date '{date}' does not match dd/MM/yyyy")
             return
-
         pal_cod_form = PALCODForm(
             self,
             column_index,
@@ -1227,13 +1171,8 @@ QTableView::item:selected {
             show_cod_cia=True,
             show_student_name=False
         )
-
         if pal_cod_form.exec_() == QDialog.Accepted:
-            # PATCH: Only now recalculate and update dates
-            new_dates = self.get_attendance_dates()
-            if new_dates != self.metadata.get("dates", []):
-                self.metadata["dates"] = new_dates
-            self.refresh_student_table()
+            pass
 
     def header_double_click(self, section_index):
         """Handle double-click on a header to open PALCODForm."""
