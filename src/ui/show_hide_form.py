@@ -99,10 +99,11 @@ class ShowHideForm(QDialog):
         self.color_edits = {}
         self.width_edits = {}  # {db_key: QLineEdit}
 
-        # --- PATCH: Make non-modal and always on top ---
+        # --- PATCH: Make non-modal and always on top, but allow header dragging in mainform ---
         from PyQt5.QtCore import Qt
         self.setModal(False)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint | Qt.Tool)
+        # Only use WindowStaysOnTopHint (remove Qt.Tool)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         # --- END PATCH ---
 
         # --- PATCH: Load per-form settings from DB ---
@@ -248,6 +249,10 @@ class ShowHideForm(QDialog):
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
 
+        # --- LIVE WIDTH TRACKING: Connect QLineEdit edits to DB update ---
+        for db_key, width_edit in self.width_edits.items():
+            width_edit.textChanged.connect(lambda val, db_key=db_key: self._update_width_live(db_key, val))
+
     def reset_widths(self):
         # Show confirmation dialog before resetting widths
         from PyQt5.QtWidgets import QMessageBox
@@ -263,17 +268,18 @@ class ShowHideForm(QDialog):
         from logic.db_interface import get_factory_defaults
         factory_defaults = get_factory_defaults()
         class_defaults = factory_defaults.get("classes", {}).get("default", {}) if factory_defaults else {}
-        print("[DEBUG] reset_widths: class_defaults:", class_defaults)
         for label, db_key in WIDTH_DB_KEYS.items():
             if db_key in self.width_edits:
                 default_val = class_defaults.get(db_key, "")
-                print(f"[DEBUG] reset_widths: Setting {db_key} to default_val='{default_val}'")
                 if default_val is not None and str(default_val).strip() != "":
                     self.width_edits[db_key].setText(str(default_val))
                     self.class_data[db_key] = default_val
                 else:
                     self.width_edits[db_key].setText("")
                     self.class_data[db_key] = None
+        # --- LIVE UPDATE: Notify mainform to update widths immediately ---
+        if self.on_save_callback:
+            self.on_save_callback(live_update=True)
 
     def toggle_columns(self):
         # Toggle all checkboxes: if any unchecked, check all; else uncheck all
@@ -295,16 +301,14 @@ class ShowHideForm(QDialog):
         # Save widths
         for db_key, edit in self.width_edits.items():
             val = edit.text().strip()
-            print(f"[DEBUG] save: {db_key} QLineEdit value='{val}'")
             if val.isdigit():
                 updates[db_key] = int(val)
             else:
                 updates[db_key] = None
-        print(f"[DEBUG] save: updates dict to be saved for class_id={self.class_id}: {updates}")
         try:
             update_class(self.class_id, updates)
             if self.on_save_callback:
-                self.on_save_callback()
+                self.on_save_callback(live_update=True)
             self.accept()
         except Exception as e:
             show_message_dialog(self, f"Failed to save: {e}")
@@ -315,3 +319,18 @@ class ShowHideForm(QDialog):
         for key, cb in self.checkboxes.items():
             result[key] = cb.isChecked()
         return result
+
+    def _update_width_live(self, db_key, val):
+        # Save the width to DB as soon as the QLineEdit changes
+        try:
+            from logic.db_interface import update_class
+            if val.isdigit():
+                update_class(self.class_id, {db_key: int(val)})
+                self.class_data[db_key] = int(val)
+            else:
+                update_class(self.class_id, {db_key: None})
+                self.class_data[db_key] = None
+            if self.on_save_callback:
+                self.on_save_callback(live_update=True)
+        except Exception as e:
+            print(f"[ERROR] Failed to update width {db_key} live: {e}")

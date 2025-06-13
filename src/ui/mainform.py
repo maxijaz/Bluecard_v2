@@ -1250,30 +1250,26 @@ QTableView::item:selected {
             return
         columns = [col for col in self.FROZEN_COLUMN_WIDTHS.keys() if col not in ("#", "Name")]
         current = {col: self.column_visibility.get(col, True) for col in columns}
-        dlg = ShowHideForm(self, self.class_id)
-        if dlg.exec_():
-            updated = dlg.get_selected_columns()  # Now returns DB keys
-            for key in updated:
-                # Map DB keys to column_visibility and scrollable_column_visibility
+        # --- PATCH: Pass a live update callback to ShowHideForm ---
+        def on_show_hide_saved(live_update=False):
+            # Always reload class_data from DB
+            self.class_data = get_class_by_id(self.class_id)
+            self.metadata = self.class_data
+            # Update column visibility
+            for key, label in SHOW_HIDE_FIELDS:
                 if key == "show_dates":
-                    self.scrollable_column_visibility["Dates"] = updated[key]
+                    self.scrollable_column_visibility["Dates"] = (self.class_data.get(key, "Yes") == "Yes")
                 else:
-                    label = dict(SHOW_HIDE_FIELDS)[key]
-                    self.column_visibility[label] = updated[key]
-            # Save show/hide state to DB for this class
-            db_updates = {key: "Yes" if updated[key] else "No" for key in updated}
-            from logic.db_interface import update_class
-            update_class(self.class_id, db_updates)
-            # Update in-memory metadata and class_data so refresh_student_table doesn't overwrite DB
-            for key in updated:
-                value = "Yes" if updated[key] else "No"
-                self.metadata[key] = value
-                self.class_data[key] = value
-            self.refresh_student_table()
+                    self.column_visibility[label] = (self.class_data.get(key, "Yes") == "Yes")
+            # Live update: refresh table widths and UI
             self.reset_column_widths()
             self.reset_scrollable_column_widths()
-            self.adjust_frozen_table_width()  # Ensure width is recalculated after show/hide
+            self.adjust_frozen_table_width()
             self.position_tables()
+            self.refresh_student_table()
+        dlg = ShowHideForm(self, self.class_id, on_save_callback=on_show_hide_saved)
+        dlg.show()
+
         # Overlap scrollable_table over frozen_table by setting a negative left margin
         self.scrollable_table.setStyleSheet(
             self.scrollable_table.styleSheet() +
