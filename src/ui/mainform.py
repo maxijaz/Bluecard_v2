@@ -615,6 +615,7 @@ class Mainform(QMainWindow):
         print("[DEBUG] Connected header double-click event to header_double_click method.")
 
         self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
+        self.frozen_table.horizontalHeader().sectionResized.connect(self.on_frozen_header_resized)
 
         # Set size policies and stretch factors for proper alignment
         from PyQt5.QtWidgets import QSizePolicy
@@ -680,6 +681,44 @@ QTableView::item:selected {
         QTimer.singleShot(0, lambda: self.frozen_table.updateGeometry())
         QTimer.singleShot(0, lambda: self.frozen_table.viewport().update())
         QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
+
+    def on_frozen_header_resized(self, logicalIndex, oldSize, newSize):
+        """Live-sync: Save frozen column width to DB and update ShowHideForm if open."""
+        # Map header index to DB key
+        try:
+            model = self.frozen_table.model()
+            if not hasattr(model, 'headers'):
+                return
+            header = model.headers[logicalIndex]
+            width_db_map = {
+                "#": "width_row_number",
+                "Name": "width_name",
+                "Nickname": "width_nickname",
+                "Company No": "width_company_no",
+                "Score": "width_score",
+                "PreTest": "width_pretest",
+                "PostTest": "width_posttest",
+                "Attn": "width_attn",
+                "P": "width_p",
+                "A": "width_a",
+                "L": "width_l",
+                "Note": "width_note",
+            }
+            db_key = width_db_map.get(header)
+            if db_key:
+                from logic.db_interface import update_class, get_class_by_id
+                update_class(self.class_id, {db_key: newSize})
+                # Force reload from DB to ensure value is saved
+                self.class_data = get_class_by_id(self.class_id)
+                # If ShowHideForm is open, update its QLineEdit
+                from PyQt5.QtWidgets import QApplication
+                for widget in QApplication.topLevelWidgets():
+                    if hasattr(widget, "width_edits") and db_key in widget.width_edits:
+                        widget.width_edits[db_key].blockSignals(True)
+                        widget.width_edits[db_key].setText(str(newSize))
+                        widget.width_edits[db_key].blockSignals(False)
+        except Exception as e:
+            print(f"[ERROR] on_frozen_header_resized: {e}")
 
     # Button Methods
     def run_html_output(self):
