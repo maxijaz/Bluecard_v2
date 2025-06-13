@@ -10,8 +10,8 @@ SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
     ("show_company_no", "Company No"),
     ("show_score", "Score"),
-    ("show_pre_test", "pre_test"),
-    ("show_post_test", "post_test"),
+    ("show_pre_test", "Pre-test"),
+    ("show_post_test", "Post-test"),
     ("show_attn", "Attn"),
     ("show_p", "P"),
     ("show_a", "A"),
@@ -25,8 +25,8 @@ WIDTH_DB_KEYS = {
     "Nickname": "width_nickname",
     "Company No": "width_company_no",
     "Score": "width_score",
-    "pre_test": "width_pre_test",  # <-- FIXED
-    "post_test": "width_post_test",  # <-- FIXED
+    "Pre-test": "width_pre_test",  # <-- FIXED
+    "Post-test": "width_post_test",  # <-- FIXED
     "Attn": "width_attn",
     "P": "width_p",
     "A": "width_a",
