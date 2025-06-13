@@ -56,20 +56,20 @@ def recreate_db(db_path=DB_PATH):
         class_no TEXT PRIMARY KEY,
         company TEXT,
         consultant TEXT,
-        teacher TEXT,
-        teacher_no TEXT,
+        teacher TEXT,  -- def_teacher from teacher_defaults.json
+        teacher_no TEXT,  -- def_teacher_no from teacher_defaults.json
         room TEXT,
         course_book TEXT,
         start_date TEXT,
         finish_date TEXT,
         time TEXT,
         notes TEXT,
-        rate INTEGER,
-        ccp INTEGER,
-        travel INTEGER,
-        bonus INTEGER,
-        course_hours INTEGER,
-        class_time INTEGER,
+        rate INTEGER,  -- def_rate from teacher_defaults.json
+        ccp INTEGER,  -- def_ccp from teacher_defaults.json
+        travel INTEGER,  -- def_travel from teacher_defaults.json
+        bonus INTEGER,  -- def_bonus from teacher_defaults.json
+        course_hours INTEGER, -- def_coursehours from teacher_defaults.json
+        class_time INTEGER,  -- def_classtime from teacher_defaults.json
         max_classes TEXT,
         days TEXT,
         cod_cia TEXT,
@@ -255,6 +255,8 @@ def recreate_db(db_path=DB_PATH):
     return conn
 
 def merge_metadata_with_defaults(meta, class_defaults):
+    # Set minimum defaults for class metadata 
+    # factory_defaults.json holds the default values for classes
     """Merge class metadata with defaults. Precedence: meta > class_defaults > fallback."""
     fallback = {
         "company": "",
@@ -273,7 +275,7 @@ def merge_metadata_with_defaults(meta, class_defaults):
         "bonus": "0",
         "course_hours": "0",
         "class_time": "0",
-        "max_classes": "20",
+        "max_classes": "0",
         "days": "",
         "cod_cia": "",
         "archive": "No",
@@ -288,19 +290,19 @@ def merge_metadata_with_defaults(meta, class_defaults):
         "show_l": "Yes",
         "show_note": "Yes",
         "show_dates": "Yes",
-        "width_row_number": "30",
-        "width_name": "150",
-        "width_nickname": "100",
-        "width_company_no": "100",
-        "width_score": "65",
-        "width_pretest": "65",
-        "width_posttest": "65",
-        "width_attn": "50",
-        "width_p": "30",
-        "width_a": "30",
-        "width_l": "30",
-        "width_note": "150",
-        "width_date": "50",
+        "width_row_number": 0,
+        "width_name": 0,
+        "width_nickname": 0,
+        "width_company_no": 0,
+        "width_score": 0,
+        "width_pretest": 0,
+        "width_posttest": 0,
+        "width_attn": 0,
+        "width_p": 0,
+        "width_a": 0,
+        "width_l": 0,
+        "width_note": 0,
+        "width_date": 0,
         "bgcolor_p": "#c8e6c9",
         "bgcolor_a": "#ffcdd2",
         "bgcolor_l": "#fff9c4",

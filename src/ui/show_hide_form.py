@@ -99,6 +99,12 @@ class ShowHideForm(QDialog):
         self.color_edits = {}
         self.width_edits = {}  # {db_key: QLineEdit}
 
+        # --- PATCH: Make non-modal and always on top ---
+        from PyQt5.QtCore import Qt
+        self.setModal(False)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint | Qt.Tool)
+        # --- END PATCH ---
+
         # --- PATCH: Load per-form settings from DB ---
         form_settings = get_form_settings("ShowHideForm") or {}
         defaults = get_all_defaults()
@@ -243,12 +249,21 @@ class ShowHideForm(QDialog):
         layout.addLayout(btn_layout)
 
     def reset_widths(self):
-        # Reload widths from DB and update QLineEdits
-        db_row = get_class_by_id(self.class_id)
+        # Reload widths from factory_defaults (not just DB) and update QLineEdits
+        from logic.db_interface import get_factory_defaults
+        factory_defaults = get_factory_defaults()
+        class_defaults = factory_defaults.get("classes", {}).get("default", {}) if factory_defaults else {}
+        print("[DEBUG] reset_widths: class_defaults:", class_defaults)
         for label, db_key in WIDTH_DB_KEYS.items():
             if db_key in self.width_edits:
-                val = db_row.get(db_key, "")
-                self.width_edits[db_key].setText(str(val) if val else "")
+                default_val = class_defaults.get(db_key, "")
+                print(f"[DEBUG] reset_widths: Setting {db_key} to default_val='{default_val}'")
+                if default_val is not None and str(default_val).strip() != "":
+                    self.width_edits[db_key].setText(str(default_val))
+                    self.class_data[db_key] = default_val
+                else:
+                    self.width_edits[db_key].setText("")
+                    self.class_data[db_key] = None
 
     def toggle_columns(self):
         # Toggle all checkboxes: if any unchecked, check all; else uncheck all
@@ -270,10 +285,12 @@ class ShowHideForm(QDialog):
         # Save widths
         for db_key, edit in self.width_edits.items():
             val = edit.text().strip()
+            print(f"[DEBUG] save: {db_key} QLineEdit value='{val}'")
             if val.isdigit():
                 updates[db_key] = int(val)
             else:
                 updates[db_key] = None
+        print(f"[DEBUG] save: updates dict to be saved for class_id={self.class_id}: {updates}")
         try:
             update_class(self.class_id, updates)
             if self.on_save_callback:

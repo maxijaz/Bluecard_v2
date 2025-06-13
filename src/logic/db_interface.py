@@ -314,3 +314,13 @@ def get_dates_by_class(class_no):
         except Exception:
             return d  # fallback for placeholders or invalid dates
     return sorted(date_list, key=date_key)
+
+def get_factory_defaults():
+    """Fetch all factory defaults as a nested dict (mirroring factory_defaults.json structure)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    # Get class defaults (scope = 'class', form_name IS NULL)
+    cursor.execute("SELECT key, value FROM factory_defaults WHERE scope = 'class' AND form_name IS NULL")
+    classes_default = {row[0]: row[1] for row in cursor.fetchall()}
+    conn.close()
+    return {"classes": {"default": classes_default}}

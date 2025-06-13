@@ -103,6 +103,72 @@ Action Steps
 
 "factory_defaults" description for factory_defaults.json
 
+To get only the column names (not the full table info), 
+use this SQL in DB Browser's Execute SQL tab:
+
+PRAGMA table_info(your_table_name);
+
+If you want just a list of names in one row, 
+here's a quick SQL trick to get them concatenated:
+SELECT GROUP_CONCAT(name, ', ') FROM pragma_table_info('your_table_name');
+
+🔹 Result:
+id, name, email, created_at (or whatever your columns are)
+Replace 'your_table_name' with your actual table name (keep the quotes).
+
+All columns in 'classes' (51 columns)
+class_no
+company
+consultant
+teacher
+teacher_no
+room
+course_book
+start_date
+finish_date
+time
+notes
+rate
+ccp
+travel
+bonus
+course_hours
+class_time
+max_classes
+days
+cod_cia
+archive
+show_nickname
+show_company_no
+show_score
+show_pretest
+show_posttest
+show_attn
+show_p
+show_a
+show_l
+show_note
+show_dates
+width_row_number
+width_name
+width_nickname
+width_company_no
+width_score
+width_pretest
+width_posttest
+width_attn
+width_p
+width_a
+width_l
+width_note
+width_date
+bgcolor_p
+bgcolor_a
+bgcolor_l
+bgcolor_cod
+bgcolor_cia
+bgcolor_hol
+
 "global": {
   "use_colors": true,                      // Master toggle to enable or disable colors on all forms
   "resizable": "yes",                      // Allow windows to be resized

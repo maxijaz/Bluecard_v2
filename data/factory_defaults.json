@@ -89,6 +89,8 @@
       "show_l": "Yes",
       "show_note": "Yes",
       "show_dates": "Yes",
+      "max_classes": "20",
+      "archive": "No",
       "width_row_number": 30,
       "width_name": 150,
       "width_nickname": 100,
