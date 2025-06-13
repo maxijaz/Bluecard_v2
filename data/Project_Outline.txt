@@ -141,8 +141,8 @@ archive
 show_nickname
 show_company_no
 show_score
-show_pretest
-show_posttest
+show_pre_test
+show_post_test
 show_attn
 show_p
 show_a
@@ -154,8 +154,8 @@ width_name
 width_nickname
 width_company_no
 width_score
-width_pretest
-width_posttest
+width_pre_test
+width_post_test
 width_attn
 width_p
 width_a
@@ -831,9 +831,9 @@ Add. <------ line separator ---------->
 +-------------------------+---------------------------------+
 |**Score:**               | [          82% - A            ] |    
 +-------------------------+---------------------------------+
-|**PreTest:**             | [             70%             ] |
+|**Pre Test:**             | [             70%             ] |
 +-------------------------+---------------------------------+
-|**PostTest:**            | [             90%             ] | 
+|**Post Test:**            | [             90%             ] | 
 +-------------------------+---------------------------------+
 |**Note:**                | [Very punctual                ] |                     
 +-------------------------+---------------------------------+

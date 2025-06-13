@@ -81,8 +81,8 @@ def recreate_db(db_path: str = DB_PATH) -> sqlite3.Connection | None:
         show_nickname TEXT,
         show_company_no TEXT,
         show_score TEXT,
-        show_pretest TEXT,
-        show_posttest TEXT,
+        show_pre_test TEXT,
+        show_post_test TEXT,
         show_attn TEXT,
         show_p TEXT,
         show_a TEXT,
@@ -94,8 +94,8 @@ def recreate_db(db_path: str = DB_PATH) -> sqlite3.Connection | None:
         width_nickname INTEGER,
         width_company_no INTEGER,
         width_score INTEGER,
-        width_pretest INTEGER,
-        width_posttest INTEGER,
+        width_pre_test INTEGER,
+        width_post_test INTEGER,
         width_attn INTEGER,
         width_p INTEGER,
         width_a INTEGER,
@@ -295,9 +295,9 @@ def import_data(conn: sqlite3.Connection, data: dict, factory_defaults: dict | N
         cursor.execute("""
             INSERT OR REPLACE INTO classes (
                 class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
-                show_nickname, show_company_no, show_score, show_pretest, show_posttest, show_attn, show_p, show_a, show_l, show_note,
+                show_nickname, show_company_no, show_score, show_pre_test, show_post_test, show_attn, show_p, show_a, show_l, show_note,
                 show_dates,
-                width_row_number, width_name, width_nickname, width_company_no, width_score, width_pretest, width_posttest, width_attn, width_p, width_a, width_l, width_note, width_date,
+                width_row_number, width_name, width_nickname, width_company_no, width_score, width_pre_test, width_post_test, width_attn, width_p, width_a, width_l, width_note, width_date,
                 bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
@@ -306,9 +306,9 @@ def import_data(conn: sqlite3.Connection, data: dict, factory_defaults: dict | N
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
             meta["max_classes"], meta.get("days", ""), meta.get("cod_cia", ""), meta["archive"],
-            meta["show_nickname"], meta["show_company_no"], meta["show_score"], meta["show_pretest"], meta["show_posttest"], meta["show_attn"], meta["show_p"], meta["show_a"], meta["show_l"], meta["show_note"],
+            meta["show_nickname"], meta["show_company_no"], meta["show_score"], meta["show_pre_test"], meta["show_post_test"], meta["show_attn"], meta["show_p"], meta["show_a"], meta["show_l"], meta["show_note"],
             meta["show_dates"],
-            int(meta["width_row_number"]), int(meta["width_name"]), int(meta["width_nickname"]), int(meta["width_company_no"]), int(meta["width_score"]), int(meta["width_pretest"]), int(meta["width_posttest"]), int(meta["width_attn"]), int(meta["width_p"]), int(meta["width_a"]), int(meta["width_l"]), int(meta["width_note"]), int(meta["width_date"]),
+            int(meta["width_row_number"]), int(meta["width_name"]), int(meta["width_nickname"]), int(meta["width_company_no"]), int(meta["width_score"]), int(meta["width_pre_test"]), int(meta["width_post_test"]), int(meta["width_attn"]), int(meta["width_p"]), int(meta["width_a"]), int(meta["width_l"]), int(meta["width_note"]), int(meta["width_date"]),
             meta["bgcolor_p"], meta["bgcolor_a"], meta["bgcolor_l"], meta["bgcolor_cod"], meta["bgcolor_cia"], meta["bgcolor_hol"]
         ))
 
