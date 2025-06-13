@@ -225,10 +225,10 @@ def recreate_db(db_path=DB_PATH):
     """)
     print("Created tables")
 
-    # Ensure defaults are loaded
+    # Ensure defaults are loaded from teacher_defaults.json
     defaults_path = os.path.join(DATA_DIR, "teacher_defaults.json")
     if not os.path.exists(defaults_path):
-        print(f"No default.json found at {defaults_path}")
+        print(f"No teacher_defaults.json found at {defaults_path}")
         return
     with open(defaults_path, "r", encoding="utf-8") as f:
         defaults = json.load(f)
@@ -358,113 +358,6 @@ def import_data(conn, data, factory_defaults=None):
 
     conn.commit()
     print("Imported class data")
-
-def import_defaults(conn, defaults_path=os.path.join(DATA_DIR, "default.json")):
-    if not os.path.exists(defaults_path):
-        print(f"No default.json found at {defaults_path}")
-        return
-    with open(defaults_path, "r", encoding="utf-8") as f:
-        defaults = json.load(f)
-    # --- PATCH: Map def_teacherno to def_teacher_no ---
-    if "def_teacherno" in defaults:
-        defaults["def_teacher_no"] = defaults.pop("def_teacherno")
-    # --- PATCH: Add cod_cia_hol default if not present ---
-    if "cod_cia_hol" not in defaults:
-        # Insert between columns_before_today and show_nickname if you care about order
-        keys = list(defaults.keys())
-        idx = keys.index("columns_before_today") + 1 if "columns_before_today" in keys else len(keys)
-        items = list(defaults.items())
-        items.insert(idx, ("cod_cia_hol", "0 COD 0 CIA 0 HOL"))
-        defaults = dict(items)
-    # PATCH: Add default colors if not present
-    for color_key, color_val in [
-        ("bgcolor_p", "#c8e6c9"),
-        ("bgcolor_a", "#ffcdd2"),
-        ("bgcolor_l", "#fff9c4"),
-        ("bgcolor_cod", "#c8e6c9"),
-        ("bgcolor_cia", "#ffcdd2"),
-        ("bgcolor_hol", "#ffcdd2"),
-    ]:
-        if color_key not in defaults:
-            defaults[color_key] = color_val
-    # PATCH: Add font size and global color defaults if not present
-    # Remove font_size (global) from defaults, only use specific font sizes
-    # Ensure all settings fields used in the UI are present in defaults
-    if "form_bg_color" not in defaults:
-        defaults["form_bg_color"] = "#e3f2fd"  # Light blue
-    if "form_fg_color" not in defaults:
-        defaults["form_fg_color"] = "#222222"  # Main text color
-    if "button_bg_color" not in defaults:
-        defaults["button_bg_color"] = "#1976d2"  # Blue
-    if "button_fg_color" not in defaults:
-        defaults["button_fg_color"] = "#ffffff"  # White
-    if "button_font_size" not in defaults:
-        defaults["button_font_size"] = "12"
-    if "table_bg_color" not in defaults:
-        defaults["table_bg_color"] = "#ffffff"  # White
-    if "table_fg_color" not in defaults:
-        defaults["table_fg_color"] = "#222222"  # Table text color
-    if "table_header_bg_color" not in defaults:
-        defaults["table_header_bg_color"] = "#1976d2"  # Table header bg
-    if "table_header_fg_color" not in defaults:
-        defaults["table_header_fg_color"] = "#ffffff"  # Table header fg
-    if "metadata_font_size" not in defaults:
-        defaults["metadata_font_size"] = "12"
-    if "metadata_fg_color" not in defaults:
-        defaults["metadata_fg_color"] = "#222222"
-    if "table_font_size" not in defaults:
-        defaults["table_font_size"] = "12"
-    if "form_font_size" not in defaults:
-        defaults["form_font_size"] = "12"
-    # --- Add any new settings fields from settings.py ---
-    # These are the metadata fields (default values can be blank)
-    for meta_key in [
-        "def_teacher", "def_teacher_no", "def_coursehours", "def_classtime", "def_rate", "def_ccp", "def_travel", "def_bonus"
-    ]:
-        if meta_key not in defaults:
-            defaults[meta_key] = ""
-    # Add any new color/font fields from settings.py if missing
-    for k, v in [
-        ("table_header_font_size", "12"),
-    ]:
-        if k not in defaults:
-            defaults[k] = v
-    # Remove any old global font_size if present
-    if "font_size" in defaults:
-        del defaults["font_size"]
-    # Metadata section
-    if "metadata_bg_color" not in defaults:
-        defaults["metadata_bg_color"] = "#e3f2fd"  # or your preferred color
-
-    # (Optional) Button hover/border color
-    if "button_border_color" not in defaults:
-        defaults["button_border_color"] = "#1976d2"  # or your preferred color
-
-    # (Optional) Form border/title color
-    if "form_border_color" not in defaults:
-        defaults["form_border_color"] = "#1976d2"
-    if "form_title_color" not in defaults:
-        defaults["form_title_color"] = "#222222"
-    # PATCH: Add color_toggle default if not present
-    if "color_toggle" not in defaults:
-        defaults["color_toggle"] = "yes"
-    # Remove theme from defaults if present
-    if "theme" in defaults:
-        del defaults["theme"]
-    # --- Add display management defaults for window centering/scaling ---
-    if "center_windows" not in defaults:
-        defaults["center_windows"] = "1"
-    if "scale_windows" not in defaults:
-        defaults["scale_windows"] = "1"
-    if "window_width_ratio" not in defaults:
-        defaults["window_width_ratio"] = "0.6"
-    if "window_height_ratio" not in defaults:
-        defaults["window_height_ratio"] = "0.6"
-    cursor = conn.cursor()
-    for key, value in defaults.items():
-        cursor.execute("INSERT OR REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, str(value)))
-    conn.commit()
-    print("Imported defaults from default.json")
 
 def import_defaults_from_factory(conn, factory_defaults):
     """
