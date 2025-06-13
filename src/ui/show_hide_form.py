@@ -249,6 +249,16 @@ class ShowHideForm(QDialog):
         layout.addLayout(btn_layout)
 
     def reset_widths(self):
+        # Show confirmation dialog before resetting widths
+        from PyQt5.QtWidgets import QMessageBox
+        confirm = QMessageBox(self)
+        confirm.setWindowTitle("Reset Column Widths")
+        confirm.setText("This will reset all the column widths to their default values. Are you sure?")
+        confirm.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+        confirm.setDefaultButton(QMessageBox.Cancel)
+        ret = confirm.exec_()
+        if ret != QMessageBox.Yes:
+            return  # User cancelled
         # Reload widths from factory_defaults (not just DB) and update QLineEdits
         from logic.db_interface import get_factory_defaults
         factory_defaults = get_factory_defaults()
