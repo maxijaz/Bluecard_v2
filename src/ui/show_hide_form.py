@@ -162,10 +162,30 @@ class ShowHideForm(QDialog):
         grid = QGridLayout()
         max_rows = max(len(SHOW_HIDE_FIELDS), len(COLOR_FIELDS))
         label_style = f"color: {defaults.get('form_fg_color', '#222222')}; font-size: {font_size}pt; font-weight: {'bold' if str(defaults.get('form_label_bold', True)).lower() in ('1','true','yes') else 'normal'};"
-        for row in range(max_rows):
+        # --- PATCH: Add permanent width edits for '#' and 'Name' at the top (no tickbox) ---
+        permanent_width_fields = [
+            ("#", "width_row_number"),
+            ("Name", "width_name"),
+        ]
+        for row, (label, db_key) in enumerate(permanent_width_fields):
+            lbl = QLabel(label)
+            lbl.setStyleSheet(label_style)
+            grid.addWidget(lbl, row, 0)
+            grid.addWidget(QWidget(), row, 1)  # No tickbox spacer
+            width_val = self.class_data.get(db_key, "")
+            width_edit = QLineEdit(str(width_val) if width_val else "")
+            width_edit.setMaximumWidth(60)
+            width_edit.setFont(self.form_font)
+            self.width_edits[db_key] = width_edit
+            grid.addWidget(width_edit, row, 2)
+        # --- END PATCH ---
+
+        # Adjust main grid loop to start after permanent fields
+        for row in range(len(permanent_width_fields), max_rows + len(permanent_width_fields)):
+            idx = row - len(permanent_width_fields)
             # Column 1: Show/Hide tickboxes
-            if row < len(SHOW_HIDE_FIELDS):
-                key, label = SHOW_HIDE_FIELDS[row]
+            if idx < len(SHOW_HIDE_FIELDS):
+                key, label = SHOW_HIDE_FIELDS[idx]
                 lbl = QLabel(label)
                 lbl.setStyleSheet(label_style)
                 cb = QCheckBox()
@@ -190,8 +210,8 @@ class ShowHideForm(QDialog):
                 grid.addWidget(QWidget(), row, 1)
                 grid.addWidget(QWidget(), row, 2)
             # Column 3: Color label + QLineEdit
-            if row < len(COLOR_FIELDS):
-                color_key, color_label, default = COLOR_FIELDS[row]
+            if idx < len(COLOR_FIELDS):
+                color_key, color_label, default = COLOR_FIELDS[idx]
                 lbl = QLabel(color_label)
                 lbl.setStyleSheet(label_style)
                 edit = QLineEdit(self.class_data.get(color_key, default))
@@ -298,9 +318,10 @@ class ShowHideForm(QDialog):
         updates = {key: "Yes" if cb.isChecked() else "No" for key, cb in self.checkboxes.items()}
         for color_key, edit in self.color_edits.items():
             updates[color_key] = edit.text().strip()
-        # Save widths
+        # Save widths: always use the current QLineEdit value (not self.class_data)
         for db_key, edit in self.width_edits.items():
             val = edit.text().strip()
+            print(f"[DEBUG] save: db_key={db_key}, QLineEdit={val}, class_data={self.class_data.get(db_key)}")
             if val.isdigit():
                 updates[db_key] = int(val)
             else:
@@ -309,7 +330,19 @@ class ShowHideForm(QDialog):
             update_class(self.class_id, updates)
             if self.on_save_callback:
                 self.on_save_callback(live_update=True)
-            self.accept()
+            # --- PATCH: Reload class_data and update QLineEdits to match DB, but only if changed ---
+            self.class_data = get_class_by_id(self.class_id)
+            for db_key, edit in self.width_edits.items():
+                new_val = self.class_data.get(db_key, "")
+                current_val = edit.text().strip()
+                new_val_str = str(new_val) if new_val is not None else ""
+                if current_val != new_val_str:
+                    edit.blockSignals(True)
+                    edit.setText(new_val_str)
+                    edit.blockSignals(False)
+            # Show floating message instead of closing
+            show_message_dialog(self, "Data Saved...", timeout=1500)
+            # Do NOT call self.accept() here
         except Exception as e:
             show_message_dialog(self, f"Failed to save: {e}")
 
@@ -334,3 +367,15 @@ class ShowHideForm(QDialog):
                 self.on_save_callback(live_update=True)
         except Exception as e:
             print(f"[ERROR] Failed to update width {db_key} live: {e}")
+
+    def accept(self):
+        # On dialog close (OK/Save), always trigger live update callback
+        if self.on_save_callback:
+            self.on_save_callback(live_update=True)
+        super().accept()
+
+    def reject(self):
+        # On dialog close (Cancel/X), also trigger live update callback (for width changes)
+        if self.on_save_callback:
+            self.on_save_callback(live_update=True)
+        super().reject()

@@ -655,7 +655,7 @@
     },
     "ShowHideForm": {
       "window_width": 500,
-      "window_height": 400,
+      "window_height": 500,
       "min_width": 300,
       "min_height": 200,
       "resizable": "yes",
