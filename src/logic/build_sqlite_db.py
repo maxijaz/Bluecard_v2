@@ -1,6 +1,10 @@
 import os
 import sqlite3
 import json
+from typing import Any, Optional
+
+# All defaults are now managed in factory_defaults.json
+# the DB schema should not have conflicting SQL defaults.
 
 # Sample Thai public holidays (can extend or replace later)
 thai_holidays = [
@@ -34,7 +38,7 @@ DB_PATH = os.path.join(DATA_DIR, DB_FILENAME)
 # --- BEGIN: Load attendance data from external JSON file ---
 FACTORY_STUDENTS_JSON = os.path.join(DATA_DIR, "factory_students.json")
 
-def load_factory_students():
+def load_factory_students() -> dict | None:
     if not os.path.exists(FACTORY_STUDENTS_JSON):
         print(f"Sample data file not found: {FACTORY_STUDENTS_JSON}")
         return None
@@ -42,7 +46,7 @@ def load_factory_students():
         return json.load(f)
 # --- END: Load attendance data from external JSON file ---
 
-def recreate_db(db_path=DB_PATH):
+def recreate_db(db_path: str = DB_PATH) -> sqlite3.Connection | None:
     if os.path.exists(db_path):
         os.remove(db_path)
         print(f"Deleted existing database {db_path}")
@@ -251,9 +255,10 @@ def recreate_db(db_path=DB_PATH):
     print("Inserted Thai holidays")
 
     conn.commit()
+    # (Removed automated check here; check is now only run after all imports in main())
     return conn
 
-def merge_metadata_with_defaults(meta, class_defaults):
+def merge_metadata_with_defaults(meta: dict, class_defaults: dict) -> dict:
     """Merge class metadata with defaults. Precedence: meta > class_defaults > fallback."""
     fallback = {
         "company": "",
@@ -281,7 +286,7 @@ def merge_metadata_with_defaults(meta, class_defaults):
     merged.update({k: v for k, v in meta.items() if v not in (None, "")})
     return merged
 
-def import_data(conn, data, factory_defaults=None):
+def import_data(conn: sqlite3.Connection, data: dict, factory_defaults: dict | None = None) -> None:
     cursor = conn.cursor()
     class_defaults = factory_defaults.get("classes", {}).get("default", {}) if factory_defaults else {}
     for class_no, class_data in data["classes"].items():
@@ -359,7 +364,7 @@ def import_data(conn, data, factory_defaults=None):
     conn.commit()
     print("Imported class data")
 
-def import_defaults_from_factory(conn, factory_defaults):
+def import_defaults_from_factory(conn: sqlite3.Connection, factory_defaults: dict) -> None:
     """
     Import global defaults from factory_defaults.json into the defaults table.
     """
@@ -373,7 +378,7 @@ def import_defaults_from_factory(conn, factory_defaults):
         cursor.execute("REPLACE INTO defaults (key, value) VALUES (?, ?)", (key, normalize_value(value)))
     conn.commit()
 
-def import_form_settings_from_factory(conn, factory_defaults):
+def import_form_settings_from_factory(conn: sqlite3.Connection, factory_defaults: dict) -> None:
     """
     Import per-form settings from factory_defaults.json into the form_settings table.
     """
@@ -402,44 +407,32 @@ def import_form_settings_from_factory(conn, factory_defaults):
         cursor.execute(f"REPLACE INTO form_settings ({','.join(columns)}) VALUES ({placeholders})", values)
     conn.commit()
 
-def import_class_defaults_from_factory(conn, factory_defaults):
+def import_factory_defaults_table(conn: sqlite3.Connection, factory_defaults: dict) -> None:
     """
-    Import per-class defaults from factory_defaults.json into the classes table as templates (for new classes).
-    """
-    cursor = conn.cursor()
-    class_defaults = factory_defaults.get("classes", {}).get("default", {})
-    # This function can be expanded to insert into a class_templates table if needed
-    # For now, just store in factory_defaults table for reference
-    for key, value in class_defaults.items():
-        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, json.dumps(value)))
-    conn.commit()
-
-def import_factory_defaults_table(conn, factory_defaults):
-    """
-    Import all factory defaults into the factory_defaults table for reference and reset.
+    Import all factory defaults (global, forms, classes) into the factory_defaults table for reference and reset.
     """
     cursor = conn.cursor()
-    def normalize_bool(val):
+    def normalize_value(val):
         if isinstance(val, bool):
             return "True" if val else "False"
         if isinstance(val, int):
             return str(val)
         if str(val).lower() in ("true", "yes"): return "True"
         if str(val).lower() in ("false", "no"): return "False"
-        return val
+        return str(val)
     # Global
     for key, value in factory_defaults.get("global", {}).items():
-        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, str(normalize_bool(value))))
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("global", None, key, normalize_value(value)))
     # Forms
     for form_name, form_settings in factory_defaults.get("forms", {}).items():
         for key, value in form_settings.items():
-            cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, str(normalize_bool(value))))
+            cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("form", form_name, key, normalize_value(value)))
     # Classes
     for key, value in factory_defaults.get("classes", {}).get("default", {}).items():
-        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, str(normalize_bool(value))))
+        cursor.execute("REPLACE INTO factory_defaults (scope, form_name, key, value) VALUES (?, ?, ?, ?)", ("class", None, key, normalize_value(value)))
     conn.commit()
 
-def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
+def check_factory_defaults_vs_db(conn: sqlite3.Connection, factory_defaults: dict, strict: bool = False) -> None:
     """
     Compare the DB's defaults and form_settings to those in factory_defaults.json.
     Print warnings or raise error if mismatches are found.
@@ -497,7 +490,7 @@ def check_factory_defaults_vs_db(conn, factory_defaults, strict=False):
     else:
         print("Factory defaults match DB.")
 
-def main():
+def main() -> None:
     import argparse
     parser = argparse.ArgumentParser(description="Build Bluecard DB and check against factory defaults.")
     parser.add_argument('--strict-factory-check', action='store_true', help='Fail if DB and factory defaults mismatch')
@@ -523,7 +516,6 @@ def main():
     # Import all settings from factory_defaults.json
     import_defaults_from_factory(conn, factory_defaults)
     import_form_settings_from_factory(conn, factory_defaults)
-    import_class_defaults_from_factory(conn, factory_defaults)
     import_factory_defaults_table(conn, factory_defaults)
 
     # Load sample attendance/class/student data from factory_students.json
