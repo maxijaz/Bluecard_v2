@@ -684,7 +684,7 @@ QTableView::item:selected {
         QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
 
     def on_frozen_header_resized(self, logicalIndex, oldSize, newSize):
-        """Live-sync: Save frozen/scrollable column width to DB and update ShowHideForm if open."""
+        """Live-sync: Save frozen/scrollable column width to DB and update ShowHideForm if open. Also realign tables."""
         try:
             model = self.frozen_table.model()
             if not hasattr(model, 'headers'):
@@ -717,6 +717,9 @@ QTableView::item:selected {
                         widget.width_edits[db_key].blockSignals(False)
         except Exception as e:
             print(f"[ERROR] on_frozen_header_resized: {e}")
+        # --- Ensure robust alignment after any width change ---
+        self.adjust_frozen_table_width()
+        self.position_tables()
 
     def on_scrollable_header_resized(self, logicalIndex, oldSize, newSize):
         """Live-sync: Save scrollable (dates) column width to DB and update ShowHideForm if open."""
