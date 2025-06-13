@@ -71,8 +71,8 @@ SHOW_HIDE_FIELDS = [
     ("show_nickname", "Nickname"),
     ("show_company_no", "Company No"),
     ("show_score", "Score"),
-    ("show_pre_test", "pre_test"),
-    ("show_post_test", "post_test"),
+    ("show_pre_test", "Pre-test"),
+    ("show_post_test", "Post-test"),
     ("show_attn", "Attn"),
     ("show_p", "P"),
     ("show_a", "A"),
@@ -294,8 +294,8 @@ class Mainform(QMainWindow):
             "Nickname": "width_nickname",
             "Company No": "width_company_no",
             "Score": "width_score",
-            "pre_test": "width_pre_test",
-            "post_test": "width_post_test",
+            "Pre-test": "width_pre_test",
+            "Post-test": "width_post_test",
             "Attn": "width_attn",
             "P": "width_p",
             "A": "width_a",
@@ -357,8 +357,8 @@ class Mainform(QMainWindow):
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
             "Company No": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
             "Score": (self.class_data.get("show_score") or self.default_settings.get("show_score", "Yes")) == "Yes",
-            "pre_test": (self.class_data.get("show_pre_test") or self.default_settings.get("show_pre_test", "Yes")) == "Yes",
-            "post_test": (self.class_data.get("show_post_test") or self.default_settings.get("show_post_test", "Yes")) == "Yes",
+            "Pre-test": (self.class_data.get("show_pre_test") or self.default_settings.get("show_pre_test", "Yes")) == "Yes",
+            "Post-test": (self.class_data.get("show_post_test") or self.default_settings.get("show_post_test", "Yes")) == "Yes",
             "Attn": (self.class_data.get("show_attn") or self.default_settings.get("show_attn", "Yes")) == "Yes",
             "P": (self.class_data.get("show_p") or self.default_settings.get("show_p", "Yes")) == "Yes",
             "A": (self.class_data.get("show_a") or self.default_settings.get("show_a", "Yes")) == "Yes",
@@ -696,8 +696,8 @@ QTableView::item:selected {
                 "Nickname": "width_nickname",
                 "Company No": "width_company_no",
                 "Score": "width_score",
-                "pre_test": "width_pre_test",
-                "post_test": "width_post_test",
+                "Pre-test": "width_pre_test",
+                "Post-test": "width_post_test",
                 "Attn": "width_attn",
                 "P": "width_p",
                 "A": "width_a",
@@ -997,10 +997,10 @@ QTableView::item:selected {
             frozen_headers.append("Company No")
         if self.column_visibility.get("Score", True):
             frozen_headers.append("Score")
-        if self.column_visibility.get("pre_test", True):
-            frozen_headers.append("pre_test")
-        if self.column_visibility.get("post_test", True):
-            frozen_headers.append("post_test")
+        if self.column_visibility.get("Pre-test", True):
+            frozen_headers.append("Pre-test")
+        if self.column_visibility.get("Post-test", True):
+            frozen_headers.append("Post-test")
         if self.column_visibility.get("Attn", True):
             frozen_headers.append("Attn")
         if self.column_visibility.get("P", True):
@@ -1039,9 +1039,9 @@ QTableView::item:selected {
                     row.append(student.get("company_no", ""))
                 elif header == "Score":
                     row.append(student.get("score", ""))
-                elif header == "pre_test":
+                elif header == "Pre-test":
                     row.append(student.get("pre_test", ""))
-                elif header == "post_test":
+                elif header == "Post-test":
                     row.append(student.get("post_test", ""))
                 elif header == "Attn":
                     row.append(len(student.get("attendance", {})))
@@ -1135,8 +1135,8 @@ QTableView::item:selected {
         "Nickname": 100, # mapped to db width_nickname = 100
         "Company No": 100, # mapped to db width_company_no = 100
         "Score": 65, # mapped to db to width_score = 65
-        "pre_test": 65, # mapped to db to width_pre_test = 65
-        "post_test": 65, # mapped to db to width_post_test = 65
+        "Pre-test": 65, # mapped to db to width_pre_test = 65
+        "Post-test": 65, # mapped to db to width_post_test = 65
         "Attn": 50, # mapped to db to width_attn = 50
         "P": 30, # mapped to db to width_p = 30
         "A": 30, # mapped to db to width_a = 30
