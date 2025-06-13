@@ -616,6 +616,7 @@ class Mainform(QMainWindow):
 
         self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
         self.frozen_table.horizontalHeader().sectionResized.connect(self.on_frozen_header_resized)
+        self.scrollable_table.horizontalHeader().sectionResized.connect(self.on_scrollable_header_resized)
 
         # Set size policies and stretch factors for proper alignment
         from PyQt5.QtWidgets import QSizePolicy
@@ -683,8 +684,7 @@ QTableView::item:selected {
         QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
 
     def on_frozen_header_resized(self, logicalIndex, oldSize, newSize):
-        """Live-sync: Save frozen column width to DB and update ShowHideForm if open."""
-        # Map header index to DB key
+        """Live-sync: Save frozen/scrollable column width to DB and update ShowHideForm if open."""
         try:
             model = self.frozen_table.model()
             if not hasattr(model, 'headers'):
@@ -708,9 +708,7 @@ QTableView::item:selected {
             if db_key:
                 from logic.db_interface import update_class, get_class_by_id
                 update_class(self.class_id, {db_key: newSize})
-                # Force reload from DB to ensure value is saved
                 self.class_data = get_class_by_id(self.class_id)
-                # If ShowHideForm is open, update its QLineEdit
                 from PyQt5.QtWidgets import QApplication
                 for widget in QApplication.topLevelWidgets():
                     if hasattr(widget, "width_edits") and db_key in widget.width_edits:
@@ -719,6 +717,23 @@ QTableView::item:selected {
                         widget.width_edits[db_key].blockSignals(False)
         except Exception as e:
             print(f"[ERROR] on_frozen_header_resized: {e}")
+
+    def on_scrollable_header_resized(self, logicalIndex, oldSize, newSize):
+        """Live-sync: Save scrollable (dates) column width to DB and update ShowHideForm if open."""
+        try:
+            # All date columns use width_date
+            db_key = "width_date"
+            from logic.db_interface import update_class, get_class_by_id
+            update_class(self.class_id, {db_key: newSize})
+            self.class_data = get_class_by_id(self.class_id)
+            from PyQt5.QtWidgets import QApplication
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, "width_edits") and db_key in widget.width_edits:
+                    widget.width_edits[db_key].blockSignals(True)
+                    widget.width_edits[db_key].setText(str(newSize))
+                    widget.width_edits[db_key].blockSignals(False)
+        except Exception as e:
+            print(f"[ERROR] on_scrollable_header_resized: {e}")
 
     # Button Methods
     def run_html_output(self):

@@ -25,8 +25,8 @@ WIDTH_DB_KEYS = {
     "Nickname": "width_nickname",
     "Company No": "width_company_no",
     "Score": "width_score",
-    "PreTest": "width_pretest",
-    "PostTest": "width_posttest",
+    "PreTest": "width_pretest",  # <-- FIXED
+    "PostTest": "width_posttest",  # <-- FIXED
     "Attn": "width_attn",
     "P": "width_p",
     "A": "width_a",
