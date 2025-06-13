@@ -68,43 +68,42 @@ def recreate_db(db_path=DB_PATH):
         ccp INTEGER,  -- def_ccp from teacher_defaults.json
         travel INTEGER,  -- def_travel from teacher_defaults.json
         bonus INTEGER,  -- def_bonus from teacher_defaults.json
-        course_hours INTEGER, -- def_coursehours from teacher_defaults.json
+        course_hours INTEGER,  -- def_coursehours from teacher_defaults.json
         class_time INTEGER,  -- def_classtime from teacher_defaults.json
         max_classes TEXT,
         days TEXT,
         cod_cia TEXT,
         archive TEXT,
-        show_nickname TEXT DEFAULT 'Yes',
-        show_company_no TEXT DEFAULT 'Yes',
-        show_score TEXT DEFAULT 'Yes',
-        show_pretest TEXT DEFAULT 'Yes',
-        show_posttest TEXT DEFAULT 'Yes',
-        show_attn TEXT DEFAULT 'Yes',
-        show_p TEXT DEFAULT 'Yes',
-        show_a TEXT DEFAULT 'Yes',
-        show_l TEXT DEFAULT 'Yes',
-        show_note TEXT DEFAULT 'Yes',
-        show_dates TEXT DEFAULT 'Yes',  -- NEW: show_dates column
-        width_row_number INTEGER DEFAULT 30,
-        width_name INTEGER DEFAULT 150,
-        width_nickname INTEGER DEFAULT 100,
-        width_company_no INTEGER DEFAULT 100,
-        width_score INTEGER DEFAULT 65,
-        width_pretest INTEGER DEFAULT 65,
-        width_posttest INTEGER DEFAULT 65,
-        width_attn INTEGER DEFAULT 50,
-        width_p INTEGER DEFAULT 30,
-        width_a INTEGER DEFAULT 30,
-        width_l INTEGER DEFAULT 30,
-        width_note INTEGER DEFAULT 150,
-        width_date INTEGER DEFAULT 50,
-        -- PATCH: Add color columns for attendance types
-        bgcolor_p TEXT DEFAULT '#c8e6c9',
-        bgcolor_a TEXT DEFAULT '#ffcdd2',
-        bgcolor_l TEXT DEFAULT '#fff9c4',
-        bgcolor_cod TEXT DEFAULT '#c8e6c9',
-        bgcolor_cia TEXT DEFAULT '#ffcdd2',
-        bgcolor_hol TEXT DEFAULT '#ffcdd2'
+        show_nickname TEXT,
+        show_company_no TEXT,
+        show_score TEXT,
+        show_pretest TEXT,
+        show_posttest TEXT,
+        show_attn TEXT,
+        show_p TEXT,
+        show_a TEXT,
+        show_l TEXT,
+        show_note TEXT,
+        show_dates TEXT,
+        width_row_number INTEGER,
+        width_name INTEGER,
+        width_nickname INTEGER,
+        width_company_no INTEGER,
+        width_score INTEGER,
+        width_pretest INTEGER,
+        width_posttest INTEGER,
+        width_attn INTEGER,
+        width_p INTEGER,
+        width_a INTEGER,
+        width_l INTEGER,
+        width_note INTEGER,
+        width_date INTEGER,
+        bgcolor_p TEXT,
+        bgcolor_a TEXT,
+        bgcolor_l TEXT,
+        bgcolor_cod TEXT,
+        bgcolor_cia TEXT,
+        bgcolor_hol TEXT
     );
     CREATE TABLE students (
         student_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,8 +254,6 @@ def recreate_db(db_path=DB_PATH):
     return conn
 
 def merge_metadata_with_defaults(meta, class_defaults):
-    # Set minimum defaults for class metadata 
-    # factory_defaults.json holds the default values for classes
     """Merge class metadata with defaults. Precedence: meta > class_defaults > fallback."""
     fallback = {
         "company": "",
@@ -275,40 +272,8 @@ def merge_metadata_with_defaults(meta, class_defaults):
         "bonus": "0",
         "course_hours": "0",
         "class_time": "0",
-        "max_classes": "0",
         "days": "",
         "cod_cia": "",
-        "archive": "No",
-        "show_nickname": "Yes",
-        "show_company_no": "Yes",
-        "show_score": "Yes",
-        "show_pretest": "Yes",
-        "show_posttest": "Yes",
-        "show_attn": "Yes",
-        "show_p": "Yes",
-        "show_a": "Yes",
-        "show_l": "Yes",
-        "show_note": "Yes",
-        "show_dates": "Yes",
-        "width_row_number": 0,
-        "width_name": 0,
-        "width_nickname": 0,
-        "width_company_no": 0,
-        "width_score": 0,
-        "width_pretest": 0,
-        "width_posttest": 0,
-        "width_attn": 0,
-        "width_p": 0,
-        "width_a": 0,
-        "width_l": 0,
-        "width_note": 0,
-        "width_date": 0,
-        "bgcolor_p": "#c8e6c9",
-        "bgcolor_a": "#ffcdd2",
-        "bgcolor_l": "#fff9c4",
-        "bgcolor_cod": "#c8e6c9",
-        "bgcolor_cia": "#ffcdd2",
-        "bgcolor_hol": "#ffcdd2",
         "dates": []
     }
     merged = dict(fallback)
@@ -326,7 +291,7 @@ def import_data(conn, data, factory_defaults=None):
             INSERT OR REPLACE INTO classes (
                 class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
                 show_nickname, show_company_no, show_score, show_pretest, show_posttest, show_attn, show_p, show_a, show_l, show_note,
-                show_dates,  -- NEW: show_dates column
+                show_dates,
                 width_row_number, width_name, width_nickname, width_company_no, width_score, width_pretest, width_posttest, width_attn, width_p, width_a, width_l, width_note, width_date,
                 bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
@@ -335,11 +300,11 @@ def import_data(conn, data, factory_defaults=None):
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
             meta.get("notes", ""), int(meta.get("rate", 0)), int(meta.get("ccp", 0)), int(meta.get("travel", 0)),
             int(meta.get("bonus", 0)), int(meta.get("course_hours", 0)), int(meta.get("class_time", 0)),
-            meta.get("max_classes", "20"), meta.get("days", ""), meta.get("cod_cia", ""), class_data.get("archive", "No"),
-            meta.get("show_nickname", "Yes"), meta.get("show_company_no", "Yes"), meta.get("show_score", "Yes"), meta.get("show_pretest", "Yes"), meta.get("show_posttest", "Yes"), meta.get("show_attn", "Yes"), meta.get("show_p", "Yes"), meta.get("show_a", "Yes"), meta.get("show_l", "Yes"), meta.get("show_note", "Yes"),
-            meta.get("show_dates", "Yes"),
-            int(meta.get("width_row_number", 30)), int(meta.get("width_name", 150)), int(meta.get("width_nickname", 100)), int(meta.get("width_company_no", 100)), int(meta.get("width_score", 65)), int(meta.get("width_pretest", 65)), int(meta.get("width_posttest", 65)), int(meta.get("width_attn", 50)), int(meta.get("width_p", 30)), int(meta.get("width_a", 30)), int(meta.get("width_l", 30)), int(meta.get("width_note", 150)), int(meta.get("width_date", 50)),
-            meta.get("bgcolor_p", "#c8e6c9"), meta.get("bgcolor_a", "#ffcdd2"), meta.get("bgcolor_l", "#fff9c4"), meta.get("bgcolor_cod", "#c8e6c9"), meta.get("bgcolor_cia", "#ffcdd2"), meta.get("bgcolor_hol", "#ffcdd2")
+            meta["max_classes"], meta.get("days", ""), meta.get("cod_cia", ""), meta["archive"],
+            meta["show_nickname"], meta["show_company_no"], meta["show_score"], meta["show_pretest"], meta["show_posttest"], meta["show_attn"], meta["show_p"], meta["show_a"], meta["show_l"], meta["show_note"],
+            meta["show_dates"],
+            int(meta["width_row_number"]), int(meta["width_name"]), int(meta["width_nickname"]), int(meta["width_company_no"]), int(meta["width_score"]), int(meta["width_pretest"]), int(meta["width_posttest"]), int(meta["width_attn"]), int(meta["width_p"]), int(meta["width_a"]), int(meta["width_l"]), int(meta["width_note"]), int(meta["width_date"]),
+            meta["bgcolor_p"], meta["bgcolor_a"], meta["bgcolor_l"], meta["bgcolor_cod"], meta["bgcolor_cia"], meta["bgcolor_hol"]
         ))
 
         for date in meta.get("dates", []):
