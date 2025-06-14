@@ -200,6 +200,9 @@ class ShowHideForm(QDialog):
                 self.checkboxes[key] = cb
                 grid.addWidget(lbl, row, 0)
                 grid.addWidget(cb, row, 1)
+                # --- LIVE METADATA TOGGLE ---
+                if key == "show_metadata":
+                    cb.stateChanged.connect(self._on_show_metadata_toggled)
                 # Column 2: Width QLineEdit (aligned with label/tickbox)
                 width_db_key = WIDTH_DB_KEYS.get(label)
                 if width_db_key:
@@ -374,6 +377,13 @@ class ShowHideForm(QDialog):
                 self.on_save_callback(live_update=True)
         except Exception as e:
             print(f"[ERROR] Failed to update width {db_key} live: {e}")
+
+    def _on_show_metadata_toggled(self, state):
+        # Save to DB and trigger live update in mainform
+        val = "Yes" if state == 2 else "No"
+        update_class(self.class_id, {"show_metadata": val})
+        if self.on_save_callback:
+            self.on_save_callback(live_update=True)
 
     def accept(self):
         # On dialog close (OK/Save), always trigger live update callback

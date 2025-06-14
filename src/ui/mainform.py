@@ -1365,6 +1365,7 @@ QTableView::item:selected {
         # --- PATCH: Pass a live update callback to ShowHideForm ---
         def on_show_hide_saved(live_update=False):
             self.refresh_student_table()
+            self.update_metadata_visibility()
         self.show_hide_form = ShowHideForm(self, self.class_id, on_save_callback=on_show_hide_saved)
         # Disable only mainform buttons while dialog is open
         for btn in getattr(self, '_mainform_buttons', []):
@@ -1418,8 +1419,10 @@ QTableView::item:selected {
         self.show_hide_form = None
         self.load_pal_colors()  # <-- Reload colors after Show/Hide closes
         self.refresh_student_table()  # <-- Ensure table refreshes with new colors
-        # --- LIVE METADATA TOGGLE ---
-        # Reload class_data and show/hide metadata_widget live
+        self.update_metadata_visibility()
+
+    def update_metadata_visibility(self):
+        """Reload class_data and show/hide metadata_widget live."""
         self.class_data = get_class_by_id(self.class_id)
         if hasattr(self, 'metadata_widget'):
             if self.class_data.get("show_metadata", "Yes") == "Yes":
