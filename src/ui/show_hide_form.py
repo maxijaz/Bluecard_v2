@@ -306,6 +306,8 @@ class ShowHideForm(QDialog):
         check = not all(cb.isChecked() for cb in self.checkboxes.values())
         for cb in self.checkboxes.values():
             cb.setChecked(check)
+        # --- FIX: Save immediately after toggling to persist state and trigger live update ---
+        self.save()
 
     def toggle_colors(self):
         # If any color is not empty, clear all; else set to default
@@ -379,3 +381,9 @@ class ShowHideForm(QDialog):
         if self.on_save_callback:
             self.on_save_callback(live_update=True)
         super().reject()
+
+    def closeEvent(self, event):
+        # Ensure live update is triggered even if dialog is closed via window manager
+        if self.on_save_callback:
+            self.on_save_callback(live_update=True)
+        super().closeEvent(event)

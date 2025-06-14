@@ -184,8 +184,14 @@ class CenterAlignDelegate(QStyledItemDelegate):
 class FrozenTableDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
-        if index.column() == 1:
-            option.displayAlignment = Qt.AlignLeft | Qt.AlignVCenter
+        # Center all columns except 'Name' and 'Note', which are left-aligned
+        model = index.model()
+        if hasattr(model, 'headers') and index.column() < len(model.headers):
+            header = model.headers[index.column()]
+            if header in ("Name", "Note"):
+                option.displayAlignment = Qt.AlignLeft | Qt.AlignVCenter
+            else:
+                option.displayAlignment = Qt.AlignCenter
         else:
             option.displayAlignment = Qt.AlignCenter
         option.palette.setColor(option.palette.Text, Qt.black)
@@ -513,31 +519,29 @@ class Mainform(QMainWindow):
 
         # Buttons Section
         buttons_layout = QHBoxLayout()
-        add_edit_student_btn = QPushButton("Add/Edit Student")
-        remove_student_btn = QPushButton("Manage/Remove Students")
-        pal_cod_btn = QPushButton("PAL/COD")
-        html_button = QPushButton("Run HTML Output")
-        metadata_form_btn = QPushButton("Manage Metadata")
-        manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
-        show_hide_btn = QPushButton("Show/Hide")
+        self.add_edit_student_btn = QPushButton("Add/Edit Student")
+        self.remove_student_btn = QPushButton("Manage/Remove Students")
+        self.pal_cod_btn = QPushButton("PAL/COD")
+        self.html_button = QPushButton("Run HTML Output")
+        self.metadata_form_btn = QPushButton("Manage Metadata")
+        self.manage_dates_btn = QPushButton("Manage Dates")  # Placeholder button
+        self.show_hide_btn = QPushButton("Show/Hide")
         # Only connect if method exists
         if hasattr(self, 'open_show_hide'):
-            show_hide_btn.clicked.connect(self.open_show_hide)
-
+            self.show_hide_btn.clicked.connect(self.open_show_hide)
         # Connect buttons to their respective methods
-        add_edit_student_btn.clicked.connect(self.add_edit_student)
-        remove_student_btn.clicked.connect(self.remove_student)
-        pal_cod_btn.clicked.connect(lambda: self.debug_pal_cod_button_click())  # Connect to the debug method
-        html_button.clicked.connect(self.run_html_output)
-        metadata_form_btn.clicked.connect(self.open_metadata_form)
-        manage_dates_btn.clicked.connect(self.open_calendar_view)
-
+        self.add_edit_student_btn.clicked.connect(self.add_edit_student)
+        self.remove_student_btn.clicked.connect(self.remove_student)
+        self.pal_cod_btn.clicked.connect(lambda: self.debug_pal_cod_button_click())
+        self.html_button.clicked.connect(self.run_html_output)
+        self.metadata_form_btn.clicked.connect(self.open_metadata_form)
+        self.manage_dates_btn.clicked.connect(self.open_calendar_view)
         # Add buttons to the layout
-        buttons = [
-            add_edit_student_btn, remove_student_btn, pal_cod_btn,
-            html_button, metadata_form_btn, manage_dates_btn, show_hide_btn  # Add settings_btn here
+        self._mainform_buttons = [
+            self.add_edit_student_btn, self.remove_student_btn, self.pal_cod_btn,
+            self.html_button, self.metadata_form_btn, self.manage_dates_btn, self.show_hide_btn
         ]
-        for button in buttons:
+        for button in self._mainform_buttons:
             buttons_layout.addWidget(button)
         self.layout.addLayout(buttons_layout)
 
@@ -966,8 +970,30 @@ QTableView::item:selected {
         event.accept()  # Accept the close event
 
     def refresh_student_table(self):
-        start = time.time()
-        # print("[PROFILE] Start refresh_student_table")
+        print("[DEBUG] refresh_student_table: Reloading class_data and metadata from DB...")
+        self.class_data = get_class_by_id(self.class_id)
+        self.metadata = self.class_data
+        print(f"[DEBUG] class_data: {self.class_data}")
+        print(f"[DEBUG] metadata: {self.metadata}")
+        # --- PATCH: Update column visibility after DB reload ---
+        self.column_visibility = {
+            "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
+            "Company No": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
+            "Score": (self.class_data.get("show_score") or self.default_settings.get("show_score", "Yes")) == "Yes",
+            "Pre-test": (self.class_data.get("show_pre_test") or self.default_settings.get("show_pre_test", "Yes")) == "Yes",
+            "Post-test": (self.class_data.get("show_post_test") or self.default_settings.get("show_post_test", "Yes")) == "Yes",
+            "Attn": (self.class_data.get("show_attn") or self.default_settings.get("show_attn", "Yes")) == "Yes",
+            "P": (self.class_data.get("show_p") or self.default_settings.get("show_p", "Yes")) == "Yes",
+            "A": (self.class_data.get("show_a") or self.default_settings.get("show_a", "Yes")) == "Yes",
+            "L": (self.class_data.get("show_l") or self.default_settings.get("show_l", "Yes")) == "Yes",
+            "Note": (self.class_data.get("show_note") or self.default_settings.get("show_note", "Yes")) == "Yes",
+        }
+        self.scrollable_column_visibility = {
+            "Dates": (self.class_data.get("show_dates") or self.default_settings.get("show_dates", "Yes")) == "Yes"
+        }
+        print(f"[DEBUG] column_visibility: {self.column_visibility}")
+        print(f"[DEBUG] scrollable_column_visibility: {self.scrollable_column_visibility}")
+        # ...existing code...
 
         self.ensure_max_teaching_dates()
         t1 = time.time()
@@ -1063,12 +1089,14 @@ QTableView::item:selected {
                     row.append("")
             frozen_data.append(row)
         self.frozen_table.setModel(FrozenTableModel(frozen_data, frozen_headers))
+        self.frozen_table.setItemDelegate(FrozenTableDelegate(self.frozen_table))
         t3 = time.time()
         # print(f"[PROFILE] Set frozen table model: {t3 - t2:.3f}s")
         # print(f"[DEBUG] After setModel: frozen_table visible: {self.frozen_table.isVisible()}, geometry: {self.frozen_table.geometry()}")
 
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
+        self.scrollable_table.show()
         self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
         # print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
@@ -1318,8 +1346,8 @@ QTableView::item:selected {
         def on_show_hide_saved(live_update=False):
             self.refresh_student_table()
         self.show_hide_form = ShowHideForm(self, self.class_id, on_save_callback=on_show_hide_saved)
-        # Disable all mainform buttons while dialog is open
-        for btn in self.findChildren(QPushButton):
+        # Disable only mainform buttons while dialog is open
+        for btn in getattr(self, '_mainform_buttons', []):
             btn.setEnabled(False)
         self.show_hide_form.finished.connect(lambda _: self._on_show_hide_closed())
         self.show_hide_form.show()
@@ -1366,8 +1394,8 @@ QTableView::item:selected {
         self.scrollable_table.setVisible(show_dates == "Yes")
 
     def _on_show_hide_closed(self):
-        # Re-enable all mainform buttons when dialog is closed
-        for btn in self.findChildren(QPushButton):
+        # Re-enable only mainform buttons when dialog is closed
+        for btn in getattr(self, '_mainform_buttons', []):
             btn.setEnabled(True)
         self.show_hide_form = None
 
