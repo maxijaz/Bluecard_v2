@@ -994,7 +994,6 @@ QTableView::item:selected {
         print(f"[DATES DEBUG] show_dates from DB: {show_dates_db}")
         print(f"[DATES DEBUG] scrollable_column_visibility['Dates']: {self.scrollable_column_visibility['Dates']}")
         # ...existing code for rebuilding tables...
-        # ...existing code...
         # At the end, control scrollable table visibility and print action
         if self.scrollable_column_visibility["Dates"]:
             print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
@@ -1002,6 +1001,10 @@ QTableView::item:selected {
         else:
             print("[DATES DEBUG] Hiding scrollable table (attendance dates table)")
             self.scrollable_table.hide()
+        # --- Add forced repaint and visibility debug ---
+        self.scrollable_table.repaint()
+        self.scrollable_table.update()
+        print(f"[UI DEBUG] scrollable_table.isVisible(): {self.scrollable_table.isVisible()}")
         # ...rest of method unchanged...
 
         self.ensure_max_teaching_dates()
