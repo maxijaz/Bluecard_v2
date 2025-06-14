@@ -1,6 +1,0 @@
-I have been looking carefully at the best ways to help Amy and Clever prepare for the CAT4 test. As we know, CAT4 is a special test and most good practice materials are only available online, with limited access times and digital restrictions. I sent you information about TestPrep-Online, which sells CAT4 practice packages with full tests and guides. Prices start at about 69 US dollars. This is an online self-study course:
-https://www.testprep-online.com/cat4-level-e
-
-Teacher packs that include printable materials are usually part of expensive premium packages. A better choice may be downloadable PDF practice packs from trusted providers. We can print these locally and use them more easily in lessons. I am happy to research this option today and share what I find.
-
-If you agree, I can prepare a full summary and recommendation to help us decide the best way to support Amy and Clever. The current course ends on 13 June, so it might be good to think about extending it — especially if we want to focus more on CAT4 preparation. Please let me know what you think before I make any final plans.

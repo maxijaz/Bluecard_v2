@@ -1,5 +1,6 @@
 {
   "terminal.integrated.env.windows": {
     "PYTHONPATH": "c:\\Temp\\Bluecard_v2"
-  }
+  },
+  "editor.fontSize": 16
 }
