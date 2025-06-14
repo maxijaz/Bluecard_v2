@@ -268,7 +268,11 @@ class Mainform(QMainWindow):
         # REMOVED: max_width and max_height logic
 
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint)
-        self.setWindowTitle(f"Bluecard Attendance - {class_id}")
+        # --- PATCH: Set company name in window title from data or class metadata ---
+        company = data.get("company")
+        if not company and "classes" in data and class_id in data["classes"]:
+            company = data["classes"][class_id].get("company")
+        self.setWindowTitle(f"Bluecard Attendance - {class_id} - {company or 'Unknown Company'}")
         # --- FONT SIZE PATCH: Set default font size from per-form or global settings ---
         from logic.db_interface import get_all_defaults
         self.default_settings = get_all_defaults()
@@ -994,14 +998,24 @@ QTableView::item:selected {
         print(f"[DATES DEBUG] show_dates from DB: {show_dates_db}")
         print(f"[DATES DEBUG] scrollable_column_visibility['Dates']: {self.scrollable_column_visibility['Dates']}")
         # ...existing code for rebuilding tables...
-        # At the end, control scrollable table visibility and print action
-        if self.scrollable_column_visibility["Dates"]:
-            print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
-            self.scrollable_table.show()
-        else:
+        # Build attendance_dates and set model
+        attendance_dates = self.get_attendance_dates()  # <-- Use robust method
+        print(f"[DATES DEBUG] attendance_dates used for model: {attendance_dates}")
+        active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
+        self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
+        self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))  # Always set delegate after model
+        print(f"[UI DEBUG] scrollable_table columnCount: {self.scrollable_table.model().columnCount() if self.scrollable_table.model() else 'No model'}")
+        # Hide scrollable table if Dates is off or no columns
+        if not self.scrollable_column_visibility["Dates"] or self.scrollable_table.model().columnCount() == 0:
             print("[DATES DEBUG] Hiding scrollable table (attendance dates table)")
             self.scrollable_table.hide()
-        # --- Add forced repaint and visibility debug ---
+        else:
+            print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
+            self.scrollable_table.show()
+        # Force layout update after show/hide
+        self.scrollable_table.parentWidget().update()
+        self.scrollable_table.parentWidget().adjustSize()
+        self.scrollable_table.updateGeometry()
         self.scrollable_table.repaint()
         self.scrollable_table.update()
         print(f"[UI DEBUG] scrollable_table.isVisible(): {self.scrollable_table.isVisible()}")
@@ -1400,8 +1414,8 @@ QTableView::item:selected {
         QTimer.singleShot(0, lambda: self.frozen_table.horizontalHeader().repaint())
 
         # Show or hide the scrollable table based on show_dates value
-        show_dates = self.class_data.get("show_dates", "Yes")
-        self.scrollable_table.setVisible(show_dates == "Yes")
+        # (REMOVED: self.scrollable_table.setVisible(show_dates == "Yes"))
+        # Let refresh_student_table handle visibility logic
 
     def _on_show_hide_closed(self):
         # Re-enable only mainform buttons when dialog is closed
@@ -1482,10 +1496,13 @@ QTableView::item:selected {
         # Retrieve the selected column index from the table
         selected_columns = self.scrollable_table.selectionModel().selectedColumns()
         if not selected_columns:
+
             print("[DEBUG] No column selected, defaulting to column index 0.")
             column_index = 0
         else:
             column_index = selected_columns[0].column()
+           
+
             print(f"[DEBUG] Selected column index: {column_index}")
         self.open_pal_cod_form(column_index=column_index)
 
