@@ -102,6 +102,8 @@ def recreate_db(db_path: str = DB_PATH) -> sqlite3.Connection | None:
         width_l INTEGER,
         width_note INTEGER,
         width_date INTEGER,
+        show_pal_colors TEXT,  -- New field to control visibility of pal colors        
+        show_metadata TEXT,  -- New field to control visibility of metadata
         bgcolor_p TEXT,
         bgcolor_a TEXT,
         bgcolor_l TEXT,
@@ -297,9 +299,9 @@ def import_data(conn: sqlite3.Connection, data: dict, factory_defaults: dict | N
                 class_no, company, consultant, teacher, teacher_no, room, course_book, start_date, finish_date, time, notes, rate, ccp, travel, bonus, course_hours, class_time, max_classes, days, cod_cia, archive,
                 show_nickname, show_company_no, show_score, show_pre_test, show_post_test, show_attn, show_p, show_a, show_l, show_note,
                 show_dates,
-                width_row_number, width_name, width_nickname, width_company_no, width_score, width_pre_test, width_post_test, width_attn, width_p, width_a, width_l, width_note, width_date,
-                bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                width_row_number, width_name, width_nickname, width_company_no, width_score, width_pre_test, width_post_test, width_attn, width_p, width_a, width_l, width_note, width_date, show_pal_colors, 
+                show_metadata, bgcolor_p, bgcolor_a, bgcolor_l, bgcolor_cod, bgcolor_cia, bgcolor_hol
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             meta["class_no"], meta["company"], meta["consultant"], meta["teacher"], meta["teacher_no"],
             meta["room"], meta["course_book"], meta["start_date"], meta["finish_date"], meta["time"],
@@ -308,8 +310,8 @@ def import_data(conn: sqlite3.Connection, data: dict, factory_defaults: dict | N
             meta["max_classes"], meta.get("days", ""), meta.get("cod_cia", ""), meta["archive"],
             meta["show_nickname"], meta["show_company_no"], meta["show_score"], meta["show_pre_test"], meta["show_post_test"], meta["show_attn"], meta["show_p"], meta["show_a"], meta["show_l"], meta["show_note"],
             meta["show_dates"],
-            int(meta["width_row_number"]), int(meta["width_name"]), int(meta["width_nickname"]), int(meta["width_company_no"]), int(meta["width_score"]), int(meta["width_pre_test"]), int(meta["width_post_test"]), int(meta["width_attn"]), int(meta["width_p"]), int(meta["width_a"]), int(meta["width_l"]), int(meta["width_note"]), int(meta["width_date"]),
-            meta["bgcolor_p"], meta["bgcolor_a"], meta["bgcolor_l"], meta["bgcolor_cod"], meta["bgcolor_cia"], meta["bgcolor_hol"]
+            int(meta["width_row_number"]), int(meta["width_name"]), int(meta["width_nickname"]), int(meta["width_company_no"]), int(meta["width_score"]), int(meta["width_pre_test"]), int(meta["width_post_test"]), int(meta["width_attn"]), int(meta["width_p"]), int(meta["width_a"]), int(meta["width_l"]), int(meta["width_note"]), int(meta["width_date"]), meta["show_pal_colors"], 
+            meta["show_metadata"], meta["bgcolor_p"], meta["bgcolor_a"], meta["bgcolor_l"], meta["bgcolor_cod"], meta["bgcolor_cia"], meta["bgcolor_hol"]
         ))
 
         for date in meta.get("dates", []):

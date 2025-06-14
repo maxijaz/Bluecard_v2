@@ -125,21 +125,11 @@ class TableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return value
         elif role == Qt.BackgroundRole:
-            mainform = self.mainform
-            if mainform and hasattr(mainform, "metadata"):
-                color_map = {
-                    "P": mainform.metadata.get("bgcolor_p", "#c8e6c9"),
-                    "COD": mainform.metadata.get("bgcolor_cod", "#c8e6c9"),
-                    "A": mainform.metadata.get("bgcolor_a", "#ffcdd2"),
-                    "CIA": mainform.metadata.get("bgcolor_cia", "#ffcdd2"),
-                    "HOL": mainform.metadata.get("bgcolor_hol", "#ffcdd2"),
-                    "L": mainform.metadata.get("bgcolor_l", "#fff9c4"),
-                }
-                color = color_map.get(value, "")
-                if isinstance(color, str) and color.startswith("#") and len(color) in (4, 7):
+            if self.mainform and getattr(self.mainform, 'pal_colors_enabled', True):
+                value = self.students[self.student_keys[row - 1]]["attendance"].get(self.attendance_dates[col], "-")
+                color = self.mainform.pal_colors.get(value)
+                if color:
                     return QColor(color)
-                else:
-                    return None
             return None
         return None
 
@@ -450,8 +440,8 @@ class Mainform(QMainWindow):
         self.layout.setContentsMargins(5, 5, 5, 0)
 
         # Metadata Section (updated)
-        metadata_widget = QWidget()  # Create a widget to contain the metadata layout
-        metadata_layout = QGridLayout(metadata_widget)
+        self.metadata_widget = QWidget()  # Create a widget to contain the metadata layout
+        metadata_layout = QGridLayout(self.metadata_widget)
         metadata_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
         # metadata_layout.setHorizontalSpacing(10)  # Reduce horizontal spacing
         metadata_layout.setVerticalSpacing(0)  # Reduce vertical spacing
@@ -482,8 +472,8 @@ class Mainform(QMainWindow):
         value2_min = max(200, max([metrics.width(str(text)) for text in value2_list]) + 34) if value2_list else value1_min
 
         # Set fixed width for metadata widget based on calculated min widths
-        metadata_widget.setFixedWidth(label1_min + value1_min + label2_min + value2_min + 24)
-        metadata_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.metadata_widget.setFixedWidth(label1_min + value1_min + label2_min + value2_min + 24)
+        self.metadata_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # --- Metadata Section - Add metadata fields ---
         for row, (label1, value1, label2, value2) in enumerate(metadata_fields):
             # Label 1
@@ -516,8 +506,11 @@ class Mainform(QMainWindow):
             value2_widget.setFont(self.metadata_font)
             value2_widget.setFixedHeight(metrics.height() + 4)
             metadata_layout.addWidget(value2_widget, row, 3)
-        # Add the metadata widget to the main layout
-        self.layout.addWidget(metadata_widget)
+        # Add the metadata widget to the main layout only if show_metadata is Yes
+        if self.class_data.get("show_metadata", "Yes") == "Yes":
+            self.layout.addWidget(self.metadata_widget)
+        else:
+            self.metadata_widget.hide()
 
         # Add a 5px vertical spacer below metadata before buttons
         from PyQt5.QtWidgets import QSpacerItem, QSizePolicy
@@ -979,6 +972,7 @@ QTableView::item:selected {
         # Focused debug for 'Dates' column and scrollable table visibility
         self.class_data = get_class_by_id(self.class_id)
         self.metadata = self.class_data
+        self.load_pal_colors()  # <-- Always reload colors and toggle from DB
         show_dates_db = self.class_data.get("show_dates", "Yes")
         self.column_visibility = {
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
@@ -1122,8 +1116,7 @@ QTableView::item:selected {
 
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
-        # Do NOT show scrollable_table here; let refresh_student_table handle visibility
-        # self.scrollable_table.show()  # <-- REMOVE or comment out this line if present
+        self.scrollable_table.show()
         self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
         # print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
@@ -1423,6 +1416,25 @@ QTableView::item:selected {
         for btn in getattr(self, '_mainform_buttons', []):
             btn.setEnabled(True)
         self.show_hide_form = None
+        self.load_pal_colors()  # <-- Reload colors after Show/Hide closes
+        self.refresh_student_table()  # <-- Ensure table refreshes with new colors
+        # --- LIVE METADATA TOGGLE ---
+        # Reload class_data and show/hide metadata_widget live
+        self.class_data = get_class_by_id(self.class_id)
+        if hasattr(self, 'metadata_widget'):
+            if self.class_data.get("show_metadata", "Yes") == "Yes":
+                self.metadata_widget.show()
+            else:
+                self.metadata_widget.hide()
+
+    def load_pal_colors(self):
+        # Load P/A/L color settings and toggle state from class_data (DB)
+        self.pal_colors = {
+            'P': self.class_data.get('bgcolor_p', '#c8e6c9'),
+            'A': self.class_data.get('bgcolor_a', '#ffcdd2'),
+            'L': self.class_data.get('bgcolor_l', '#fff9c4'),
+        }
+        self.pal_colors_enabled = self.class_data.get('show_pal_colors', 'Yes') == 'Yes'
 
     def get_default_attendance_for_new_student(self):
         """Return a default attendance dictionary for a new student, with all dates set to '-'."""

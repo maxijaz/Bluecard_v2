@@ -18,6 +18,8 @@ SHOW_HIDE_FIELDS = [
     ("show_l", "L"),
     ("show_note", "Note"),
     ("show_dates", "Dates"),  # <-- Add Dates (scrollable table)
+    ("show_pal_colors", "Show P/A/L Colors"),  # <-- Add this line
+    ("show_metadata", "Show Metadata"),  # <-- Add this line for metadata toggle
 ]
 
 # Map from label to DB width key
@@ -189,7 +191,11 @@ class ShowHideForm(QDialog):
                 lbl = QLabel(label)
                 lbl.setStyleSheet(label_style)
                 cb = QCheckBox()
-                cb.setChecked(self.class_data.get(key, "Yes") == "Yes")
+                # For show_pal_colors, default to Yes if not present
+                if key == "show_pal_colors":
+                    cb.setChecked(self.class_data.get(key, "Yes") == "Yes")
+                else:
+                    cb.setChecked(self.class_data.get(key, "Yes") == "Yes")
                 cb.setFont(self.form_font)
                 self.checkboxes[key] = cb
                 grid.addWidget(lbl, row, 0)
@@ -310,11 +316,10 @@ class ShowHideForm(QDialog):
         self.save()
 
     def toggle_colors(self):
-        # If any color is not empty, clear all; else set to default
-        any_colored = any(edit.text().strip() for edit in self.color_edits.values())
-        for color_key, edit in self.color_edits.items():
-            default = next((d for k, l, d in COLOR_FIELDS if k == color_key), "")
-            edit.setText("" if any_colored else default)
+        # Toggle the show_pal_colors checkbox instead of clearing color values
+        cb = self.checkboxes.get("show_pal_colors")
+        if cb:
+            cb.setChecked(not cb.isChecked())
 
     def save(self):
         updates = {key: "Yes" if cb.isChecked() else "No" for key, cb in self.checkboxes.items()}
