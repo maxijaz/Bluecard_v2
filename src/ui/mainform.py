@@ -1122,7 +1122,8 @@ QTableView::item:selected {
 
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))
-        self.scrollable_table.show()
+        # Do NOT show scrollable_table here; let refresh_student_table handle visibility
+        # self.scrollable_table.show()  # <-- REMOVE or comment out this line if present
         self.scrollable_table.viewport().update()  # Force repaint after setting the model
         t4 = time.time()
         # print(f"[PROFILE] Set scrollable table model: {t4 - t3:.3f}s")
