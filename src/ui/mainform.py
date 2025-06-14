@@ -550,6 +550,9 @@ class Mainform(QMainWindow):
         # Create both tables before referencing them
         self.frozen_table = QTableView()
         self.scrollable_table = QTableView()
+        # Set minimum section size for both tables to allow very narrow columns
+        self.frozen_table.horizontalHeader().setMinimumSectionSize(10)
+        self.scrollable_table.horizontalHeader().setMinimumSectionSize(10)
         self.frozen_table.verticalHeader().setVisible(False)
         self.scrollable_table.verticalHeader().setVisible(False)
 
@@ -1300,32 +1303,26 @@ QTableView::item:selected {
 
     def open_show_hide(self):
         """Open the Show/Hide columns dialog and update the frozen and scrollable tables accordingly."""
+        # Prevent multiple instances
+        if hasattr(self, 'show_hide_form') and self.show_hide_form is not None and self.show_hide_form.isVisible():
+            self.show_hide_form.raise_()
+            self.show_hide_form.activateWindow()
+            return
         try:
-            from .show_hide_form import ShowHideForm, SHOW_HIDE_FIELDS
+            from ui.show_hide_form import ShowHideForm
         except ImportError:
-            QMessageBox.warning(self, "Error", "Show/Hide form not found.")
             return
         columns = [col for col in self.FROZEN_COLUMN_WIDTHS.keys() if col not in ("#", "Name")]
         current = {col: self.column_visibility.get(col, True) for col in columns}
         # --- PATCH: Pass a live update callback to ShowHideForm ---
         def on_show_hide_saved(live_update=False):
-            # Always reload class_data from DB
-            self.class_data = get_class_by_id(self.class_id)
-            self.metadata = self.class_data
-            # Update column visibility
-            for key, label in SHOW_HIDE_FIELDS:
-                if key == "show_dates":
-                    self.scrollable_column_visibility["Dates"] = (self.class_data.get(key, "Yes") == "Yes")
-                else:
-                    self.column_visibility[label] = (self.class_data.get(key, "Yes") == "Yes")
-            # Live update: refresh table widths and UI
-            self.reset_column_widths()
-            self.reset_scrollable_column_widths()
-            self.adjust_frozen_table_width()
-            self.position_tables()
             self.refresh_student_table()
-        dlg = ShowHideForm(self, self.class_id, on_save_callback=on_show_hide_saved)
-        dlg.show()
+        self.show_hide_form = ShowHideForm(self, self.class_id, on_save_callback=on_show_hide_saved)
+        # Disable all mainform buttons while dialog is open
+        for btn in self.findChildren(QPushButton):
+            btn.setEnabled(False)
+        self.show_hide_form.finished.connect(lambda _: self._on_show_hide_closed())
+        self.show_hide_form.show()
 
         # Overlap scrollable_table over frozen_table by setting a negative left margin
         self.scrollable_table.setStyleSheet(
@@ -1367,6 +1364,12 @@ QTableView::item:selected {
         # Show or hide the scrollable table based on show_dates value
         show_dates = self.class_data.get("show_dates", "Yes")
         self.scrollable_table.setVisible(show_dates == "Yes")
+
+    def _on_show_hide_closed(self):
+        # Re-enable all mainform buttons when dialog is closed
+        for btn in self.findChildren(QPushButton):
+            btn.setEnabled(True)
+        self.show_hide_form = None
 
     def get_default_attendance_for_new_student(self):
         """Return a default attendance dictionary for a new student, with all dates set to '-'."""
