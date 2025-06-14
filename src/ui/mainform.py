@@ -289,9 +289,11 @@ class Mainform(QMainWindow):
                 center_widget(self)
         self.class_id = class_id
         self.theme = theme
-
         # --- PATCH: Load from DB ---
         self.class_data = get_class_by_id(self.class_id)
+        show_dates_db = self.class_data.get("show_dates", "Yes")
+        print(f"[DATES DEBUG INIT] show_dates from DB: {show_dates_db}")
+        print(f"[DATES DEBUG INIT] Will show scrollable table: {show_dates_db == 'Yes'}")
         # --- PATCH: Update FROZEN_COLUMN_WIDTHS from DB if present ---
         width_map = {
             "#": "width_row_number",
@@ -970,12 +972,10 @@ QTableView::item:selected {
         event.accept()  # Accept the close event
 
     def refresh_student_table(self):
-        print("[DEBUG] refresh_student_table: Reloading class_data and metadata from DB...")
+        # Focused debug for 'Dates' column and scrollable table visibility
         self.class_data = get_class_by_id(self.class_id)
         self.metadata = self.class_data
-        print(f"[DEBUG] class_data: {self.class_data}")
-        print(f"[DEBUG] metadata: {self.metadata}")
-        # --- PATCH: Update column visibility after DB reload ---
+        show_dates_db = self.class_data.get("show_dates", "Yes")
         self.column_visibility = {
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
             "Company No": (self.class_data.get("show_company_no") or self.default_settings.get("show_company_no", "Yes")) == "Yes",
@@ -989,11 +989,20 @@ QTableView::item:selected {
             "Note": (self.class_data.get("show_note") or self.default_settings.get("show_note", "Yes")) == "Yes",
         }
         self.scrollable_column_visibility = {
-            "Dates": (self.class_data.get("show_dates") or self.default_settings.get("show_dates", "Yes")) == "Yes"
+            "Dates": (show_dates_db or self.default_settings.get("show_dates", "Yes")) == "Yes"
         }
-        print(f"[DEBUG] column_visibility: {self.column_visibility}")
-        print(f"[DEBUG] scrollable_column_visibility: {self.scrollable_column_visibility}")
+        print(f"[DATES DEBUG] show_dates from DB: {show_dates_db}")
+        print(f"[DATES DEBUG] scrollable_column_visibility['Dates']: {self.scrollable_column_visibility['Dates']}")
+        # ...existing code for rebuilding tables...
         # ...existing code...
+        # At the end, control scrollable table visibility and print action
+        if self.scrollable_column_visibility["Dates"]:
+            print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
+            self.scrollable_table.show()
+        else:
+            print("[DATES DEBUG] Hiding scrollable table (attendance dates table)")
+            self.scrollable_table.hide()
+        # ...rest of method unchanged...
 
         self.ensure_max_teaching_dates()
         t1 = time.time()
@@ -1367,8 +1376,6 @@ QTableView::item:selected {
 """
         self.scrollable_table.setStyleSheet(
             "QTableView { border: none; border-top: none; border-bottom: none; border-right: none; border-left: none; margin: 0px; padding: 0px; }"
-            " QTableView::item { border-left: 1px solid #000; }"
-            " QHeaderView::section { border-left: none !important; }"
             + corner_style + highlight_style
         )
 
