@@ -270,12 +270,12 @@ class ShowHideForm(QDialog):
         save_btn.setFont(self.form_font)
         save_btn.setStyleSheet(button_style)
         save_btn.clicked.connect(self.save)
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.setFont(self.form_font)
-        cancel_btn.setStyleSheet(button_style)
-        cancel_btn.clicked.connect(self.reject)
+        close_btn = QPushButton("Close")  # Renamed from Cancel to Close
+        close_btn.setFont(self.form_font)
+        close_btn.setStyleSheet(button_style)
+        close_btn.clicked.connect(self.reject)
         btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(close_btn)
         layout.addLayout(btn_layout)
 
         # --- LIVE WIDTH TRACKING: Connect QLineEdit edits to DB update ---
