@@ -126,10 +126,14 @@ class TableModel(QAbstractTableModel):
             return value
         elif role == Qt.BackgroundRole:
             if self.mainform and getattr(self.mainform, 'pal_colors_enabled', True):
-                value = self.students[self.student_keys[row - 1]]["attendance"].get(self.attendance_dates[col], "-")
-                color = self.mainform.pal_colors.get(value)
+                # Enhanced debug output for P/A/L coloring
+                color_map = getattr(self.mainform, 'pal_colors', {'P': '#c8e6c9', 'A': '#ffcdd2', 'L': '#fff9c4'})
+                color = color_map.get(value, None)
+                print(f"[PAL COLOR DEBUG] row={row}, col={col}, student_id={student_id}, date={date}, value={value}, pal_colors_enabled={self.mainform.pal_colors_enabled}, color={color}")
                 if color:
                     return QColor(color)
+            else:
+                print(f"[PAL COLOR DEBUG] row={row}, col={col}, student_id={student_id}, date={date}, value={value}, pal_colors_enabled={getattr(self.mainform, 'pal_colors_enabled', None)} (NO COLOR)")
             return None
         return None
 
@@ -157,6 +161,10 @@ class TableModel(QAbstractTableModel):
 class AttendanceDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super().initStyleOption(option, index)
+        # Ensure delegate does NOT override model's BackgroundRole color
+        # DO NOT set option.backgroundBrush here; let the model's BackgroundRole handle all coloring.
+        # If you set option.backgroundBrush, it will override the model's color!
+        # (Do not set option.backgroundBrush to None; just do not set it at all.)
         option.displayAlignment = Qt.AlignCenter
         option.palette.setColor(option.palette.Text, Qt.black)  # Normal text
         option.palette.setColor(option.palette.HighlightedText, Qt.black)  # Selected text
@@ -286,8 +294,8 @@ class Mainform(QMainWindow):
         # --- PATCH: Load from DB ---
         self.class_data = get_class_by_id(self.class_id)
         show_dates_db = self.class_data.get("show_dates", "Yes")
-        print(f"[DATES DEBUG INIT] show_dates from DB: {show_dates_db}")
-        print(f"[DATES DEBUG INIT] Will show scrollable table: {show_dates_db == 'Yes'}")
+        # print(f"[DATES DEBUG INIT] show_dates from DB: {show_dates_db}")
+        # print(f"[DATES DEBUG INIT] Will show scrollable table: {show_dates_db == 'Yes'}")
         # --- PATCH: Update FROZEN_COLUMN_WIDTHS from DB if present ---
         width_map = {
             "#": "width_row_number",
@@ -597,7 +605,8 @@ class Mainform(QMainWindow):
         # Make frozen_table 1px wider
         self.frozen_table.resize(self.frozen_table.width() + 1, self.frozen_table.height())
         # Remove the vertical line (border-left) under the scrollable table
-        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet() + " QTableView::item { border-left: none; }")
+        # Remove any background override for items to allow model's BackgroundRole to show
+        self.scrollable_table.setStyleSheet(self.scrollable_table.styleSheet().replace('QTableView::item { border-left: none; }', ''))
         # Ensure the table_layout has no spacing or margins
         # self.table_layout.setSpacing(0)
         # self.table_layout.setContentsMargins(0, 0, 0, 0)
@@ -618,7 +627,7 @@ class Mainform(QMainWindow):
         # Connect the double-click event of the header to the `header_double_click` method
         header = self.scrollable_table.horizontalHeader()
         header.sectionDoubleClicked.connect(self.header_double_click)
-        print("[DEBUG] Connected header double-click event to header_double_click method.")
+        # print("[DEBUG] Connected header double-click event to header_double_click method.")
 
         self.frozen_table.horizontalHeader().sectionResized.connect(self.adjust_frozen_table_width)
         self.frozen_table.horizontalHeader().sectionResized.connect(self.on_frozen_header_resized)
@@ -861,11 +870,11 @@ QTableView::item:selected {
 
     def showEvent(self, event):
         super().showEvent(event)
-        print(f"[DEBUG] Mainform shown: width={self.width()}, height={self.height()}")
+        # print(f"[DEBUG] Mainform shown: width={self.width()}, height={self.height()}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        print(f"[DEBUG] Mainform resized: width={self.width()}, height={self.height()}")
+        # print(f"[DEBUG] Mainform resized: width={self.width()}, height={self.height()}")
 
     def resizeEvent(self, event):
         """Adjust the width and position of the scrollable table dynamically."""
@@ -908,7 +917,7 @@ QTableView::item:selected {
             weekdays = [day_map[day.strip()] for day in days_str.split(",") if day.strip() in day_map]
 
         # Remove placeholders and duplicates
-        print("[DEBUG] Original attendance_dates before patch:", attendance_dates)
+        # print("[DEBUG] Original attendance_dates before patch:", attendance_dates)
         attendance_dates = [d for d in attendance_dates if d != "--/--/--"]
         attendance_dates = list(dict.fromkeys(attendance_dates))
 
@@ -920,12 +929,12 @@ QTableView::item:selected {
                     return False
             return True
         # attendance_dates = [d for d in attendance_dates if is_real_class_date(d)]
-        print("[DEBUG] attendance_dates after removing CIA/HOL/COD:", attendance_dates)
-        print(f"[DEBUG] max_classes: {max_classes}, weekdays: {weekdays}, start_date: {start_date}")
-        if attendance_dates:
-            print(f"[DEBUG] last_date for extension: {attendance_dates[-1]}")
-        else:
-            print("[DEBUG] No real class dates, using start_date for extension.")
+        # print("[DEBUG] attendance_dates after removing CIA/HOL/COD:", attendance_dates)
+        # print(f"[DEBUG] max_classes: {max_classes}, weekdays: {weekdays}, start_date: {start_date}")
+        # if attendance_dates:
+            # print(f"[DEBUG] last_date for extension: {attendance_dates[-1]}")
+        # else:
+            # print("[DEBUG] No real class dates, using start_date for extension.")
 
         # Now generate new dates if needed
         if len(attendance_dates) < max_classes:
@@ -943,12 +952,12 @@ QTableView::item:selected {
                     if new_date_str not in attendance_dates and date_status.get(new_date_str, "") not in ("CIA", "HOL", "COD"):
                         new_dates.append(new_date_str)
                 current_date += timedelta(days=1)
-            print("[DEBUG] new_dates generated:", new_dates)
+            # print("[DEBUG] new_dates generated:", new_dates)
             attendance_dates += new_dates
         if len(attendance_dates) < max_classes:
             print(f"[DEBUG] Adding {max_classes - len(attendance_dates)} placeholders.")
             attendance_dates += ["--/--/--"] * (max_classes - len(attendance_dates))
-        print("[DEBUG] Final attendance_dates returned:", attendance_dates)
+        # print("[DEBUG] Final attendance_dates returned:", attendance_dates)
         return attendance_dates
     
 
@@ -969,10 +978,14 @@ QTableView::item:selected {
         event.accept()  # Accept the close event
 
     def refresh_student_table(self):
+        """Refresh the student table and always reload show_pal_colors from DB for persistence."""
+        # Always reload class_data from DB to get the latest show_pal_colors
+        self.class_data = get_class_by_id(self.class_id)
+        self.load_pal_colors()  # This will set self.pal_colors_enabled from DB
+
         # Focused debug for 'Dates' column and scrollable table visibility
         self.class_data = get_class_by_id(self.class_id)
         self.metadata = self.class_data
-        self.load_pal_colors()  # <-- Always reload colors and toggle from DB
         show_dates_db = self.class_data.get("show_dates", "Yes")
         self.column_visibility = {
             "Nickname": (self.class_data.get("show_nickname") or self.default_settings.get("show_nickname", "Yes")) == "Yes",
@@ -989,30 +1002,29 @@ QTableView::item:selected {
         self.scrollable_column_visibility = {
             "Dates": (show_dates_db or self.default_settings.get("show_dates", "Yes")) == "Yes"
         }
-        print(f"[DATES DEBUG] show_dates from DB: {show_dates_db}")
-        print(f"[DATES DEBUG] scrollable_column_visibility['Dates']: {self.scrollable_column_visibility['Dates']}")
+        # print(f"[DATES DEBUG] show_dates from DB: {show_dates_db}")
+        # print(f"[DATES DEBUG] scrollable_column_visibility['Dates']: {self.scrollable_column_visibility['Dates']}")
         # ...existing code for rebuilding tables...
         # Build attendance_dates and set model
         attendance_dates = self.get_attendance_dates()  # <-- Use robust method
-        print(f"[DATES DEBUG] attendance_dates used for model: {attendance_dates}")
+        # print(f"[DATES DEBUG] attendance_dates used for model: {attendance_dates}")
         active_students = {sid: s for sid, s in self.students.items() if s.get("active", "Yes") == "Yes"}
         self.scrollable_table.setModel(TableModel(active_students, attendance_dates, mainform=self))
         self.scrollable_table.setItemDelegate(AttendanceDelegate(self.scrollable_table))  # Always set delegate after model
-        print(f"[UI DEBUG] scrollable_table columnCount: {self.scrollable_table.model().columnCount() if self.scrollable_table.model() else 'No model'}")
+        # print(f"[UI DEBUG] scrollable_table columnCount: {self.scrollable_table.model().columnCount() if self.scrollable_table.model() else 'No model'}")
         # Hide scrollable table if Dates is off or no columns
         if not self.scrollable_column_visibility["Dates"] or self.scrollable_table.model().columnCount() == 0:
-            print("[DATES DEBUG] Hiding scrollable table (attendance dates table)")
+            # print("[DATES DEBUG] Hiding scrollable table (attendance dates table)")
             self.scrollable_table.hide()
         else:
-            print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
+            # print("[DATES DEBUG] Showing scrollable table (attendance dates table)")
             self.scrollable_table.show()
         # Force layout update after show/hide
         self.scrollable_table.parentWidget().update()
         self.scrollable_table.parentWidget().adjustSize()
         self.scrollable_table.updateGeometry()
         self.scrollable_table.repaint()
-        self.scrollable_table.update()
-        print(f"[UI DEBUG] scrollable_table.isVisible(): {self.scrollable_table.isVisible()}")
+        # print(f"[UI DEBUG] scrollable_table.isVisible(): {self.scrollable_table.isVisible()}")
         # ...rest of method unchanged...
 
         self.ensure_max_teaching_dates()
@@ -1438,6 +1450,8 @@ QTableView::item:selected {
             'L': self.class_data.get('bgcolor_l', '#fff9c4'),
         }
         self.pal_colors_enabled = self.class_data.get('show_pal_colors', 'Yes') == 'Yes'
+        print(f"[PAL DEBUG] Loaded pal_colors: {self.pal_colors}")
+        print(f"[PAL DEBUG] pal_colors_enabled: {self.pal_colors_enabled} (show_pal_colors from DB: {self.class_data.get('show_pal_colors')})")
 
     def get_default_attendance_for_new_student(self):
         """Return a default attendance dictionary for a new student, with all dates set to '-'."""
@@ -1457,12 +1471,14 @@ QTableView::item:selected {
         scheduled_dates = self.metadata.get("dates", [])
         students = self.students
         # PATCH: Robustly parse max_classes as int, even if string is like '20 x 2 = 40.0'
+
         max_classes_raw = self.metadata.get("max_classes", 10)
         try:
             if isinstance(max_classes_raw, int):
                 max_classes = max_classes_raw
             else:
                 max_classes = int(str(max_classes_raw).split()[0])
+
         except Exception:
             max_classes = 10
         def on_save_callback(new_dates):
